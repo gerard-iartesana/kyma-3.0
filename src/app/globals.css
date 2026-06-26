@@ -316,7 +316,7 @@ button, input, textarea, select {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
   width: 100%;
 }
@@ -343,6 +343,7 @@ button, input, textarea, select {
   gap: 4px;
   position: relative;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
 }
 
 .calendar-day-cell:hover {
@@ -401,6 +402,7 @@ button, input, textarea, select {
   display: flex;
   gap: 4px;
   align-items: center;
+  min-width: 0;
 }
 
 .calendar-event-pill:hover {
@@ -431,6 +433,7 @@ button, input, textarea, select {
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  min-width: 0;
 }
 
 /* Mobile Calendar Adaptability */
