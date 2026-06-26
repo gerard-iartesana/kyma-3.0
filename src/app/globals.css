@@ -333,7 +333,6 @@ button, input, textarea, select {
 }
 
 .calendar-day-cell {
-  min-height: 95px;
   height: 95px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
