@@ -161,13 +161,36 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
         onClearContext();
       }
 
-      // Trigger Kyma simulated response
+      // Trigger Kyma response
       setIsTyping(true);
 
       const timer = setTimeout(async () => {
         setIsTyping(false);
         try {
-          const kymaText = await generateResponse(userText, contextItem);
+          let kymaText = '';
+          
+          try {
+            const allMsgs = await dbClient.getMessages();
+            const response = await fetch('/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messages: allMsgs })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              kymaText = data.text;
+            } else {
+              console.warn('Gemini API route returned an error, falling back to simulated response');
+            }
+          } catch (apiErr) {
+            console.error('Error fetching Gemini API:', apiErr);
+          }
+
+          if (!kymaText) {
+            kymaText = await generateResponse(userText, contextItem);
+          }
+
           const kymaMsg = await dbClient.receiveKymaMessage(kymaText);
           setMessages(prev => [...prev, kymaMsg]);
           onItemAddedOrModified(); // Refresh items in case Kyma created one
