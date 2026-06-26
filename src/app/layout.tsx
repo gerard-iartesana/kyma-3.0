@@ -24,8 +24,11 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Kyma — El antídoto a la conexión de comida rápida",
+  title: "Kyma - Conecta contigo y evoluciona",
   description: "Un asistente personal que te ayuda en el día a día y, mientras lo hace, dibuja contigo tu mapa interior de autoconocimiento.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
