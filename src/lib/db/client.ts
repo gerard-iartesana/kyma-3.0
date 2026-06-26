@@ -1,0 +1,705 @@
+import { supabase } from '../supabase';
+
+export interface KymaItem {
+  id: string;
+  userId: string;
+  doorId: 'agenda' | 'tareas' | 'notas' | 'intereses' | 'personas' | 'reflexiones';
+  title: string;
+  content: string;
+  createdAt: string;
+  tags: string[];
+  peso: 1 | 2 | 3; // 1: Normal/Orbita/Curiosidad, 2: Destacado/Cercana, 3: Urgente/Nucleo/Pasion
+  completed?: boolean; // Specific to tareas
+  eventDate?: string; // Specific to agenda
+  eventTime?: string; // Specific to agenda (HH:MM)
+  cercania?: 'nucleo' | 'cercana' | 'orbita'; // Specific to personas
+  frecuencia?: number; // Specific to personas (0-100)
+}
+
+export interface ChatMessage {
+  id: string;
+  sender: 'user' | 'kyma';
+  text: string;
+  timestamp: string;
+  contextItem?: {
+    id: string;
+    title: string;
+    doorId: string;
+  };
+}
+
+const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
+  // Agenda
+  {
+    doorId: 'agenda',
+    title: 'Cena con Marta',
+    content: 'Cena en nuestro restaurante italiano favorito para celebrar su nuevo proyecto.',
+    eventDate: new Date(Date.now() + 3600000 * 24).toISOString().split('T')[0],
+    eventTime: '21:00',
+    tags: ['#cena', '#marta', '#agenda'],
+    peso: 2
+  },
+  {
+    doorId: 'agenda',
+    title: 'Presentación Kyma MVP',
+    content: 'Demostración de la interfaz del observatorio y del cuaderno móvil.',
+    eventDate: new Date(Date.now() + 3600000 * 72).toISOString().split('T')[0],
+    eventTime: '11:30',
+    tags: ['#trabajo', '#demo', '#agenda'],
+    peso: 3
+  },
+  // Tareas
+  {
+    doorId: 'tareas',
+    title: 'Comprar café de especialidad',
+    content: 'Buscar el origen Etiopía que recomendó Javier.',
+    tags: ['#cafe', '#compra', '#tareas'],
+    peso: 1,
+    completed: false
+  },
+  {
+    doorId: 'tareas',
+    title: 'Preparar presentación de producto',
+    content: 'Estructurar diapositivas y guion de la demo.',
+    tags: ['#trabajo', '#tareas'],
+    peso: 3,
+    completed: false
+  },
+  {
+    doorId: 'tareas',
+    title: 'Responder correo a Lucía',
+    content: 'Confirmar fechas de entrega del roadmap v2.',
+    tags: ['#lucia', '#correo', '#tareas'],
+    peso: 2,
+    completed: true
+  },
+  // Notas
+  {
+    doorId: 'notas',
+    title: 'Notas sobre La Llegada',
+    content: 'Anoche volví a ver La Llegada. Increíble cómo trata la lingüística y el tiempo no lineal. Me quedé pensando en cómo percibimos el destino: si conocieras tu futuro, ¿cambiarías algo?',
+    tags: ['#cine', '#la-llegada', '#filosofia', '#notas'],
+    peso: 2
+  },
+  {
+    doorId: 'notas',
+    title: 'Color como recompensa',
+    content: 'Idea de diseño: una interfaz que empiece casi monocromática y florezca en color a medida que Kyma aprende del usuario. Menos estímulos, más calma.',
+    tags: ['#kyma', '#diseño', '#notas'],
+    peso: 3
+  },
+  // Intereses
+  {
+    doorId: 'intereses',
+    title: 'Cine de Ciencia Ficción',
+    content: 'Atracción por historias de corte existencial, lingüística y realidades no lineales. Obras clave discutidas: La Llegada, Interestelar.',
+    tags: ['#cine', '#ciencia-ficcion', '#intereses'],
+    peso: 3
+  },
+  {
+    doorId: 'intereses',
+    title: 'Filosofía del Lenguaje',
+    content: 'Curiosidad por comprender cómo la estructura gramatical y los símbolos que usamos limitan o expanden los pensamientos cotidianos.',
+    tags: ['#filosofia', '#intereses'],
+    peso: 2
+  },
+  {
+    doorId: 'intereses',
+    title: 'Diseño de Interfaces',
+    content: 'Estudio de micro-interacciones, tipografía y contrastes en interfaces oscuras. Principios de calma visual y balance.',
+    tags: ['#diseño', '#intereses'],
+    peso: 2
+  },
+  {
+    doorId: 'intereses',
+    title: 'Desarrollo de Software',
+    content: 'Programación funcional, arquitectura limpia, tipado estático y algoritmos en TypeScript y React.',
+    tags: ['#desarrollo', '#intereses'],
+    peso: 3
+  },
+  {
+    doorId: 'intereses',
+    title: 'Modelos de Lenguaje',
+    content: 'Interés en redes neuronales, prompting socrático y comportamiento emergente en sistemas de IA.',
+    tags: ['#ia', '#intereses'],
+    peso: 2
+  },
+  {
+    doorId: 'intereses',
+    title: 'Ética y Existencialismo',
+    content: 'Debates sobre el libre albedrío, la responsabilidad individual y la construcción de sentido en la modernidad líquida.',
+    tags: ['#filosofia', '#intereses'],
+    peso: 3
+  },
+  {
+    doorId: 'intereses',
+    title: 'Cine de Acción',
+    content: 'Análisis del ritmo visual, montaje cinético y coreografías en el cine de acción contemporáneo.',
+    tags: ['#cine', '#accion', '#intereses'],
+    peso: 1
+  },
+  {
+    doorId: 'intereses',
+    title: 'Cine de Fantasía',
+    content: 'Exploración de la mitopoiesis, construcción de mundos fantásticos y el viaje del héroe clásico en el cine.',
+    tags: ['#cine', '#fantasia', '#intereses'],
+    peso: 2
+  },
+  {
+    doorId: 'intereses',
+    title: 'Filosofía de la Inteligencia Artificial',
+    content: 'Reflexión ética y epistemológica sobre la conciencia artificial, la mente extendida y el futuro humano.',
+    tags: ['#filosofia', '#ia', '#intereses'],
+    peso: 3
+  },
+  // Vínculos
+  {
+    doorId: 'personas',
+    title: 'Marta',
+    content: 'Pareja. Compartimos el amor por el cine, la cocina y los paseos matutinos. Kyma ha registrado múltiples eventos conjuntos.',
+    tags: ['#marta', '#vinculos'],
+    peso: 3,
+    cercania: 'nucleo',
+    frecuencia: 100
+  },
+  {
+    doorId: 'personas',
+    title: 'Javier',
+    content: 'Amigo cercano y mentor tecnológico. Conversaciones frecuentes sobre desarrollo, café y existencialismo.',
+    tags: ['#javier', '#vinculos'],
+    peso: 2,
+    cercania: 'cercana',
+    frecuencia: 75
+  },
+  {
+    doorId: 'personas',
+    title: 'Lucía',
+    content: 'Compañera del equipo de diseño. Contacto laboral regular pero con poca carga subjetiva registrada.',
+    tags: ['#lucia', '#vinculos'],
+    peso: 1,
+    cercania: 'orbita',
+    frecuencia: 50
+  },
+  // Reflexiones
+  {
+    doorId: 'reflexiones',
+    title: 'Sobre la rutina y el control',
+    content: 'A veces me aferro a hábitos obsoletos solo porque la predictibilidad me da calma. Kyma me hizo reflexionar: ¿busco orden o evito enfrentarme al vacío de tomar decisiones nuevas?',
+    tags: ['#reflexiones', '#filosofia'],
+    peso: 2
+  }
+];
+
+const SEED_MESSAGES_EMPTY: ChatMessage[] = [
+  {
+    id: 'me1',
+    sender: 'kyma',
+    text: 'Hola. Soy Kyma. Estoy aquí para escucharte y ayudarte con tu día a día. A medida que compartas tus notas, ideas o vínculos importantes, dibujaremos juntos tu mapa interior. ¿De qué te apetece conversar hoy?',
+    timestamp: new Date().toISOString()
+  }
+];
+
+// Helper to get active user ID
+async function getCurrentUserId(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('Usuario no autenticado');
+  }
+  return user.id;
+}
+
+// Map database row to KymaItem
+function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
+  const doorIdMap: Record<string, KymaItem['doorId']> = {
+    evento: 'agenda',
+    tarea: 'tareas',
+    nota: 'notas',
+    interes: 'intereses',
+    vinculo: 'personas',
+    reflexion: 'reflexiones'
+  };
+
+  const doorId = doorIdMap[dbItem.tipo] || 'notas';
+  const datos = dbItem.datos || {};
+
+  const item: KymaItem = {
+    id: dbItem.id,
+    userId: dbItem.user_id,
+    doorId,
+    title: dbItem.titulo,
+    content: dbItem.cuerpo || '',
+    createdAt: dbItem.created_at,
+    tags: tagNames || [],
+    peso: (dbItem.peso || 1) as 1 | 2 | 3,
+  };
+
+  if (doorId === 'tareas') {
+    item.completed = !!datos.hecha;
+  } else if (doorId === 'agenda') {
+    item.eventDate = datos.fecha || '';
+    item.eventTime = datos.hora || '';
+  } else if (doorId === 'personas') {
+    item.cercania = datos.cercania || 'orbita';
+    item.frecuencia = typeof datos.frecuencia_score === 'number' ? datos.frecuencia_score : 50;
+  }
+
+  return item;
+}
+
+// Map KymaItem properties to public.elementos fields
+function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
+  const dbItem: any = {};
+  
+  if (item.title !== undefined) dbItem.titulo = item.title;
+  if (item.content !== undefined) dbItem.cuerpo = item.content;
+  if (item.peso !== undefined) dbItem.peso = item.peso;
+  
+  if (item.doorId !== undefined) {
+    const tipoMap: Record<KymaItem['doorId'], string> = {
+      agenda: 'evento',
+      tareas: 'tarea',
+      notas: 'nota',
+      intereses: 'interes',
+      personas: 'vinculo',
+      reflexiones: 'reflexion'
+    };
+    dbItem.tipo = tipoMap[item.doorId];
+  }
+
+  const datos: any = {};
+  if (item.completed !== undefined) datos.hecha = item.completed;
+  if (item.eventDate !== undefined) datos.fecha = item.eventDate;
+  if (item.eventTime !== undefined) datos.hora = item.eventTime;
+  if (item.cercania !== undefined) datos.cercania = item.cercania;
+  if (item.frecuencia !== undefined) datos.frecuencia_score = item.frecuencia;
+  
+  if (Object.keys(datos).length > 0) {
+    dbItem.datos = datos;
+  }
+  
+  return dbItem;
+}
+
+// Check database state (for local display purposes)
+export function getDbState(): 'populated' | 'empty' {
+  if (typeof window === 'undefined') return 'populated';
+  const state = localStorage.getItem('KYMA_DB_STATE');
+  return (state as 'populated' | 'empty') || 'populated';
+}
+
+export function setDbState(state: 'populated' | 'empty') {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('KYMA_DB_STATE', state);
+}
+
+// Client Database API
+export const dbClient = {
+  // Sync tag names to public.tags and create relations in elemento_tags
+  async syncElementTags(elementoId: string, userId: string, tagNames: string[]): Promise<void> {
+    // 1. Delete existing associations
+    const { error: deleteError } = await supabase
+      .from('elemento_tags')
+      .delete()
+      .eq('elemento_id', elementoId);
+      
+    if (deleteError) {
+      console.error('Error clearing old tags:', deleteError);
+      throw new Error(`Error clearing tags: ${deleteError.message}`);
+    }
+
+    if (tagNames.length === 0) return;
+
+    // 2. Normalize and filter tag names (ensure they start with '#')
+    const normalizedTags = Array.from(
+      new Set(
+        tagNames
+          .map(t => t.trim().toLowerCase())
+          .filter(t => t.startsWith('#'))
+      )
+    );
+    
+    if (normalizedTags.length === 0) return;
+
+    // 3. Bulk upsert tags into public.tags
+    const tagsData = normalizedTags.map(nombre => {
+      const systemicTags = ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones'];
+      const tipo = systemicTags.includes(nombre) ? 'sistemico' : 'tematico';
+      return {
+        user_id: userId,
+        nombre,
+        tipo
+      };
+    });
+
+    const { data: upsertedTags, error: tagsError } = await supabase
+      .from('tags')
+      .upsert(tagsData, { onConflict: 'user_id,nombre' })
+      .select('id, nombre');
+
+    if (tagsError) {
+      console.error('Error upserting tags:', tagsError);
+      throw new Error(`Error syncing tags: ${tagsError.message}`);
+    }
+
+    // 4. Link elements to tags in public.elemento_tags
+    const linksData = (upsertedTags || []).map(t => ({
+      elemento_id: elementoId,
+      tag_id: t.id
+    }));
+
+    const { error: linkError } = await supabase
+      .from('elemento_tags')
+      .insert(linksData);
+
+    if (linkError) {
+      console.error('Error linking element to tags:', linkError);
+      throw new Error(`Error linking tags: ${linkError.message}`);
+    }
+  },
+
+  // Items CRUD
+  async getItems(doorId?: string): Promise<KymaItem[]> {
+    try {
+      const userId = await getCurrentUserId();
+      
+      let query = supabase
+        .from('elementos')
+        .select(`
+          *,
+          elemento_tags (
+            tags (
+              nombre
+            )
+          )
+        `)
+        .eq('user_id', userId);
+        
+      if (doorId) {
+        const tipoMap: Record<string, string> = {
+          agenda: 'evento',
+          tareas: 'tarea',
+          notas: 'nota',
+          intereses: 'interes',
+          personas: 'vinculo',
+          reflexiones: 'reflexion'
+        };
+        const tipo = tipoMap[doorId];
+        if (tipo) {
+          query = query.eq('tipo', tipo);
+        }
+      }
+      
+      const { data, error } = await query;
+      if (error) {
+        console.error('Error fetching items:', error);
+        return [];
+      }
+      
+      return (data || []).map(dbItem => {
+        const tagNames = (dbItem.elemento_tags || [])
+          .map((et: any) => et.tags?.nombre)
+          .filter(Boolean);
+        return mapDbToKymaItem(dbItem, tagNames);
+      });
+    } catch (e) {
+      console.warn('getCurrentUserId failed or error fetching items:', e);
+      return [];
+    }
+  },
+
+  async getItemById(id: string): Promise<KymaItem | undefined> {
+    const userId = await getCurrentUserId();
+    const { data, error } = await supabase
+      .from('elementos')
+      .select(`
+        *,
+        elemento_tags (
+          tags (
+            nombre
+          )
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('id', id)
+      .single();
+      
+    if (error || !data) {
+      return undefined;
+    }
+    
+    const tagNames = (data.elemento_tags || [])
+      .map((et: any) => et.tags?.nombre)
+      .filter(Boolean);
+      
+    return mapDbToKymaItem(data, tagNames);
+  },
+
+  async createItem(item: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>): Promise<KymaItem> {
+    const userId = await getCurrentUserId();
+    
+    // 1. Map to DB fields
+    const dbItemFields = mapKymaToDbFields(item);
+    dbItemFields.user_id = userId;
+    
+    // 2. Insert into elementos
+    const { data: createdDbItem, error: insertError } = await supabase
+      .from('elementos')
+      .insert(dbItemFields)
+      .select()
+      .single();
+      
+    if (insertError || !createdDbItem) {
+      throw new Error(`Error creating element: ${insertError?.message}`);
+    }
+    
+    // 3. Process tags
+    let tagsToLink = item.tags || [];
+    if (tagsToLink.length === 0) {
+      const doorTagMap: Record<string, string> = {
+        agenda: '#agenda',
+        tareas: '#tareas',
+        notas: '#notas',
+        intereses: '#intereses',
+        personas: '#vinculos',
+        reflexiones: '#reflexiones'
+      };
+      if (doorTagMap[item.doorId]) {
+        tagsToLink = [doorTagMap[item.doorId]];
+      }
+    }
+
+    if (item.content && (!item.tags || item.tags.length === 0)) {
+      const mentioned = item.content.match(/#[a-zA-Z0-9-]+/g);
+      if (mentioned) {
+        tagsToLink = Array.from(new Set([...tagsToLink, ...mentioned.map(t => t.toLowerCase())]));
+      }
+    }
+    
+    if (tagsToLink.length > 0) {
+      await this.syncElementTags(createdDbItem.id, userId, tagsToLink);
+    }
+    
+    return mapDbToKymaItem(createdDbItem, tagsToLink);
+  },
+
+  async updateItem(id: string, updates: Partial<Omit<KymaItem, 'id' | 'userId'>>): Promise<KymaItem> {
+    const userId = await getCurrentUserId();
+    
+    // 1. Fetch current element
+    const { data: existing, error: fetchError } = await supabase
+      .from('elementos')
+      .select(`
+        *,
+        elemento_tags (
+          tags (
+            nombre
+          )
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('id', id)
+      .single();
+      
+    if (fetchError || !existing) {
+      throw new Error(`Element with id ${id} not found`);
+    }
+    
+    const currentTags: string[] = (existing.elemento_tags || [])
+      .map((et: any) => et.tags?.nombre)
+      .filter(Boolean) as string[];
+      
+    // 2. Determine final tags
+    let finalTags = updates.tags;
+    
+    if (updates.content !== undefined && updates.tags === undefined) {
+      const mentioned = updates.content.match(/#[a-zA-Z0-9-]+/g);
+      if (mentioned) {
+        const systemicTags = currentTags.filter((t: string) => 
+          ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones'].includes(t)
+        );
+        finalTags = Array.from(new Set([...systemicTags, ...mentioned.map((t: string) => t.toLowerCase())]));
+      }
+    }
+    
+    // 3. Map updates
+    const dbItemFields = mapKymaToDbFields(updates);
+    
+    if (dbItemFields.datos || existing.datos) {
+      dbItemFields.datos = {
+        ...existing.datos,
+        ...dbItemFields.datos
+      };
+    }
+    
+    dbItemFields.updated_at = new Date().toISOString();
+    
+    // 4. Update element
+    const { data: updatedDbItem, error: updateError } = await supabase
+      .from('elementos')
+      .update(dbItemFields)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (updateError || !updatedDbItem) {
+      throw new Error(`Error updating element: ${updateError?.message}`);
+    }
+    
+    // 5. Sync tags
+    if (finalTags !== undefined) {
+      await this.syncElementTags(id, userId, finalTags);
+    } else {
+      finalTags = currentTags;
+    }
+    
+    return mapDbToKymaItem(updatedDbItem, finalTags);
+  },
+
+  async deleteItem(id: string): Promise<void> {
+    const userId = await getCurrentUserId();
+    const { error } = await supabase
+      .from('elementos')
+      .delete()
+      .eq('user_id', userId)
+      .eq('id', id);
+      
+    if (error) {
+      throw new Error(`Error deleting element: ${error.message}`);
+    }
+  },
+
+  // Messages API
+  async getMessages(): Promise<ChatMessage[]> {
+    try {
+      const userId = await getCurrentUserId();
+      const { data, error } = await supabase
+        .from('conversacion_buffer')
+        .select('mensajes')
+        .eq('user_id', userId)
+        .single();
+        
+      if (error && error.code === 'PGRST116') {
+        const initial = getDbState() === 'populated' ? [] : SEED_MESSAGES_EMPTY;
+        const { error: insertError } = await supabase
+          .from('conversacion_buffer')
+          .insert({ user_id: userId, mensajes: initial });
+        if (insertError) console.error('Error inserting initial buffer:', insertError);
+        return initial;
+      }
+      
+      const msgs = (data?.mensajes as ChatMessage[]) || [];
+      // If empty and DB state is empty, initialize with default message
+      if (msgs.length === 0 && getDbState() === 'empty') {
+        return SEED_MESSAGES_EMPTY;
+      }
+      return msgs;
+    } catch (e) {
+      console.warn('getCurrentUserId failed or error fetching messages:', e);
+      return getDbState() === 'empty' ? SEED_MESSAGES_EMPTY : [];
+    }
+  },
+
+  async sendMessage(text: string, contextItem?: ChatMessage['contextItem']): Promise<ChatMessage> {
+    const userId = await getCurrentUserId();
+    const msgs = await this.getMessages();
+    const userMsg: ChatMessage = {
+      id: Math.random().toString(36).substring(2, 9),
+      sender: 'user',
+      text,
+      timestamp: new Date().toISOString(),
+      contextItem
+    };
+    const newMsgs = [...msgs, userMsg];
+    await supabase
+      .from('conversacion_buffer')
+      .upsert({ user_id: userId, mensajes: newMsgs, updated_at: new Date().toISOString() });
+    return userMsg;
+  },
+
+  async receiveKymaMessage(text: string): Promise<ChatMessage> {
+    const userId = await getCurrentUserId();
+    const msgs = await this.getMessages();
+    const kymaMsg: ChatMessage = {
+      id: Math.random().toString(36).substring(2, 9),
+      sender: 'kyma',
+      text,
+      timestamp: new Date().toISOString()
+    };
+    const newMsgs = [...msgs, kymaMsg];
+    await supabase
+      .from('conversacion_buffer')
+      .upsert({ user_id: userId, mensajes: newMsgs, updated_at: new Date().toISOString() });
+    return kymaMsg;
+  },
+
+  async clearMessages(): Promise<ChatMessage[]> {
+    const userId = await getCurrentUserId();
+    const cleanMsg: ChatMessage[] = [
+      {
+        id: Math.random().toString(36).substring(2, 9),
+        sender: 'kyma',
+        text: 'He limpiado nuestra conversación. ¿De qué te apetece conversar ahora?',
+        timestamp: new Date().toISOString()
+      }
+    ];
+    await supabase
+      .from('conversacion_buffer')
+      .upsert({ user_id: userId, mensajes: cleanMsg, updated_at: new Date().toISOString() });
+    return cleanMsg;
+  },
+
+  async resetDatabase(): Promise<void> {
+    const userId = await getCurrentUserId();
+    
+    // 1. Delete elements (cascades to elemento_tags)
+    const { error: deleteElementsError } = await supabase
+      .from('elementos')
+      .delete()
+      .eq('user_id', userId);
+    if (deleteElementsError) throw deleteElementsError;
+      
+    // 2. Delete tags
+    const { error: deleteTagsError } = await supabase
+      .from('tags')
+      .delete()
+      .eq('user_id', userId);
+    if (deleteTagsError) throw deleteTagsError;
+      
+    // 3. Reset conversation buffer
+    const cleanMsg: ChatMessage[] = [];
+    await supabase
+      .from('conversacion_buffer')
+      .upsert({ user_id: userId, mensajes: cleanMsg, updated_at: new Date().toISOString() });
+      
+    // 4. Seed database with SEED_ITEMS for the user
+    for (const item of SEED_ITEMS) {
+      const { tags, ...rest } = item;
+      
+      const dbItemFields = mapKymaToDbFields(rest);
+      dbItemFields.user_id = userId;
+      
+      const { data: created, error: insertError } = await supabase
+        .from('elementos')
+        .insert(dbItemFields)
+        .select()
+        .single();
+        
+      if (insertError) {
+        console.error('Error inserting seed element:', insertError);
+        continue;
+      }
+      
+      if (created && tags) {
+        await this.syncElementTags(created.id, userId, tags);
+      }
+    }
+  },
+
+  async deleteAccount(): Promise<void> {
+    const { error } = await supabase.rpc('delete_user_account');
+    if (error) {
+      throw new Error(`Error deleting account: ${error.message}`);
+    }
+    await supabase.auth.signOut();
+  }
+};
