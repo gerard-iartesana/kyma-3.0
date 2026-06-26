@@ -333,7 +333,8 @@ button, input, textarea, select {
 }
 
 .calendar-day-cell {
-  height: 95px;
+  min-height: 95px;
+  height: auto;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-md);
@@ -376,7 +377,6 @@ button, input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  overflow-y: auto;
   flex: 1;
   margin-top: 2px;
 }
@@ -388,7 +388,7 @@ button, input, textarea, select {
 .calendar-event-pill {
   font-size: 0.65rem;
   font-weight: 500;
-  padding: 3px 6px;
+  padding: 4px 6px;
   border-radius: 4px;
   background: rgba(252, 252, 253, 0.03);
   border: 1px solid rgba(252, 252, 253, 0.05);
@@ -399,7 +399,8 @@ button, input, textarea, select {
   white-space: normal;
   overflow: hidden;
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 2px;
   align-items: flex-start;
   min-width: 0;
 }
