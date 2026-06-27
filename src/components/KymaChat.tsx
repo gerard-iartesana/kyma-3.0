@@ -10,6 +10,30 @@ interface KymaChatProps {
   onItemAddedOrModified: (item?: KymaItem, action?: string) => void;
 }
 
+function renderFormattedText(text: string) {
+  if (!text) return null;
+  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g;
+  const splitText = text.split(regex);
+
+  return splitText.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return (
+        <strong key={index} style={{ color: 'var(--text-primary, #f8fafc)', fontWeight: 700 }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if ((part.startsWith('*') && part.endsWith('*') && part.length > 2) || (part.startsWith('_') && part.endsWith('_') && part.length > 2)) {
+      return (
+        <em key={index} style={{ fontStyle: 'italic', color: '#c084fc', fontWeight: 500 }}>
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return part;
+  });
+}
+
 function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string; isLatest: boolean; onCharacterTyped?: () => void }) {
   const [displayedText, setDisplayedText] = useState(isLatest ? '' : text);
 
@@ -39,7 +63,7 @@ function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string;
 
   return (
     <p className="message-text">
-      {displayedText}
+      {renderFormattedText(displayedText)}
       {isStillTyping && <span className="typing-cursor" />}
     </p>
   );
@@ -339,7 +363,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
                     onCharacterTyped={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })} 
                   />
                 ) : (
-                  <p className="message-text">{msg.text}</p>
+                  <p className="message-text">{renderFormattedText(msg.text)}</p>
                 )}
                 <span className="message-time">
                   {new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}

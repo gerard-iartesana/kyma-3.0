@@ -99,7 +99,8 @@ Devuelve UNICAMENTE un JSON con este formato:
 
   // Step 3: Format conversation history & system prompt for Kyma's response
   const contents: any[] = [];
-  for (const msg of messages) {
+  const historyMessages = messages.slice(-12);
+  for (const msg of historyMessages) {
     if (!msg.text || !msg.text.trim()) continue;
     const role = msg.sender === 'kyma' ? 'model' : 'user';
     let text = msg.text;
@@ -135,7 +136,7 @@ Devuelve UNICAMENTE un JSON con este formato:
       contents,
       systemInstruction,
       generationConfig: {
-        maxOutputTokens: 800,
+        maxOutputTokens: 1200,
         temperature: 0.7
       }
     })
