@@ -663,9 +663,11 @@ export default function Home() {
         {selectedDoorId === null ? (
           <div className="home-view animate-fade-in">
             <div className="home-hero">
-              <h1 className="serif-title font-serif">Hola. Soy Kyma.</h1>
+              <h1 className="serif-title font-serif">
+                {userProfile.nombre?.trim() ? `¡Hola, ${userProfile.nombre.trim()}!` : '¡Hola!'}
+              </h1>
               <p className="hero-subtitle">
-                Tu diario interior, tu agenda y tus pensamientos en un solo panel de autoconocimiento.
+                Aquí tienes un resumen con tus últimas novedades y actividad en tu espacio.
               </p>
             </div>
 
