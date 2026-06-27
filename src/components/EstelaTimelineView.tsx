@@ -4,11 +4,12 @@ import { Star, MapPin, Sparkles, Calendar, Plus } from 'lucide-react';
 
 interface EstelaTimelineViewProps {
   items: KymaItem[];
+  isCompact?: boolean;
   onItemClick: (item: KymaItem) => void;
   onAskKyma?: (item: KymaItem, e: React.MouseEvent) => void;
 }
 
-export function EstelaTimelineView({ items, onItemClick, onAskKyma }: EstelaTimelineViewProps) {
+export function EstelaTimelineView({ items, isCompact, onItemClick, onAskKyma }: EstelaTimelineViewProps) {
   const [sortAsc, setSortAsc] = useState(false); // Default newest year first, or oldest first
 
   const estelaItems = items.filter(i => i.doorId === 'estela');
@@ -116,8 +117,8 @@ export function EstelaTimelineView({ items, onItemClick, onAskKyma }: EstelaTime
                       {isMilestone && <Star size={12} fill="#c084fc" color="#c084fc" />}
                     </div>
 
-                    <div className="timeline-card-bubble glass-panel">
-                      <div className="timeline-card-header">
+                    <div className="timeline-card-bubble glass-panel" style={{ padding: isCompact ? '12px 16px' : '18px 20px' }}>
+                      <div className="timeline-card-header" style={{ marginBottom: isCompact && !item.lugar ? '0' : '8px' }}>
                         <div className="title-area">
                           <h4 className="timeline-card-title">{item.title}</h4>
                           {item.dateStr && <span className="timeline-datestr">{item.dateStr}</span>}
@@ -130,16 +131,18 @@ export function EstelaTimelineView({ items, onItemClick, onAskKyma }: EstelaTime
                         )}
                       </div>
 
-                      <p className="timeline-card-content">{item.content}</p>
+                      {!isCompact && (
+                        <p className="timeline-card-content">{item.content}</p>
+                      )}
 
                       {item.lugar && (
-                        <div className="timeline-lugar">
+                        <div className="timeline-lugar" style={{ marginBottom: isCompact ? '0' : '10px' }}>
                           <MapPin size={12} />
                           <span>{item.lugar}</span>
                         </div>
                       )}
 
-                      {item.tags && item.tags.length > 0 && (
+                      {!isCompact && item.tags && item.tags.length > 0 && (
                         <div className="timeline-tags">
                           {item.tags.filter(t => !['#estela'].includes(t.toLowerCase())).map(t => (
                             <span key={t} className="tag-chip">{t}</span>
@@ -147,7 +150,7 @@ export function EstelaTimelineView({ items, onItemClick, onAskKyma }: EstelaTime
                         </div>
                       )}
 
-                      {onAskKyma && (
+                      {!isCompact && onAskKyma && (
                         <button 
                           className="ask-kyma-timeline-btn"
                           onClick={(e) => {

@@ -962,6 +962,7 @@ export default function Home() {
               ) : selectedDoorId === 'estela' ? (
                 <EstelaTimelineView
                   items={filteredItems}
+                  isCompact={isCompactView}
                   onItemClick={(item) => setSelectedItem(item)}
                   onAskKyma={(item, e) => handleAskKyma(item, e)}
                 />
