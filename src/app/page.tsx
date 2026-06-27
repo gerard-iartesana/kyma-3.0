@@ -2676,12 +2676,15 @@ export default function Home() {
 
           /* Active tab handling with generous top margins and padding */
           .content-pane {
-            padding: 32px 16px 36px 16px !important;
+            padding: 44px 16px 36px 16px !important;
             margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
             height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
+          }
+          .door-view {
+            padding-top: 16px !important;
           }
           .content-pane.mobile-hidden {
             display: none;
