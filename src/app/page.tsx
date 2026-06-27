@@ -35,9 +35,9 @@ export default function Home() {
       }
     }
     return {
-      nombre: 'David',
-      edad: '34',
-      lugarResidencia: 'Mahón, Menorca',
+      nombre: '',
+      edad: '',
+      lugarResidencia: '',
       idioma: 'Español'
     };
   });
@@ -1553,7 +1553,7 @@ export default function Home() {
                           <span>Actualizaciones en vivo</span>
                         </div>
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                          Si en la conversación dices algo como <em>"Nací el 11 de agosto de 1980"</em> o <em>"Me llamo David"</em>, Kyma calculará y actualizará tu perfil de configuración en tiempo real.
+                          Si en la conversación dices algo como <em>"Nací el 11 de agosto de 1980"</em> o <em>"Me llamo María"</em>, Kyma calculará y actualizará tu perfil de configuración en tiempo real.
                         </p>
                       </div>
 
