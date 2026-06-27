@@ -1642,17 +1642,18 @@ export default function Home() {
         }
         .sidebar-action-bar {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           align-items: center;
+          justify-content: space-around;
           width: 100%;
-          gap: 8px;
+          gap: 4px;
         }
         .sidebar-footer-action-btn {
-          width: 38px;
-          height: 38px;
+          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
+          height: 38px;
           border-radius: 10px;
           border: none;
           background: transparent;
@@ -1734,6 +1735,15 @@ export default function Home() {
         /* Collapsed footer */
         .sidebar.collapsed .sidebar-footer {
           padding-top: 12px;
+        }
+        .sidebar.collapsed .sidebar-action-bar {
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+        .sidebar.collapsed .sidebar-footer-action-btn {
+          flex: none;
+          width: 38px;
         }
         .sidebar.collapsed .user-info-text,
         .sidebar.collapsed .settings-gear {
