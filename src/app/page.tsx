@@ -2569,25 +2569,31 @@ export default function Home() {
         @media (max-width: 1024px) {
           .app-layout {
             flex-direction: column;
+            height: 100dvh;
             height: 100vh;
             overflow: hidden;
+            position: relative;
           }
 
-          /* Header on Mobile */
+          /* Header on Mobile: pinned fixed to top */
           .mobile-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 56px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             width: 100%;
-            margin: 0;
-            padding: 0 16px;
+            height: calc(56px + env(safe-area-inset-top, 0px));
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-left: 16px;
+            padding-right: 16px;
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border-subtle);
             border-radius: 0;
             flex-shrink: 0;
-            z-index: 60;
-            position: relative;
+            z-index: 100;
             box-sizing: border-box;
           }
           .menu-toggle-btn {
@@ -2606,15 +2612,15 @@ export default function Home() {
             width: 100% !important;
             padding: 24px 16px !important;
             position: fixed;
-            top: 56px;
+            top: calc(56px + env(safe-area-inset-top, 0px));
             left: 0;
-            height: calc(100% - 56px);
+            height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
             background: var(--bg-primary);
             border-right: none;
             border-bottom: 1px solid var(--border-subtle);
             transform: translateX(-100%);
             transition: transform 0.3s ease;
-            z-index: 50;
+            z-index: 90;
           }
           
           .sidebar.mobile-open {
@@ -2651,9 +2657,11 @@ export default function Home() {
           /* Active tab handling */
           .content-pane {
             padding: 16px;
-            height: calc(100vh - 56px);
+            margin-top: calc(56px + env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
             flex: 1;
             overflow-y: auto;
+            box-sizing: border-box;
           }
           .content-pane.mobile-hidden {
             display: none;
@@ -2664,11 +2672,13 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            height: calc(100vh - 56px);
+            margin-top: calc(56px + env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
             flex: 1;
             border-left: none;
             padding: 12px 12px 16px 12px;
             overflow: hidden;
+            box-sizing: border-box;
           }
           .chat-pane.mobile-hidden {
             display: none;
