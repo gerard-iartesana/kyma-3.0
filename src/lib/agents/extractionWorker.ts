@@ -34,6 +34,53 @@ function getFrequencyScore(freqLabel?: string): number | undefined {
   return undefined;
 }
 
+function deriveEstelaTitle(userMessage: string, extractedTitle?: string): string {
+  const genericTerms = ['recuerdo especial', 'nueva ficha', 'hito', 'recuerdo', 'evento', 'hito vital', 'sin título', 'sin titulo', 'recuerdo vital', 'momento'];
+  if (extractedTitle && !genericTerms.includes(extractedTitle.trim().toLowerCase())) {
+    return extractedTitle;
+  }
+
+  if (/falleci|falleció|muerte|murió|murio|pérdida|perdida/i.test(userMessage)) {
+    if (/padre|papá|papa/i.test(userMessage)) return 'Fallecimiento de mi padre';
+    if (/madre|mamá|mama/i.test(userMessage)) return 'Fallecimiento de mi madre';
+    if (/abuelo/i.test(userMessage)) return 'Fallecimiento de mi abuelo';
+    if (/abuela/i.test(userMessage)) return 'Fallecimiento de mi abuela';
+    if (/hermano/i.test(userMessage)) return 'Fallecimiento de mi hermano';
+    if (/hermana/i.test(userMessage)) return 'Fallecimiento de mi hermana';
+    return 'Fallecimiento en la familia';
+  }
+
+  if (/gradu|gradué|gradue|licenciad|carrera|universidad|estudios/i.test(userMessage)) {
+    const match = userMessage.match(/diseño|medicina|derecho|ingeniería|psicología|historia|arte|filosofía/i);
+    if (match) return `Graduación en ${match[0].charAt(0).toUpperCase() + match[0].slice(1)}`;
+    return 'Graduación Universitaria';
+  }
+
+  if (/naci|nació|nacio|nacimiento|bebé|bebe|hijo|hija/i.test(userMessage)) {
+    if (/hijo\b/i.test(userMessage)) return 'Nacimiento de mi hijo';
+    if (/hija\b/i.test(userMessage)) return 'Nacimiento de mi hija';
+    return 'Nacimiento familiar';
+  }
+
+  if (/mundial|campeones|españa gana|final del mundial/i.test(userMessage)) {
+    return 'Final del Mundial';
+  }
+
+  if (/viaje|viajé|viaje a|visitamos|vacaciones/i.test(userMessage)) {
+    const lugarMatch = userMessage.match(/a ([A-Z][a-z]+)/);
+    if (lugarMatch) return `Viaje a ${lugarMatch[1]}`;
+    return 'Viaje inolvidable';
+  }
+
+  if (/boda|casamiento|me casé|me case/i.test(userMessage)) {
+    return 'Mi Boda';
+  }
+
+  const clean = userMessage.replace(/[#@*]/g, '').trim();
+  const words = clean.split(/\s+/).slice(0, 4).join(' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export async function executeExtractionWorker(
   doorId: DoorId,
   userMessage: string,
@@ -209,6 +256,11 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       }
     }
 
+    let finalTitle = result.extractedData.title || 'Nueva ficha';
+    if (doorId === 'estela') {
+      finalTitle = deriveEstelaTitle(userMessage, result.extractedData.title);
+    }
+
     if (result.action === 'enrich' && result.targetItemId) {
       const existing = existingItems.find(i => i.id === result.targetItemId);
       if (existing) {
@@ -218,7 +270,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         
         const updatedItem = await dbClient.updateItem(existing.id, {
           doorId,
-          title: (result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title,
+          title: (doorId === 'estela' && finalTitle) ? finalTitle : ((result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title),
           content: updatedContent,
           eventDate: result.extractedData.eventDate || existing.eventDate,
           eventTime: result.extractedData.eventTime || existing.eventTime,
@@ -244,7 +296,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     const newItem = await dbClient.createItem({
       doorId,
-      title: result.extractedData.title || (doorId === 'estela' ? 'Recuerdo especial' : 'Nueva ficha'),
+      title: finalTitle,
       content: result.extractedData.content || userMessage,
       peso: extractedPeso,
       tags: initialTags.length > 0 ? initialTags : [`#${doorId}`],
