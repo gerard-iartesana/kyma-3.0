@@ -520,11 +520,11 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           box-shadow: var(--shadow-sm);
         }
         .bubble-user {
-          background: linear-gradient(135deg, rgba(139, 92, 246, 0.18) 0%, rgba(59, 130, 246, 0.12) 100%);
-          color: #f8fafc;
-          border: 1px solid rgba(139, 92, 246, 0.35);
+          background: var(--bg-tertiary, #18181b);
+          color: var(--text-primary, #f4f4f5);
+          border: 1px solid var(--border-focus, #3f3f46);
           border-bottom-right-radius: 4px;
-          box-shadow: 0 4px 14px rgba(139, 92, 246, 0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         .bubble-kyma {
           background: var(--bg-secondary);
