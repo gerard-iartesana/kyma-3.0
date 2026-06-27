@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, dbClient, KymaItem } from '../lib/db/client';
+import { supabase } from '../lib/supabase';
 import { Send, X, Sparkles, PlusCircle, Trash2, Mic } from 'lucide-react';
 
 interface KymaChatProps {
@@ -171,15 +172,21 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
           
           try {
             const allMsgs = await dbClient.getMessages();
+            const sessionRes = await supabase.auth.getSession();
+            const userId = sessionRes.data.session?.user?.id;
+            
             const response = await fetch('/api/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ messages: allMsgs })
+              body: JSON.stringify({ messages: allMsgs, userId })
             });
             
             if (response.ok) {
               const data = await response.json();
               kymaText = data.text;
+              if (data.createdItem || data.action === 'create' || data.action === 'enrich') {
+                onItemAddedOrModified();
+              }
             } else {
               console.warn('Gemini API route returned an error, falling back to simulated response');
             }

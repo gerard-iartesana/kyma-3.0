@@ -1,6 +1,6 @@
 import React from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile } from 'lucide-react';
+import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface ItemCardProps {
@@ -8,11 +8,22 @@ interface ItemCardProps {
   onClick: (item: KymaItem) => void;
   onAskKyma: (item: KymaItem, e: React.MouseEvent) => void;
   onToggleComplete?: (item: KymaItem, e: React.MouseEvent) => void;
+  onConfirmItem?: (item: KymaItem, e: React.MouseEvent) => void;
+  onDiscardItem?: (item: KymaItem, e: React.MouseEvent) => void;
   isCompact?: boolean;
   onTagSelect?: (tag: string) => void;
 }
 
-export function ItemCard({ item, onClick, onAskKyma, onToggleComplete, isCompact, onTagSelect }: ItemCardProps) {
+export function ItemCard({ 
+  item, 
+  onClick, 
+  onAskKyma, 
+  onToggleComplete, 
+  onConfirmItem,
+  onDiscardItem,
+  isCompact, 
+  onTagSelect 
+}: ItemCardProps) {
   // Helper to format dates
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -148,9 +159,49 @@ export function ItemCard({ item, onClick, onAskKyma, onToggleComplete, isCompact
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
       onClick={() => onClick(item)}
     >
+      {item.origen === 'kyma_sugerido' && (
+        <div 
+          className="tentative-banner" 
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(139, 92, 246, 0.12)',
+            border: '1px solid rgba(139, 92, 246, 0.28)',
+            borderRadius: '6px',
+            padding: '6px 10px',
+            fontSize: '0.75rem',
+            color: '#c084fc',
+            width: '100%'
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}>
+            <Sparkles size={13} color="#c084fc" /> Sugerido por Kyma
+          </span>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {onConfirmItem && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onConfirmItem(item, e); }}
+                style={{ background: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.7rem', fontWeight: 600 }}
+              >
+                <Check size={12} /> Confirmar
+              </button>
+            )}
+            {onDiscardItem && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDiscardItem(item, e); }}
+                style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#a1a1aa', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.7rem' }}
+              >
+                <X size={12} /> Descartar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       <div className="card-header">
         <div className="card-title-group">
           {item.doorId === 'tareas' && onToggleComplete && (

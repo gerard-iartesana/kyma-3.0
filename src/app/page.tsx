@@ -199,6 +199,26 @@ export default function Home() {
     setMobileTab('chat');
   };
 
+  const handleConfirmItem = async (item: KymaItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await dbClient.confirmItem(item.id);
+      refreshItems();
+    } catch (err) {
+      console.error('Error al confirmar elemento:', err);
+    }
+  };
+
+  const handleDiscardItem = async (item: KymaItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await dbClient.discardItem(item.id);
+      refreshItems();
+    } catch (err) {
+      console.error('Error al descartar elemento:', err);
+    }
+  };
+
   const handleBrandClick = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
@@ -919,6 +939,8 @@ export default function Home() {
                       onClick={(clickedItem) => setSelectedItem(clickedItem)}
                       onAskKyma={(item, e) => handleAskKyma(item, e)}
                       onToggleComplete={selectedDoorId === 'tareas' ? handleToggleComplete : undefined}
+                      onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                      onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                       onTagSelect={(tag) => setSelectedTag(tag)}
                     />
                   ))}

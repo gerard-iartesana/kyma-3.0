@@ -9,6 +9,7 @@ export interface KymaItem {
   createdAt: string;
   tags: string[];
   peso: 1 | 2 | 3; // 1: Normal/Orbita/Curiosidad, 2: Destacado/Cercana, 3: Urgente/Nucleo/Pasion
+  origen?: 'manual' | 'kyma_sugerido' | 'kyma_confirmado';
   completed?: boolean; // Specific to tareas
   eventDate?: string; // Specific to agenda
   eventTime?: string; // Specific to agenda (HH:MM)
@@ -37,7 +38,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     eventDate: new Date(Date.now() + 3600000 * 24).toISOString().split('T')[0],
     eventTime: '21:00',
     tags: ['#cena', '#marta', '#agenda'],
-    peso: 2
+    peso: 2,
+    origen: 'manual'
   },
   {
     doorId: 'agenda',
@@ -46,7 +48,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     eventDate: new Date(Date.now() + 3600000 * 72).toISOString().split('T')[0],
     eventTime: '11:30',
     tags: ['#trabajo', '#demo', '#agenda'],
-    peso: 3
+    peso: 3,
+    origen: 'manual'
   },
   // Tareas
   {
@@ -55,7 +58,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     content: 'Buscar el origen Etiopía que recomendó Javier.',
     tags: ['#cafe', '#compra', '#tareas'],
     peso: 1,
-    completed: false
+    completed: false,
+    origen: 'manual'
   },
   {
     doorId: 'tareas',
@@ -63,7 +67,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     content: 'Estructurar diapositivas y guion de la demo.',
     tags: ['#trabajo', '#tareas'],
     peso: 3,
-    completed: false
+    completed: false,
+    origen: 'manual'
   },
   {
     doorId: 'tareas',
@@ -71,7 +76,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     content: 'Confirmar fechas de entrega del roadmap v2.',
     tags: ['#lucia', '#correo', '#tareas'],
     peso: 2,
-    completed: true
+    completed: true,
+    origen: 'manual'
   },
   // Notas
   {
@@ -79,14 +85,16 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     title: 'Notas sobre La Llegada',
     content: 'Anoche volví a ver La Llegada. Increíble cómo trata la lingüística y el tiempo no lineal. Me quedé pensando en cómo percibimos el destino: si conocieras tu futuro, ¿cambiarías algo?',
     tags: ['#cine', '#la-llegada', '#filosofia', '#notas'],
-    peso: 2
+    peso: 2,
+    origen: 'manual'
   },
   {
     doorId: 'notas',
     title: 'Color como recompensa',
     content: 'Idea de diseño: una interfaz que empiece casi monocromática y florezca en color a medida que Kyma aprende del usuario. Menos estímulos, más calma.',
     tags: ['#kyma', '#diseño', '#notas'],
-    peso: 3
+    peso: 3,
+    origen: 'manual'
   },
   // Intereses
   {
@@ -94,63 +102,72 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     title: 'Cine de Ciencia Ficción',
     content: 'Atracción por historias de corte existencial, lingüística y realidades no lineales. Obras clave discutidas: La Llegada, Interestelar.',
     tags: ['#cine', '#ciencia-ficcion', '#intereses'],
-    peso: 3
+    peso: 3,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Filosofía del Lenguaje',
     content: 'Curiosidad por comprender cómo la estructura gramatical y los símbolos que usamos limitan o expanden los pensamientos cotidianos.',
     tags: ['#filosofia', '#intereses'],
-    peso: 2
+    peso: 2,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Diseño de Interfaces',
     content: 'Estudio de micro-interacciones, tipografía y contrastes en interfaces oscuras. Principios de calma visual y balance.',
     tags: ['#diseño', '#intereses'],
-    peso: 2
+    peso: 2,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Desarrollo de Software',
     content: 'Programación funcional, arquitectura limpia, tipado estático y algoritmos en TypeScript y React.',
     tags: ['#desarrollo', '#intereses'],
-    peso: 3
+    peso: 3,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Modelos de Lenguaje',
     content: 'Interés en redes neuronales, prompting socrático y comportamiento emergente en sistemas de IA.',
     tags: ['#ia', '#intereses'],
-    peso: 2
+    peso: 2,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Ética y Existencialismo',
     content: 'Debates sobre el libre albedrío, la responsabilidad individual y la construcción de sentido en la modernidad líquida.',
     tags: ['#filosofia', '#intereses'],
-    peso: 3
+    peso: 3,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Cine de Acción',
     content: 'Análisis del ritmo visual, montaje cinético y coreografías en el cine de acción contemporáneo.',
     tags: ['#cine', '#accion', '#intereses'],
-    peso: 1
+    peso: 1,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Cine de Fantasía',
     content: 'Exploración de la mitopoiesis, construcción de mundos fantásticos y el viaje del héroe clásico en el cine.',
     tags: ['#cine', '#fantasia', '#intereses'],
-    peso: 2
+    peso: 2,
+    origen: 'manual'
   },
   {
     doorId: 'intereses',
     title: 'Filosofía de la Inteligencia Artificial',
     content: 'Reflexión ética y epistemológica sobre la conciencia artificial, la mente extendida y el futuro humano.',
     tags: ['#filosofia', '#ia', '#intereses'],
-    peso: 3
+    peso: 3,
+    origen: 'manual'
   },
   // Vínculos
   {
@@ -160,7 +177,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     tags: ['#marta', '#vinculos'],
     peso: 3,
     cercania: 'nucleo',
-    frecuencia: 100
+    frecuencia: 100,
+    origen: 'manual'
   },
   {
     doorId: 'personas',
@@ -169,7 +187,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     tags: ['#javier', '#vinculos'],
     peso: 2,
     cercania: 'cercana',
-    frecuencia: 75
+    frecuencia: 75,
+    origen: 'manual'
   },
   {
     doorId: 'personas',
@@ -178,7 +197,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     tags: ['#lucia', '#vinculos'],
     peso: 1,
     cercania: 'orbita',
-    frecuencia: 50
+    frecuencia: 50,
+    origen: 'manual'
   },
   // Reflexiones
   {
@@ -186,7 +206,8 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     title: 'Sobre la rutina y el control',
     content: 'A veces me aferro a hábitos obsoletos solo porque la predictibilidad me da calma. Kyma me hizo reflexionar: ¿busco orden o evito enfrentarme al vacío de tomar decisiones nuevas?',
     tags: ['#reflexiones', '#filosofia'],
-    peso: 2
+    peso: 2,
+    origen: 'manual'
   }
 ];
 
@@ -200,7 +221,8 @@ const SEED_MESSAGES_EMPTY: ChatMessage[] = [
 ];
 
 // Helper to get active user ID
-async function getCurrentUserId(): Promise<string> {
+async function getCurrentUserId(overrideUserId?: string): Promise<string> {
+  if (overrideUserId) return overrideUserId;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error('Usuario no autenticado');
@@ -231,6 +253,7 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
     createdAt: dbItem.created_at,
     tags: tagNames || [],
     peso: (dbItem.peso || 1) as 1 | 2 | 3,
+    origen: dbItem.origen || 'manual',
   };
 
   if (doorId === 'tareas') {
@@ -253,6 +276,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   if (item.title !== undefined) dbItem.titulo = item.title;
   if (item.content !== undefined) dbItem.cuerpo = item.content;
   if (item.peso !== undefined) dbItem.peso = item.peso;
+  if (item.origen !== undefined) dbItem.origen = item.origen;
   
   if (item.doorId !== undefined) {
     const tipoMap: Record<KymaItem['doorId'], string> = {
@@ -358,9 +382,9 @@ export const dbClient = {
   },
 
   // Items CRUD
-  async getItems(doorId?: string): Promise<KymaItem[]> {
+  async getItems(doorId?: string, overrideUserId?: string): Promise<KymaItem[]> {
     try {
-      const userId = await getCurrentUserId();
+      const userId = await getCurrentUserId(overrideUserId);
       
       let query = supabase
         .from('elementos')
@@ -407,8 +431,8 @@ export const dbClient = {
     }
   },
 
-  async getItemById(id: string): Promise<KymaItem | undefined> {
-    const userId = await getCurrentUserId();
+  async getItemById(id: string, overrideUserId?: string): Promise<KymaItem | undefined> {
+    const userId = await getCurrentUserId(overrideUserId);
     const { data, error } = await supabase
       .from('elementos')
       .select(`
@@ -434,8 +458,8 @@ export const dbClient = {
     return mapDbToKymaItem(data, tagNames);
   },
 
-  async createItem(item: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>): Promise<KymaItem> {
-    const userId = await getCurrentUserId();
+  async createItem(item: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>, overrideUserId?: string): Promise<KymaItem> {
+    const userId = await getCurrentUserId(overrideUserId);
     
     // 1. Map to DB fields
     const dbItemFields = mapKymaToDbFields(item);
@@ -482,8 +506,8 @@ export const dbClient = {
     return mapDbToKymaItem(createdDbItem, tagsToLink);
   },
 
-  async updateItem(id: string, updates: Partial<Omit<KymaItem, 'id' | 'userId'>>): Promise<KymaItem> {
-    const userId = await getCurrentUserId();
+  async updateItem(id: string, updates: Partial<Omit<KymaItem, 'id' | 'userId'>>, overrideUserId?: string): Promise<KymaItem> {
+    const userId = await getCurrentUserId(overrideUserId);
     
     // 1. Fetch current element
     const { data: existing, error: fetchError } = await supabase
@@ -555,8 +579,8 @@ export const dbClient = {
     return mapDbToKymaItem(updatedDbItem, finalTags);
   },
 
-  async deleteItem(id: string): Promise<void> {
-    const userId = await getCurrentUserId();
+  async deleteItem(id: string, overrideUserId?: string): Promise<void> {
+    const userId = await getCurrentUserId(overrideUserId);
     const { error } = await supabase
       .from('elementos')
       .delete()
@@ -566,6 +590,14 @@ export const dbClient = {
     if (error) {
       throw new Error(`Error deleting element: ${error.message}`);
     }
+  },
+
+  async confirmItem(id: string, overrideUserId?: string): Promise<KymaItem> {
+    return this.updateItem(id, { origen: 'kyma_confirmado' }, overrideUserId);
+  },
+
+  async discardItem(id: string, overrideUserId?: string): Promise<void> {
+    return this.deleteItem(id, overrideUserId);
   },
 
   // Messages API
