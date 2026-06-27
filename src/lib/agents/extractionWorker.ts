@@ -3,6 +3,27 @@ import { createSupabaseClient } from '../supabase';
 import { DOOR_PACKAGES } from './doorPackages';
 import { DoorId, ExtractionResult } from './types';
 
+function formatTagList(tags: string[]): string[] {
+  const map = new Map<string, string>();
+  for (const t of tags) {
+    let clean = t.trim();
+    if (!clean) continue;
+    if (!clean.startsWith('#')) clean = `#${clean}`;
+    const key = clean.toLowerCase();
+    if (!map.has(key)) {
+      const words = clean.split(' ').map(w => {
+        if (w.startsWith('#')) {
+          const body = w.slice(1);
+          return '#' + (body.charAt(0).toUpperCase() + body.slice(1));
+        }
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      });
+      map.set(key, words.join(' '));
+    }
+  }
+  return Array.from(map.values());
+}
+
 export async function executeExtractionWorker(
   doorId: DoorId,
   userMessage: string,
@@ -61,9 +82,9 @@ MENSAJE O CONTEXTO DEL USUARIO:
 ${contextSnippet ? `Contexto adicional: "${contextSnippet}"` : ''}
 
 REGLAS DE FORMATO Y ENRIQUECIMIENTO (tanto para create como para enrich):
-1. "title": DEBE SER DIRECTO Y CORTO (máximo 3-4 palabras, ej: "Torneo de Pádel", "Cita Médica"). NUNCA incluyas personas, lugares ni horas en el título.
+1. "title": DEBE SER DIRECTO Y CORTO (máximo 3-4 palabras, ej: "Torneo de Pádel", "Día de Playa", "Cita Médica"). NUNCA incluyas personas, lugares ni horas en el título.
 2. "content": Redacta los detalles prácticos (con quién es, lugar o notas). PARA AGENDA: OMITE totalmente la fecha y la hora en la redacción del texto del contenido, ya que la fecha y la hora se guardan en sus campos dedicados (eventDate, eventTime). NUNCA repitas ni concatenes frases absurdas.
-3. "tags": Extrae OBLIGATORIAMENTE todas las etiquetas temáticas relevantes que identifiques (ej. deportes como "#padel", personas como "#alejandro", lugares como "#padelone", categorías como "#deporte") empezando siempre con '#'.
+3. "tags": Extrae OBLIGATORIAMENTE todas las etiquetas temáticas relevantes con '#', la primera letra en mayúscula y respetando espacios para nombres propios (ej: "#Playa", "#Rafa", "#Son Bou", "#Pádel", "#PadelOne", "#Deporte").
 
 REGLAS DE SALIDA:
 Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
@@ -71,14 +92,14 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
   "action": "create" | "enrich" | "none",
   "targetItemId": "ID del elemento existente a enriquecer si action es 'enrich'",
   "extractedData": {
-    "title": "Título corto y directo (ej: 'Torneo de Pádel')",
-    "content": "Detalles del con quién y dónde sin incluir fechas ni horas (ej: 'Con Alejandro en PadelOne')",
+    "title": "Título corto y directo (ej: 'Día de Playa')",
+    "content": "Detalles del con quién y dónde sin incluir fechas ni horas (ej: 'Con Rafa en la playa de Son Bou')",
     "peso": 1 | 2 | 3,
     "eventDate": "YYYY-MM-DD" (OBLIGATORIO si es agenda),
     "eventTime": "HH:MM" (solo si es agenda),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
-    "tags": ["#agenda", "#deporte", "#padel", "#alejandro", "#padelone"]
+    "tags": ["#Agenda", "#Playa", "#Rafa", "#Son Bou", "#Ocio"]
   },
   "reasoning": "Breve justificación interna"
 }
@@ -120,7 +141,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       if (existing) {
         const updatedContent = result.extractedData.content || existing.content;
         const rawTags = [...(existing.tags || []), ...(result.extractedData.tags || [])];
-        const mergedTags = Array.from(new Set(rawTags.map(t => t.trim().toLowerCase()).filter(t => t.startsWith('#'))));
+        const mergedTags = formatTagList(rawTags);
         
         const updatedItem = await dbClient.updateItem(existing.id, {
           title: (result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title,
@@ -140,7 +161,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     // Default to create
     const eventDate = doorId === 'agenda' ? (result.extractedData.eventDate || currentDateStr) : result.extractedData.eventDate;
     const rawTags = result.extractedData.tags || [`#${doorId}`];
-    const initialTags = Array.from(new Set(rawTags.map(t => t.trim().toLowerCase()).filter(t => t.startsWith('#'))));
+    const initialTags = formatTagList(rawTags);
 
     const newItem = await dbClient.createItem({
       doorId,

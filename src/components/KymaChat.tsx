@@ -6,7 +6,7 @@ import { Send, X, Sparkles, PlusCircle, Trash2, Mic } from 'lucide-react';
 interface KymaChatProps {
   contextItem: KymaItem | null;
   onClearContext: () => void;
-  onItemAddedOrModified: () => void;
+  onItemAddedOrModified: (item?: KymaItem, action?: string) => void;
 }
 
 export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }: KymaChatProps) {
@@ -190,7 +190,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
               const data = await response.json();
               kymaText = data.text;
               if (data.createdItem || data.action === 'create' || data.action === 'enrich') {
-                onItemAddedOrModified();
+                onItemAddedOrModified(data.createdItem, data.action);
               }
             } else {
               console.warn('Gemini API route returned an error, falling back to simulated response');

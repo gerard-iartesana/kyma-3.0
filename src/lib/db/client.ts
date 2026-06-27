@@ -334,21 +334,32 @@ export const dbClient = {
 
     if (tagNames.length === 0) return;
 
-    // 2. Normalize and filter tag names (ensure they start with '#')
-    const normalizedTags = Array.from(
-      new Set(
-        tagNames
-          .map((t: string) => t.trim().toLowerCase())
-          .filter((t: string) => t.startsWith('#'))
-      )
-    );
+    // 2. Normalize and filter tag names (ensure '#', proper casing, and spaces for multi-words)
+    const map = new Map<string, string>();
+    for (const t of tagNames) {
+      let clean = t.trim();
+      if (!clean) continue;
+      if (!clean.startsWith('#')) clean = `#${clean}`;
+      const key = clean.toLowerCase();
+      if (!map.has(key)) {
+        const words = clean.split(' ').map(w => {
+          if (w.startsWith('#')) {
+            const body = w.slice(1);
+            return '#' + (body.charAt(0).toUpperCase() + body.slice(1));
+          }
+          return w.charAt(0).toUpperCase() + w.slice(1);
+        });
+        map.set(key, words.join(' '));
+      }
+    }
+    const normalizedTags = Array.from(map.values());
     
     if (normalizedTags.length === 0) return;
 
     // 3. Bulk upsert tags into public.tags
     const tagsData = normalizedTags.map((nombre: string) => {
       const systemicTags = ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones'];
-      const tipo = systemicTags.includes(nombre) ? 'sistemico' : 'tematico';
+      const tipo = systemicTags.includes(nombre.toLowerCase()) ? 'sistemico' : 'tematico';
       return {
         user_id: userId,
         nombre,

@@ -57,6 +57,14 @@ export default function Home() {
   const [newPeso, setNewPeso] = useState<1 | 2 | 3>(1);
   const [newCercania, setNewCercania] = useState<'nucleo' | 'cercana' | 'orbita'>('orbita');
 
+  // Toast Notification state
+  const [toastNotification, setToastNotification] = useState<{
+    show: boolean;
+    message: string;
+    doorId: string;
+    item?: KymaItem;
+  } | null>(null);
+
   // Load database state and session on mount
   useEffect(() => {
     // 1. Get initial session
@@ -97,6 +105,27 @@ export default function Home() {
       setItems(dbItems);
     } catch (e) {
       console.error('Error loading items from Supabase:', e);
+    }
+  };
+
+  const handleItemAddedOrModified = async (item?: KymaItem, action?: string) => {
+    await refreshItems();
+    if (item && item.doorId) {
+      const doorMod = DOOR_MODULES.find(m => m.id === item.doorId);
+      const doorTitle = doorMod ? doorMod.title.toUpperCase() : item.doorId.toUpperCase();
+      const actionLabel = action === 'enrich' ? 'Modificación en' : 'Nueva tarjeta en';
+      const message = `${actionLabel} ${doorTitle}`;
+
+      setToastNotification({
+        show: true,
+        message,
+        doorId: item.doorId,
+        item
+      });
+
+      setTimeout(() => {
+        setToastNotification(prev => (prev?.item?.id === item.id ? null : prev));
+      }, 5000);
     }
   };
 
@@ -988,7 +1017,7 @@ export default function Home() {
         <KymaChat
           contextItem={chatContextItem}
           onClearContext={() => setChatContextItem(null)}
-          onItemAddedOrModified={refreshItems}
+          onItemAddedOrModified={handleItemAddedOrModified}
         />
       </section>
 
@@ -1156,8 +1185,140 @@ export default function Home() {
         </div>
       )}
 
+      {/* 7. TOAST NOTIFICATION WINDOW */}
+      {toastNotification && toastNotification.show && (
+        <div className="toast-notification">
+          <div className="toast-content">
+            <div className="toast-icon-wrapper">
+              <Icons.Sparkles size={18} />
+            </div>
+            <span className="toast-message">{toastNotification.message}</span>
+            <button 
+              className="toast-action-btn"
+              onClick={() => {
+                setSelectedDoorId(toastNotification.doorId);
+                if (toastNotification.item) {
+                  setSelectedItem(toastNotification.item);
+                }
+                setMobileTab('panel');
+                setToastNotification(null);
+              }}
+            >
+              <span>Ver</span>
+              <Icons.ChevronRight size={14} />
+            </button>
+            <button 
+              className="toast-close-btn"
+              onClick={() => setToastNotification(null)}
+            >
+              <Icons.X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ESTILOS DE LAYOUT */}
       <style jsx global>{`
+        /* Toast Notification Styling */
+        .toast-notification {
+          position: fixed;
+          bottom: 24px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 9999;
+          background: rgba(22, 24, 35, 0.94);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(139, 92, 246, 0.4);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(139, 92, 246, 0.2);
+          border-radius: 14px;
+          padding: 10px 16px;
+          animation: toastSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes toastSlideUp {
+          from {
+            opacity: 0;
+            transform: translate(-50%, 20px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+        }
+
+        .toast-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .toast-icon-wrapper {
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(236, 72, 153, 0.25));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #a855f7;
+          flex-shrink: 0;
+        }
+
+        .toast-message {
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: #f8fafc;
+          white-space: nowrap;
+        }
+
+        .toast-action-btn {
+          background: linear-gradient(135deg, #8b5cf6, #ec4899);
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          padding: 6px 14px;
+          font-size: 0.82rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          transition: all 0.2s ease;
+          margin-left: 4px;
+        }
+
+        .toast-action-btn:hover {
+          filter: brightness(1.15);
+          transform: translateY(-1px);
+        }
+
+        .toast-close-btn {
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          transition: background 0.2s ease;
+        }
+
+        .toast-close-btn:hover {
+          color: #f1f5f9;
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+          .toast-notification {
+            bottom: 80px;
+            width: calc(100% - 32px);
+            max-width: 400px;
+          }
+        }
+
         /* Sidebar Footer and Settings styling */
         .sidebar-footer {
           width: 100%;
