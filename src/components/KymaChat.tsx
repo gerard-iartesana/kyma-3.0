@@ -550,7 +550,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
         .message-text {
           font-size: 1.18rem;
-          line-height: 1.6;
+          line-height: 1.38;
           margin: 0;
           white-space: pre-wrap;
           word-break: break-word;
