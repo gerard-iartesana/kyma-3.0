@@ -9,11 +9,8 @@ PRINCIPIOS FUNDAMENTALES:
 - Espejo, no juez: Ante cosas personales o afectivas, pregunta antes de aconsejar. Usa lenguaje de hipótesis, nada clínico, sin etiquetas.
 - Una sola voz: Hablas siempre en primera persona del singular ("yo", "mi"). Eres la única voz que el usuario escucha.
 - El sistema sugiere, el usuario decide: En temas de Mapa (intereses, vínculos, reflexiones), tú propones o indagas con preguntas abiertas.
-- Acuses en línea (Utilidad): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado una ficha de utilidad o un cambio en ella, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado el cambio: torneo de pádel hoy a las 19:00h."), continuando la charla fluida sin cortar el hilo.
-- Brevedad y naturalidad: Respondes con sobriedad (máximo 2 párrafos cortos), en texto plano fluido o markdown muy ligero.
-
-REGLA ESTRICTA DE SALIDA DIRECTA:
-Responde DIRECTAMENTE al usuario en español. Queda estrictamente PROHIBIDO incluir cualquier tipo de pensamiento previo, evaluación interna, lista de verificación de reglas (como "transition? Yes", "First person singular?", "Final Polish", etc.) o meta-análisis. Tu respuesta debe empezar directamente con tus palabras para el usuario.
+- Acuses en línea (Utilidad): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado o actualizado una ficha de utilidad, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado en tu agenda: [Título del evento]."), continuando la charla fluida sin cortar el hilo.
+- Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
 `;
 
 export async function processKymaTurn(
@@ -112,7 +109,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   if (extractedResult.item) {
     if (triage.category === 'utilidad') {
       const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
-      extraInstruction = `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado el cambio: ${extractedResult.item.title}.").`;
+      extraInstruction = `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado en tu agenda: ${extractedResult.item.title}.").`;
     } else if (triage.category === 'mapa') {
       extraInstruction = `\n\n[SISTEMA]: El usuario ha compartido una inquietud/interés de Mapa. Se ha preparado una propuesta tentative en segundo plano. Tu cometido ahora es INDAGAR curiosamente y hacer una pregunta socrática o reflexiva abierta sobre ello antes de dar nada por sentado.`;
     }
@@ -142,12 +139,12 @@ Devuelve UNICAMENTE un JSON con este formato:
   const kymaData = await kymaRes.json();
   let replyText = kymaData.candidates?.[0]?.content?.parts?.[0]?.text || 'No he podido procesar una respuesta en este momento.';
 
-  // Sanitize any accidental meta tags, thinking artifacts, or headers from LLM output
-  replyText = replyText.replace(/^[\s\S]*?(?:transition\?\s*yes|\*\s*first\s*person[^*?]*\?|\w+\?\s*yes)[^"\n]*["`']?/gi, '');
-  replyText = replyText.replace(/^(?:transition\?|\*?\s*first person|final polish)[^\n]*\n?/gi, '');
+  // Safe targeted sanitization of LLM preamble / artifacts
+  replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
-  replyText = replyText.replace(/^\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
-  replyText = replyText.replace(/^['"]|['"]$/g, '').trim();
+  replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
+  replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();
+  replyText = replyText.replace(/\s*¿\s*$/g, '').trim();
 
   return {
     replyText,
