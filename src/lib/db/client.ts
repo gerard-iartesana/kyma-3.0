@@ -268,8 +268,11 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
     estela: 'estela'
   };
 
-  const doorId = doorIdMap[dbItem.tipo] || 'notas';
   const datos = dbItem.datos || {};
+  let doorId = doorIdMap[dbItem.tipo] || 'notas';
+  if (datos.is_estela || (tagNames || []).some(t => t.toLowerCase() === '#estela')) {
+    doorId = 'estela';
+  }
 
   const item: KymaItem = {
     id: dbItem.id,
@@ -317,12 +320,15 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
       intereses: 'interes',
       personas: 'vinculo',
       reflexiones: 'reflexion',
-      estela: 'estela'
+      estela: 'evento'
     };
     dbItem.tipo = tipoMap[item.doorId];
   }
 
   const datos: any = {};
+  if (item.doorId === 'estela') {
+    datos.is_estela = true;
+  }
   if (item.completed !== undefined) datos.hecha = item.completed;
   if (item.eventDate !== undefined) datos.fecha = item.eventDate;
   if (item.eventTime !== undefined) datos.hora = item.eventTime;
@@ -454,7 +460,7 @@ export const dbClient = {
           intereses: 'interes',
           personas: 'vinculo',
           reflexiones: 'reflexion',
-          estela: 'estela'
+          estela: 'evento'
         };
         const tipo = tipoMap[doorId];
         if (tipo) {
@@ -468,12 +474,21 @@ export const dbClient = {
         return [];
       }
       
-      return (data || []).map((dbItem: any) => {
+      const mapped = (data || []).map((dbItem: any) => {
         const tagNames = (dbItem.elemento_tags || [])
           .map((et: any) => et.tags?.nombre)
           .filter(Boolean);
         return mapDbToKymaItem(dbItem, tagNames);
       });
+
+      if (doorId === 'agenda') {
+        return mapped.filter((i: KymaItem) => i.doorId === 'agenda');
+      }
+      if (doorId === 'estela') {
+        return mapped.filter((i: KymaItem) => i.doorId === 'estela');
+      }
+
+      return mapped;
     } catch (e) {
       console.warn('getCurrentUserId failed or error fetching items:', e);
       return [];
