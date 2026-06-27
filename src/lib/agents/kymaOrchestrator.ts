@@ -89,11 +89,17 @@ Devuelve UNICAMENTE un JSON con este formato:
       console.error('Error en triage:', e);
     }
 
-    // Deterministic override for memories, past years, and life milestones
-    const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
-    const memoryKeywords = /acordaba|acuerdo|recuerdo|infancia|juventud|momento de mi vida|hito|viaje a|en mi vida|mundial/i;
-    if (pastYearMatch || memoryKeywords.test(userText)) {
-      triage = { isFicheable: true, category: 'mapa', doorId: 'estela', confidence: 0.95 };
+    // Question / query check to prevent duplications on read turns
+    const isQuestion = /^\s*¿|\?|qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir/i.test(userText.trim());
+    if (isQuestion) {
+      triage = { isFicheable: false, confidence: 0 };
+    } else {
+      // Deterministic override for memories, past years, and life milestones
+      const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
+      const memoryKeywords = /acordaba|acuerdo|recuerdo|infancia|juventud|momento de mi vida|hito|viaje a|en mi vida|mundial/i;
+      if (pastYearMatch || memoryKeywords.test(userText)) {
+        triage = { isFicheable: true, category: 'mapa', doorId: 'estela', confidence: 0.95 };
+      }
     }
   }
 
@@ -109,6 +115,22 @@ Devuelve UNICAMENTE un JSON con este formato:
       accessToken,
       `Historial inmediato: ${recentMsgsSnippet}`
     );
+
+    // Secondary multi-door extraction for personas/vínculos if a person is mentioned
+    const personMatch = userText.match(/(?:amigo|amiga|hermano|hermana|padre|madre|pareja|novio|novia|tío|tía|primo|prima|compañero|compañera|con) ([A-ZÁÉÍÓÚ][a-záéíóú]+)/i);
+    if (personMatch && triage.doorId !== 'personas') {
+      try {
+        await executeExtractionWorker(
+          'personas',
+          userText,
+          userId,
+          accessToken,
+          `Mención de persona en ${triage.doorId}: ${userText}`
+        );
+      } catch (personErr) {
+        console.error('Error en extracción secundaria de personas:', personErr);
+      }
+    }
   }
 
   // Step 3: Fetch user items context to allow Kyma to read agenda, tasks, notes, etc.

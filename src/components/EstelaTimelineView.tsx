@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { KymaItem } from '../lib/db/client';
 import { Star, MapPin, Sparkles, Calendar, Plus } from 'lucide-react';
+import { LogoIcon } from './Logo';
 
 interface EstelaTimelineViewProps {
   items: KymaItem[];
@@ -107,6 +108,8 @@ export function EstelaTimelineView({ items, isCompact, onItemClick, onAskKyma }:
             <div className="timeline-cards-list">
               {groupedByYear[year].map(item => {
                 const isMilestone = item.peso === 3;
+                const filteredTags = (item.tags || []).filter(t => !['#estela'].includes(t.toLowerCase()));
+                
                 return (
                   <div 
                     key={item.id} 
@@ -117,8 +120,8 @@ export function EstelaTimelineView({ items, isCompact, onItemClick, onAskKyma }:
                       {isMilestone && <Star size={12} fill="#c084fc" color="#c084fc" />}
                     </div>
 
-                    <div className="timeline-card-bubble glass-panel" style={{ padding: isCompact ? '12px 16px' : '18px 20px' }}>
-                      <div className="timeline-card-header" style={{ marginBottom: isCompact && !item.lugar ? '0' : '8px' }}>
+                    <div className="timeline-card-bubble glass-panel" style={{ padding: isCompact ? '10px 16px' : '18px 20px' }}>
+                      <div className="timeline-card-header" style={{ marginBottom: isCompact ? '0' : '8px' }}>
                         <div className="title-area">
                           <h4 className="timeline-card-title">{item.title}</h4>
                           {item.dateStr && <span className="timeline-datestr">{item.dateStr}</span>}
@@ -135,32 +138,38 @@ export function EstelaTimelineView({ items, isCompact, onItemClick, onAskKyma }:
                         <p className="timeline-card-content">{item.content}</p>
                       )}
 
-                      {item.lugar && (
-                        <div className="timeline-lugar" style={{ marginBottom: isCompact ? '0' : '10px' }}>
+                      {!isCompact && item.lugar && (
+                        <div className="timeline-lugar" style={{ marginBottom: '10px' }}>
                           <MapPin size={12} />
                           <span>{item.lugar}</span>
                         </div>
                       )}
 
-                      {!isCompact && item.tags && item.tags.length > 0 && (
-                        <div className="timeline-tags">
-                          {item.tags.filter(t => !['#estela'].includes(t.toLowerCase())).map(t => (
-                            <span key={t} className="tag-chip">{t}</span>
-                          ))}
-                        </div>
-                      )}
+                      {!isCompact && (
+                        <div className="timeline-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                          <div className="timeline-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {filteredTags.map(t => (
+                              <span key={t} className="tag-chip" style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                                {t.startsWith('#') ? t.slice(1) : t}
+                              </span>
+                            ))}
+                          </div>
 
-                      {!isCompact && onAskKyma && (
-                        <button 
-                          className="ask-kyma-timeline-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAskKyma(item, e);
-                          }}
-                        >
-                          <Sparkles size={12} />
-                          <span>Recordar con Kyma</span>
-                        </button>
+                          {onAskKyma && (
+                            <button 
+                              className="ask-kyma-btn btn"
+                              style={{ marginLeft: 'auto', flexShrink: 0 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAskKyma(item, e);
+                              }}
+                              title="Explorar con Kyma sobre este recuerdo"
+                            >
+                              <LogoIcon size={13} className="kyma-btn-icon" />
+                              <span>Recordar</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
