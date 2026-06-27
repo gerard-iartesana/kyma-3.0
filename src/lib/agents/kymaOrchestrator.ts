@@ -16,12 +16,63 @@ PRINCIPIOS FUNDAMENTALES:
 - Compleitud: Concluye siempre tus oraciones y pensamientos de forma completa.
 `;
 
+function extractUserProfileUpdates(userText: string, currentProfile?: any): { updatedProfile?: any; extractedKey?: string; extractedVal?: string } {
+  if (!userText || userText.trim().length < 3) return {};
+
+  const text = userText.trim();
+  let updated = { ...currentProfile };
+  let hasChanges = false;
+  let key = '';
+  let val = '';
+
+  // 1. Nombre
+  const nameMatch = text.match(/(?:me llamo|mi nombre es|llámame|llamame|cábiame el nombre a|cambiame el nombre a|mi nombre por|puedes llamarme) ([A-ZÁÉÍÓÚÑa-záéíóúñ]+)/i);
+  if (nameMatch) {
+    const newName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+    if (newName !== updated.nombre) {
+      updated.nombre = newName;
+      hasChanges = true;
+      key = 'nombre';
+      val = newName;
+    }
+  }
+
+  // 2. Edad
+  const ageMatch = text.match(/(?:tengo|mi edad es|cumplí|cumpli|tengo unos) (\d{1,3}) (?:años|anos)/i);
+  if (ageMatch) {
+    const newAge = ageMatch[1];
+    if (newAge !== updated.edad) {
+      updated.edad = newAge;
+      hasChanges = true;
+      key = 'edad';
+      val = newAge;
+    }
+  }
+
+  // 3. Lugar de Residencia
+  const residenceMatch = text.match(/(?:vivo en|resido en|soy de|mi lugar de residencia es) ([A-ZÁÉÍÓÚÑa-záéíóúñ\s,]+)(?:\.|$|,)/i);
+  if (residenceMatch) {
+    const newRes = residenceMatch[1].trim();
+    if (newRes.length > 2 && newRes.length < 40 && newRes !== updated.lugarResidencia) {
+      updated.lugarResidencia = newRes;
+      hasChanges = true;
+      key = 'lugarResidencia';
+      val = newRes;
+    }
+  }
+
+  if (hasChanges) {
+    return { updatedProfile: updated, extractedKey: key, extractedVal: val };
+  }
+  return {};
+}
+
 export async function processKymaTurn(
   messages: ChatMessage[],
   userId?: string,
   accessToken?: string,
   userProfile?: { nombre?: string; edad?: string; lugarResidencia?: string; idioma?: string }
-): Promise<{ replyText: string; createdItem?: KymaItem; action?: string }> {
+): Promise<{ replyText: string; createdItem?: KymaItem; action?: string; updatedProfile?: any }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
@@ -36,6 +87,10 @@ export async function processKymaTurn(
 
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';
+
+  // Extract automatic user profile updates from chat
+  const profileExtract = extractUserProfileUpdates(userText, userProfile);
+  const activeUserProfile = profileExtract.updatedProfile || userProfile;
 
   const sbClient = createSupabaseClient(accessToken);
 
@@ -175,22 +230,26 @@ Devuelve UNICAMENTE un JSON con este formato:
   }
 
   let extraInstruction = '';
+  if (profileExtract.updatedProfile && profileExtract.extractedKey) {
+    extraInstruction += `\n\n[SISTEMA]: El usuario te ha compartido o actualizado su ${profileExtract.extractedKey} ("${profileExtract.extractedVal}"). He guardado automáticamente este dato en su configuración. DEBES acusar recibo de forma muy cálida y natural (ej: "Encantado de conocerte, ${profileExtract.extractedVal}" o "Anotado en tu configuración").`;
+  }
+
   if (extractedResult.item) {
     if (extractedResult.item.doorId === 'estela') {
       const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
-      extraInstruction = `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un hito/recuerdo en la puerta "Estela de vida" titulado "${extractedResult.item.title}". DEBES incluir un acuse de recibo cálido e integrado en tu respuesta (ej: "Guardado en tu Estela de vida: ${extractedResult.item.title}.").`;
+      extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un hito/recuerdo en la puerta "Estela de vida" titulado "${extractedResult.item.title}". DEBES incluir un acuse de recibo cálido e integrado en tu respuesta (ej: "Guardado en tu Estela de vida: ${extractedResult.item.title}.").`;
     } else if (triage.category === 'utilidad') {
       const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
-      extraInstruction = `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado en tu agenda: ${extractedResult.item.title}.").`;
+      extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado en tu agenda: ${extractedResult.item.title}.").`;
     } else if (triage.category === 'mapa') {
-      extraInstruction = `\n\n[SISTEMA]: El usuario ha compartido una inquietud/interés de Mapa. Se ha preparado una propuesta tentative en segundo plano. Tu cometido ahora es INDAGAR curiosamente y hacer una pregunta socrática o reflexiva abierta sobre ello antes de dar nada por sentado.`;
+      extraInstruction += `\n\n[SISTEMA]: El usuario ha compartido una inquietud/interés de Mapa. Se ha preparado una propuesta tentative en segundo plano. Tu cometido ahora es INDAGAR curiosamente y hacer una pregunta socrática o reflexiva abierta sobre ello antes de dar nada por sentado.`;
     }
   }
 
-  const userName = userProfile?.nombre || 'Usuario';
-  const userAge = userProfile?.edad || 'No especificada';
-  const userResidence = userProfile?.lugarResidencia || 'No especificado';
-  const userLang = userProfile?.idioma || 'Español';
+  const userName = activeUserProfile?.nombre || 'Usuario';
+  const userAge = activeUserProfile?.edad || 'No especificada';
+  const userResidence = activeUserProfile?.lugarResidencia || 'No especificado';
+  const userLang = activeUserProfile?.idioma || 'Español';
 
   const userContextInstruction = `
 \n\n[DATOS DE CONTEXTO PERSONAL DEL USUARIO]:
@@ -206,7 +265,7 @@ FECHA DE MAÑANA: ${tomorrowStr} (${tomorrow.toLocaleDateString('es-ES', { weekd
 FICHAS GUARDADAS EN EL ESPACIO DEL USUARIO:
 ${userItemsContext || 'No hay fichas guardadas actualmente.'}
 
-REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene para hoy, para mañana o sobre sus tareas/notas/agenda/estela de vida, REVISA estrictamente la lista anterior de fichas guardadas y dale una respuesta precisa y directa citando los eventos, horas y detalles.
+REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene para hoy, para mañana o sobre sus tareas/notas/agenda/estela de vida, REVISA strictly la lista anterior de fichas guardadas y dale una respuesta precisa y directa citando los eventos, horas y detalles.
 `;
 
   const systemInstruction = {
@@ -243,6 +302,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   return {
     replyText,
     createdItem: extractedResult.item,
-    action: extractedResult.action
+    action: extractedResult.action,
+    updatedProfile: profileExtract.updatedProfile
   };
 }

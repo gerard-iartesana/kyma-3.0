@@ -63,5 +63,13 @@ export const DOOR_MODULES: DoorModule[] = [
     category: 'map',
     description: 'Línea de tiempo de hitos históricos, recuerdos y momentos que han marcado tu vida.',
     emptyPromise: 'Esta puerta está velada. Cuéntale a Kyma tus recuerdos más significativos, viajes o momentos del pasado para construir gradualmente tu línea de tiempo vital aquí.'
+  },
+  {
+    id: 'configuracion',
+    title: 'Configuración',
+    icon: 'Settings',
+    category: 'utility',
+    description: 'Ajustes del espacio, datos de contexto personal, exportación y soberanía de datos.',
+    emptyPromise: 'Configura tus datos de contexto y preferencias de privacidad.'
   }
 ];

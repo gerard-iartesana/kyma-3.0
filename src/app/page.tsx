@@ -594,148 +594,12 @@ export default function Home() {
           </div>
         </nav>
 
-        <div className="sidebar-footer" style={{ position: 'relative' }}>
-          {showSettingsModal && (
-            <div 
-              className="user-settings-popover glass-panel animate-pop-up-upwards"
-              onClick={e => e.stopPropagation()}
-              style={{
-                position: 'absolute',
-                bottom: 'calc(100% + 12px)',
-                left: 0,
-                width: '320px',
-                maxWidth: 'calc(100vw - 32px)',
-                background: 'rgba(18, 18, 26, 0.96)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: '16px',
-                padding: '18px',
-                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(139, 92, 246, 0.15)',
-                zIndex: 1000,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '14px'
-              }}
-            >
-              <div className="popover-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Icons.User size={16} className="text-purple" />
-                  <span style={{ fontWeight: 600, fontSize: '0.92rem', color: '#ffffff' }}>Configuración y Contexto</span>
-                </div>
-                <button 
-                  className="close-btn" 
-                  onClick={() => setShowSettingsModal(false)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}
-                >
-                  <Icons.X size={16} />
-                </button>
-              </div>
-
-              <div className="popover-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Nombre (para Kyma)</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    value={userProfile.nombre} 
-                    onChange={e => handleUpdateUserProfile({ nombre: e.target.value })}
-                    placeholder="Tu nombre..."
-                    style={{ fontSize: '0.88rem', padding: '6px 10px' }}
-                  />
-                </div>
-
-                <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
-                  <div className="form-group flex-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Edad</label>
-                    <input 
-                      type="number" 
-                      className="input-field" 
-                      value={userProfile.edad} 
-                      onChange={e => handleUpdateUserProfile({ edad: e.target.value })}
-                      placeholder="ej: 34"
-                      style={{ fontSize: '0.88rem', padding: '6px 10px' }}
-                    />
-                  </div>
-                  <div className="form-group flex-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Idioma</label>
-                    <select 
-                      className="input-field" 
-                      value={userProfile.idioma} 
-                      onChange={e => handleUpdateUserProfile({ idioma: e.target.value })}
-                      style={{ fontSize: '0.88rem', padding: '6px 10px' }}
-                    >
-                      <option value="Español">Español</option>
-                      <option value="English">English</option>
-                      <option value="Català">Català</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lugar de Residencia</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    value={userProfile.lugarResidencia} 
-                    onChange={e => handleUpdateUserProfile({ lugarResidencia: e.target.value })}
-                    placeholder="ej: Mahón, Menorca"
-                    style={{ fontSize: '0.88rem', padding: '6px 10px' }}
-                  />
-                </div>
-
-                <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
-
-                <div className="popover-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    onClick={handleExportAllData}
-                    style={{ width: '100%', justifyContent: 'flex-start', gap: '8px', fontSize: '0.82rem', padding: '8px 12px' }}
-                  >
-                    <Icons.Download size={14} />
-                    <span>Exportar todo el Panel (.md)</span>
-                  </button>
-
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary flex-1" 
-                      onClick={() => {
-                        supabase.auth.signOut();
-                        setShowSettingsModal(false);
-                      }}
-                      style={{ justifyContent: 'center', gap: '6px', fontSize: '0.8rem', padding: '6px 10px' }}
-                    >
-                      <Icons.LogOut size={14} />
-                      <span>Cerrar Sesión</span>
-                    </button>
-
-                    <button 
-                      type="button" 
-                      className="btn btn-danger flex-1" 
-                      onClick={async () => {
-                        if (confirm('⚠️ ¿BORRAR CUENTA COMPLETAMENTE?\n\nEsta acción es definitiva. Eliminará tu cuenta de usuario de Supabase Auth, borrando instantáneamente en cascada todas tus notas, tareas, agenda, intereses, personas y historial de chat. No podrás recuperar esta información.\n\n¿Quieres proceder con la eliminación?')) {
-                          try {
-                            await dbClient.deleteAccount();
-                            setShowSettingsModal(false);
-                          } catch (err) {
-                            console.error(err);
-                            alert('Error al borrar la cuenta.');
-                          }
-                        }
-                      }}
-                      style={{ justifyContent: 'center', gap: '6px', fontSize: '0.8rem', padding: '6px 10px' }}
-                    >
-                      <Icons.UserX size={14} />
-                      <span>Borrar Cuenta</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="user-profile-btn" onClick={() => setShowSettingsModal(!showSettingsModal)} title="Preferencias y cuenta">
+        <div className="sidebar-footer">
+          <div 
+            className={`user-profile-btn ${selectedDoorId === 'configuracion' ? 'active' : ''}`} 
+            onClick={() => handleSelectDoor('configuracion')} 
+            title="Configuración y Preferencias"
+          >
             {user.user_metadata?.avatar_url ? (
               <img 
                 src={user.user_metadata.avatar_url} 
@@ -1167,37 +1031,147 @@ export default function Home() {
                     <Icons.Plus size={16} />
                   </button>
                 </div>
-              ) : selectedDoorId === 'personas' && personasViewMode === 'orbits' ? (
-                <OrbitsView 
-                  people={filteredItems}
-                  onPersonClick={(person) => setSelectedItem(person)}
-                />
-              ) : selectedDoorId === 'intereses' && interesesViewMode === 'orbits' ? (
-                <InterestsMapView 
-                  interests={filteredItems}
-                  onInterestClick={(interest) => setSelectedItem(interest)}
-                  onTagSelect={setSelectedTag}
-                />
-              ) : selectedDoorId === 'agenda' && agendaViewMode === 'calendar' ? (
-                <CalendarView 
-                  items={filteredItems}
-                  onItemClick={(item) => setSelectedItem(item)}
-                />
-              ) : selectedDoorId === 'estela' && estelaViewMode === 'timeline' ? (
-                <EstelaHorizontalTimelineView
-                  items={filteredItems}
-                  sortAsc={estelaSortAsc}
-                  onItemClick={(item) => setSelectedItem(item)}
-                />
-              ) : selectedDoorId === 'estela' ? (
-                <EstelaTimelineView
-                  items={filteredItems}
-                  isCompact={isCompactView}
-                  sortAsc={estelaSortAsc}
-                  onItemClick={(item) => setSelectedItem(item)}
-                  onAskKyma={(item, e) => handleAskKyma(item, e)}
-                  onTagSelect={(tag) => setSelectedTag(tag)}
-                />
+              ) : selectedDoorId === 'configuracion' ? (
+                <div className="configuracion-section animate-fade-in" style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  maxWidth: '800px',
+                  margin: '0 auto',
+                  padding: '10px 0 40px 0'
+                }}>
+                  <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px' }}>
+                      <Icons.User size={20} className="text-purple" />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Datos de Contexto Personal</h3>
+                    </div>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                      Los datos básicos que le permiten a Kyma comunicarse contigo de forma natural y contextualizar tus momentos. Puedes editarlos directamente aquí o conversarlos con Kyma en el chat para que los anote sola.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '8px' }}>
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label className="form-label">Nombre (para Kyma)</label>
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          value={userProfile.nombre} 
+                          onChange={e => handleUpdateUserProfile({ nombre: e.target.value })}
+                          placeholder="Tu nombre..."
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label className="form-label">Edad</label>
+                        <input 
+                          type="number" 
+                          className="input-field" 
+                          value={userProfile.edad} 
+                          onChange={e => handleUpdateUserProfile({ edad: e.target.value })}
+                          placeholder="ej: 34"
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label className="form-label">Lugar de Residencia</label>
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          value={userProfile.lugarResidencia} 
+                          onChange={e => handleUpdateUserProfile({ lugarResidencia: e.target.value })}
+                          placeholder="ej: Mahón, Menorca"
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label className="form-label">Idioma Preferido</label>
+                        <select 
+                          className="input-field" 
+                          value={userProfile.idioma} 
+                          onChange={e => handleUpdateUserProfile({ idioma: e.target.value })}
+                        >
+                          <option value="Español">Español</option>
+                          <option value="English">English</option>
+                          <option value="Català">Català</option>
+                          <option value="Galego">Galego</option>
+                          <option value="Euskara">Euskara</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px' }}>
+                      <Icons.Shield size={20} className="text-purple" />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Soberanía de Datos y Exportación</h3>
+                    </div>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                      Tus datos te pertenecen. Puedes exportar la totalidad de tus fichas y recuerdos en un único documento estructurado en formato Markdown.
+                    </p>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '8px' }}>
+                      <button className="btn btn-secondary" onClick={handleExportAllData} style={{ gap: '10px', padding: '10px 18px' }}>
+                        <Icons.Download size={16} />
+                        <span>Exportar todo el Panel en Markdown (.md)</span>
+                      </button>
+
+                      <button className="btn btn-secondary" onClick={handleResetDb} style={{ gap: '10px', padding: '10px 18px' }}>
+                        <Icons.RefreshCw size={16} />
+                        <span>Restablecer y Sembrar Datos</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid rgba(239, 68, 68, 0.25)', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px' }}>
+                      <Icons.UserX size={20} style={{ color: '#ef4444' }} />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Cuenta y Sesión</h3>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(255, 255, 255, 0.02)', padding: '12px 16px', borderRadius: '12px' }}>
+                      {user?.user_metadata?.avatar_url ? (
+                        <img src={user.user_metadata.avatar_url} alt="Avatar" style={{ width: '42px', height: '42px', borderRadius: '50%' }} />
+                      ) : (
+                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                          <Icons.User size={20} />
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ffffff' }}>{userProfile.nombre || user?.user_metadata?.full_name || 'Usuario Kyma'}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user?.email}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                      <button 
+                        className="btn btn-secondary flex-1" 
+                        onClick={() => supabase.auth.signOut()}
+                        style={{ gap: '8px', justifyContent: 'center', padding: '10px 16px' }}
+                      >
+                        <Icons.LogOut size={16} />
+                        <span>Cerrar Sesión</span>
+                      </button>
+
+                      <button 
+                        className="btn btn-danger flex-1" 
+                        onClick={async () => {
+                          if (confirm('⚠️ ¿BORRAR CUENTA COMPLETAMENTE?\n\nEsta acción es definitiva. Eliminará tu cuenta de usuario de Supabase Auth, borrando instantáneamente en cascada todas tus notas, tareas, agenda, intereses, personas y historial de chat. No podrás recuperar esta información.\n\n¿Quieres proceder con la eliminación?')) {
+                            try {
+                              await dbClient.deleteAccount();
+                            } catch (err) {
+                              console.error(err);
+                              alert('Error al borrar la cuenta.');
+                            }
+                          }
+                        }}
+                        style={{ gap: '8px', justifyContent: 'center', padding: '10px 16px' }}
+                      >
+                        <Icons.UserX size={16} />
+                        <span>Borrar Cuenta Permanentemente</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className={`grid-layout ${isCompactView ? 'compact-layout' : ''} animate-fade-in`}>
                   {filteredItems.map(item => (
