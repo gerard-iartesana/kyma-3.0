@@ -98,6 +98,8 @@ export default function Home() {
   const [newTime, setNewTime] = useState('');
   const [newPeso, setNewPeso] = useState<1 | 2 | 3>(1);
   const [newCercania, setNewCercania] = useState<'nucleo' | 'cercana' | 'orbita'>('orbita');
+  const [newRecurrencia, setNewRecurrencia] = useState<'none' | 'semanal' | 'mensual' | 'anual'>('none');
+  const [showPastAgendaEvents, setShowPastAgendaEvents] = useState(false);
 
   // Toast Notification state
   const [toastNotification, setToastNotification] = useState<{
@@ -239,6 +241,7 @@ export default function Home() {
     if (selectedDoorId === 'agenda') {
       itemData.eventDate = newDate || new Date().toISOString().split('T')[0];
       if (newTime) itemData.eventTime = newTime;
+      if (newRecurrencia !== 'none') itemData.recurrencia = newRecurrencia;
     } else if (selectedDoorId === 'personas') {
       itemData.cercania = newCercania;
       itemData.frecuencia = 50;
@@ -258,6 +261,7 @@ export default function Home() {
       setNewTime('');
       setNewPeso(1);
       setNewCercania('orbita');
+      setNewRecurrencia('none');
       setShowAddForm(false);
     } catch (err) {
       console.error(err);
@@ -306,7 +310,7 @@ export default function Home() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  const renderIcon = (iconName: string, size = 18, className = '') => {
+  const renderIcon = (iconName: string, size = 18, className = "") => {
     const IconComponent = (Icons as any)[iconName] || Icons.HelpCircle;
     return <IconComponent size={size} className={className} />;
   };
@@ -315,7 +319,19 @@ export default function Home() {
     ? items
         .filter(item => item.doorId === selectedDoorId)
         .filter(item => !selectedTag || item.tags.includes(selectedTag))
+        .filter(item => {
+          if (selectedDoorId === 'agenda' && !showPastAgendaEvents) {
+            const today = new Date().toISOString().split('T')[0];
+            return !item.eventDate || item.eventDate >= today;
+          }
+          return true;
+        })
         .sort((a, b) => {
+          if (selectedDoorId === 'agenda') {
+            const dateA = a.eventDate ? `${a.eventDate}T${a.eventTime || '00:00'}` : '9999-99-99';
+            const dateB = b.eventDate ? `${b.eventDate}T${b.eventTime || '00:00'}` : '9999-99-99';
+            return dateA.localeCompare(dateB);
+          }
           if (selectedDoorId === 'tareas' || selectedDoorId === 'notas') {
             const isFeaturedA = a.peso === 3 ? 1 : 0;
             const isFeaturedB = b.peso === 3 ? 1 : 0;
@@ -818,22 +834,44 @@ export default function Home() {
                 )}
 
                 {selectedDoorId === 'agenda' && !isVelado && (
-                  <div className="view-mode-selector radio-group">
+                  <>
+                    <div className="view-mode-selector radio-group">
+                      <button 
+                        className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
+                        onClick={() => setAgendaViewMode('grid')}
+                      >
+                        <Icons.Grid size={14} />
+                        <span>Lista</span>
+                      </button>
+                      <button 
+                        className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
+                        onClick={() => setAgendaViewMode('calendar')}
+                      >
+                        <Icons.Calendar size={14} />
+                        <span>Calendario</span>
+                      </button>
+                    </div>
+
                     <button 
-                      className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
-                      onClick={() => setAgendaViewMode('grid')}
+                      className={`btn btn-secondary ${showPastAgendaEvents ? 'active' : ''}`}
+                      onClick={() => setShowPastAgendaEvents(!showPastAgendaEvents)}
+                      title={showPastAgendaEvents ? "Ocultar eventos pasados" : "Mostrar eventos pasados"}
+                      style={{ 
+                        height: '38px', 
+                        padding: '0 12px', 
+                        fontSize: '0.82rem',
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '6px',
+                        background: showPastAgendaEvents ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
+                        borderColor: showPastAgendaEvents ? 'var(--accent-purple)' : 'var(--border-subtle)',
+                        color: showPastAgendaEvents ? '#ffffff' : 'var(--text-secondary)'
+                      }}
                     >
-                      <Icons.Grid size={14} />
-                      <span>Lista</span>
+                      <Icons.History size={15} />
+                      <span>{showPastAgendaEvents ? 'Ocultar pasados' : 'Ver pasados'}</span>
                     </button>
-                    <button 
-                      className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
-                      onClick={() => setAgendaViewMode('calendar')}
-                    >
-                      <Icons.Calendar size={14} />
-                      <span>Calendario</span>
-                    </button>
-                  </div>
+                  </>
                 )}
 
                 {selectedDoorId === 'estela' && !isVelado && (
@@ -961,6 +999,19 @@ export default function Home() {
                           value={newTime}
                           onChange={e => setNewTime(e.target.value)}
                         />
+                      </div>
+                      <div className="form-group flex-1">
+                        <label className="form-label">Repetición</label>
+                        <select
+                          className="input-field"
+                          value={newRecurrencia}
+                          onChange={e => setNewRecurrencia(e.target.value as any)}
+                        >
+                          <option value="none">No se repite</option>
+                          <option value="semanal">Semanal</option>
+                          <option value="mensual">Mensual</option>
+                          <option value="anual">Anual</option>
+                        </select>
                       </div>
                     </>
                   )}

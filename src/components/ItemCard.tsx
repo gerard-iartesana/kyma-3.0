@@ -132,39 +132,58 @@ export function ItemCard({
         return null;
       case 'agenda':
         return (
-          <div className="agenda-badge-box" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '8px',
-            padding: '6px 11px',
-            gap: '2px',
-            minWidth: '68px',
-            flexShrink: 0
-          }}>
-            <span style={{
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              color: '#ffffff',
-              textTransform: 'uppercase',
-              letterSpacing: '0.02em',
-              whiteSpace: 'nowrap'
-            }}>
-              {formatDate(item.eventDate)}
-            </span>
-            {item.eventTime && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            {item.recurrencia && item.recurrencia !== 'none' && (
               <span style={{
                 fontSize: '0.68rem',
-                color: '#8a8a93',
-                fontWeight: 500,
-                whiteSpace: 'nowrap'
+                fontWeight: 600,
+                color: '#c084fc',
+                background: 'rgba(139, 92, 246, 0.15)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                borderRadius: '6px',
+                padding: '4px 7px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                textTransform: 'capitalize'
               }}>
-                {item.eventTime} h
+                🔄 {item.recurrencia}
               </span>
             )}
+            <div className="agenda-badge-box" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(0, 0, 0, 0.35)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              padding: '6px 11px',
+              gap: '2px',
+              minWidth: '68px',
+              flexShrink: 0
+            }}>
+              <span style={{
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                color: '#ffffff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.02em',
+                whiteSpace: 'nowrap'
+              }}>
+                {formatDate(item.eventDate)}
+              </span>
+              {item.eventTime && (
+                <span style={{
+                  fontSize: '0.68rem',
+                  color: '#8a8a93',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap'
+                }}>
+                  {item.eventTime} h
+                </span>
+              )}
+            </div>
           </div>
         );
       case 'estela':
@@ -393,10 +412,10 @@ export function ItemCard({
           <button 
             className="ask-kyma-btn btn"
             onClick={(e) => onAskKyma(item, e)}
-            title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
+            title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : item.doorId === 'agenda' ? "Consultar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
           >
             <LogoIcon size={13} className="kyma-btn-icon" />
-            <span>{item.doorId === 'estela' ? 'Recordar' : 'Explorar'}</span>
+            <span>{item.doorId === 'estela' ? 'Recordar' : item.doorId === 'agenda' ? 'Consultar' : 'Explorar'}</span>
           </button>
         </div>
       )}

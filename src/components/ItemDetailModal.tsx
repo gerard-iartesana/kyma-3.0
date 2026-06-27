@@ -424,10 +424,10 @@ ${content}
                 type="button" 
                 className="btn btn-secondary" 
                 onClick={() => onAskKyma(item)}
-                title="Explorar con Kyma"
+                title={item.doorId === 'estela' ? "Recordar con Kyma" : item.doorId === 'agenda' ? "Consultar con Kyma" : "Explorar con Kyma"}
               >
                 <LogoIcon size={16} style={{ marginRight: 4 }} />
-                <span>Explorar con Kyma</span>
+                <span>{item.doorId === 'estela' ? 'Recordar con Kyma' : item.doorId === 'agenda' ? 'Consultar con Kyma' : 'Explorar con Kyma'}</span>
               </button>
               
               <button type="submit" className="btn btn-primary" disabled={isSaving}>
