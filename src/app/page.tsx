@@ -2585,14 +2585,14 @@ export default function Home() {
             left: 0;
             right: 0;
             width: 100%;
-            height: calc(60px + env(safe-area-inset-top, 0px));
+            height: calc(64px + env(safe-area-inset-top, 0px));
             padding-top: env(safe-area-inset-top, 0px);
             padding-left: 16px;
             padding-right: 16px;
-            background: rgba(18, 18, 20, 0.82) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: rgba(18, 18, 20, 0.88) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 0;
             flex-shrink: 0;
             z-index: 100;
@@ -2612,12 +2612,12 @@ export default function Home() {
           /* Reset sidebar width overrides on mobile: Slide from RIGHT */
           .sidebar, .sidebar.collapsed {
             width: 100% !important;
-            padding: 24px 16px !important;
+            padding: 20px 16px !important;
             position: fixed;
-            top: calc(60px + env(safe-area-inset-top, 0px));
+            top: calc(64px + env(safe-area-inset-top, 0px));
             right: 0;
             left: auto;
-            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px));
             background: var(--bg-primary);
             border-left: 1px solid var(--border-subtle);
             border-right: none;
@@ -2625,6 +2625,7 @@ export default function Home() {
             transform: translateX(100%);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 90;
+            overflow-y: auto;
           }
           
           .sidebar.mobile-open {
@@ -2636,27 +2637,36 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Increase font size and padding of menu buttons on mobile */
+          /* Increase font size and reduce vertical spacing between menu buttons on mobile */
+          .sidebar .sidebar-nav {
+            gap: 8px !important;
+          }
+          .sidebar .nav-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 2px !important;
+          }
           .sidebar .nav-item {
-            padding: 16px 20px !important;
-            font-size: 1.15rem !important;
-            border-radius: 14px !important;
-            gap: 16px !important;
-            margin-bottom: 6px !important;
+            padding: 12px 16px !important;
+            font-size: 1.25rem !important;
+            border-radius: 12px !important;
+            gap: 14px !important;
+            margin-bottom: 2px !important;
+            min-height: 48px !important;
           }
           .sidebar .nav-item span {
             display: block !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-            font-size: 1.15rem !important;
-            font-weight: 500 !important;
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
           }
           .sidebar.collapsed .item-count,
           .sidebar.collapsed .lock-icon,
           .sidebar .item-count {
             opacity: 1 !important;
             pointer-events: auto !important;
-            font-size: 0.9rem !important;
+            font-size: 0.92rem !important;
             padding: 4px 12px !important;
           }
 
@@ -2666,9 +2676,9 @@ export default function Home() {
 
           /* Active tab handling with generous top margins and padding */
           .content-pane {
-            padding: 24px 16px 32px 16px;
-            margin-top: calc(60px + env(safe-area-inset-top, 0px));
-            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px));
+            padding: 32px 16px 36px 16px !important;
+            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
@@ -2682,11 +2692,11 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            margin-top: calc(60px + env(safe-area-inset-top, 0px));
-            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px));
+            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
             flex: 1;
             border-left: none;
-            padding: 12px 12px 16px 12px;
+            padding: 16px 12px 16px 12px !important;
             overflow: hidden;
             box-sizing: border-box;
           }
