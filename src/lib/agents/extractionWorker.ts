@@ -37,9 +37,16 @@ export async function executeExtractionWorker(
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
+  const now = new Date();
+  const currentDateStr = now.toISOString().split('T')[0];
+  const dayOfWeekStr = now.toLocaleDateString('es-ES', { weekday: 'long' });
+
   const prompt = `
 Tu tarea es actuar como el trabajador de extracción invisible para la puerta "${pkg.doorId}" (Categoría: ${pkg.category}).
 NO HABLAS CON EL USUARIO. Tu única salida debe ser un objeto JSON válido con la estructura especificada.
+
+FECHA ACTUAL DEL SISTEMA: ${currentDateStr} (Día de la semana: ${dayOfWeekStr}).
+IMPORTANTE PARA AGENDA: Si el usuario usa palabras como "hoy", "esta tarde", "mañana", "este viernes", calcula la fecha exacta en formato YYYY-MM-DD basándote estrictamente en la FECHA ACTUAL DEL SISTEMA (${currentDateStr}). Para "hoy" o "esta tarde", la fecha ES ${currentDateStr}.
 
 GUARDARRAÍLES DE ESTA PUERTA:
 ${pkg.guardrails.map(g => `- ${g}`).join('\n')}
@@ -60,7 +67,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "title": "Título claro y conciso",
     "content": "Cuerpo o detalle estructurado",
     "peso": 1 | 2 | 3,
-    "eventDate": "YYYY-MM-DD" (solo si es agenda),
+    "eventDate": "YYYY-MM-DD" (OBLIGATORIO si es agenda. Si dice hoy o esta tarde usa "${currentDateStr}"),
     "eventTime": "HH:MM" (solo si es agenda),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
@@ -117,13 +124,15 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     }
 
     // Default to create
+    const eventDate = doorId === 'agenda' ? (result.extractedData.eventDate || currentDateStr) : result.extractedData.eventDate;
+
     const newItem = await dbClient.createItem({
       doorId,
       title: result.extractedData.title || 'Nueva ficha',
       content: result.extractedData.content || '',
       peso: result.extractedData.peso || 1,
       tags: result.extractedData.tags || [`#${doorId}`],
-      eventDate: result.extractedData.eventDate,
+      eventDate,
       eventTime: result.extractedData.eventTime,
       completed: result.extractedData.completed,
       cercania: result.extractedData.cercania || (doorId === 'personas' ? 'orbita' : undefined),
