@@ -2689,7 +2689,7 @@ export default function Home() {
 
           /* Active tab handling: Browser mode (Mobile Web Browser) */
           .content-pane {
-            padding: calc(108px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
+            padding: calc(136px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
             margin-top: 0 !important;
             height: 100dvh !important;
             height: 100vh !important;
