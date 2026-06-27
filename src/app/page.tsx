@@ -2687,9 +2687,9 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Active tab handling: Full-height underlay for translucent glass header scroll */
+          /* Active tab handling: Browser mode (Mobile Web Browser) */
           .content-pane {
-            padding: calc(84px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
+            padding: calc(108px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
             margin-top: 0 !important;
             height: 100dvh !important;
             height: 100vh !important;
@@ -2736,6 +2736,19 @@ export default function Home() {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
+          }
+        }
+
+        /* INSTALLED PWA STANDALONE APP RULES (UNTOUCHED AND PRESERVED EXACTLY AS REQUESTED) */
+        @media all and (display-mode: standalone) and (max-width: 1024px) {
+          .content-pane {
+            padding: calc(84px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
+            margin-top: 0 !important;
+            height: 100dvh !important;
+          }
+          .chat-pane {
+            margin-top: 0 !important;
+            height: 100dvh !important;
           }
         }
 

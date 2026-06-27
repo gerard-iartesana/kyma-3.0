@@ -493,9 +493,10 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           border-color: rgba(239, 68, 68, 0.4);
         }
 
+        /* Mobile Web Browser Mode */
         @media (max-width: 1024px) {
           .clear-chat-floating-btn {
-            top: calc(76px + env(safe-area-inset-top, 0px)) !important;
+            top: calc(96px + env(safe-area-inset-top, 0px)) !important;
             right: 16px !important;
             width: 40px !important;
             height: 40px !important;
@@ -511,7 +512,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             background: rgba(239, 68, 68, 0.2) !important;
           }
           .messages-area {
-            padding-top: calc(128px + env(safe-area-inset-top, 0px)) !important;
+            padding-top: calc(148px + env(safe-area-inset-top, 0px)) !important;
             padding-bottom: 24px !important;
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
@@ -520,6 +521,16 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             display: none !important;
             width: 0 !important;
             height: 0 !important;
+          }
+        }
+
+        /* Installed PWA Standalone Mode (UNTOUCHED as requested) */
+        @media all and (display-mode: standalone) and (max-width: 1024px) {
+          .clear-chat-floating-btn {
+            top: calc(76px + env(safe-area-inset-top, 0px)) !important;
+          }
+          .messages-area {
+            padding-top: calc(128px + env(safe-area-inset-top, 0px)) !important;
           }
         }
 
