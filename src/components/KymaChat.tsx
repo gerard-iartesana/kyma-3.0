@@ -358,7 +358,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         onClick={handleClearChat}
         title="Limpiar conversación"
       >
-        <Trash2 size={16} />
+        <Trash2 size={18} />
       </button>
 
       {/* Messages area */}
@@ -370,7 +370,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
               <div className={`message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-kyma'}`}>
                 {msg.contextItem && (
                   <div className="bubble-context-ref">
-                    <Sparkles size={10} />
+                    <Sparkles size={11} />
                     <span>Sobre: {msg.contextItem.title}</span>
                   </div>
                 )}
@@ -408,11 +408,11 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       {contextItem && (
         <div className="chat-context-bar animate-fade-in">
           <div className="context-info">
-            <Sparkles size={12} className="text-purple animate-pulse" />
+            <Sparkles size={14} className="text-purple animate-pulse" />
             <span>Hablando de: <strong>{contextItem.title}</strong> ({contextItem.doorId})</span>
           </div>
           <button className="clear-context-btn" onClick={onClearContext}>
-            <X size={14} />
+            <X size={16} />
           </button>
         </div>
       )}
@@ -423,7 +423,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           <input
             type="text"
             className="input-field chat-input"
-            style={{ paddingRight: '44px', width: '100%' }}
+            style={{ paddingRight: '48px', width: '100%', height: '48px', fontSize: '1.02rem' }}
             placeholder={contextItem ? "Responde a Kyma..." : "Háblale a Kyma, o captura una nota/tarea..."}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -443,17 +443,17 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '6px',
+              padding: '8px',
               borderRadius: '50%',
               transition: 'all 0.2s ease'
             }}
           >
-            <Mic size={18} />
+            <Mic size={20} />
           </button>
         </div>
 
-        <button type="submit" className="btn btn-primary send-btn" disabled={!inputText.trim()}>
-          <Send size={18} />
+        <button type="submit" className="btn btn-primary send-btn" disabled={!inputText.trim()} style={{ width: '48px', height: '48px' }}>
+          <Send size={20} />
         </button>
       </form>
 
@@ -472,33 +472,36 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
         .clear-chat-floating-btn {
           position: absolute;
-          top: 0;
-          right: 0;
-          z-index: 10;
-          background: rgba(255, 255, 255, 0.05);
+          top: 6px;
+          right: 6px;
+          z-index: 25;
+          background: rgba(24, 24, 27, 0.85);
           border: 1px solid var(--border-subtle);
           color: var(--text-muted);
-          padding: 6px;
+          padding: 8px;
           border-radius: 50%;
           cursor: pointer;
           transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
+          backdrop-filter: blur(8px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .clear-chat-floating-btn:hover {
           color: #ef4444;
-          background: rgba(239, 68, 68, 0.15);
-          border-color: rgba(239, 68, 68, 0.3);
+          background: rgba(239, 68, 68, 0.2);
+          border-color: rgba(239, 68, 68, 0.4);
         }
 
         .messages-area {
           flex: 1;
           overflow-y: auto;
-          padding: 12px 4px 20px 4px;
+          padding: 36px 4px 20px 4px;
           display: flex;
           flex-direction: column;
           gap: 16px;
+          -webkit-overflow-scrolling: touch;
         }
 
         .message-wrapper {
@@ -513,7 +516,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
 
         .message-bubble {
-          max-width: 82%;
+          max-width: 85%;
           padding: 14px 18px;
           border-radius: 18px;
           position: relative;
@@ -538,7 +541,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           display: flex;
           align-items: center;
           gap: 6px;
-          font-size: 0.72rem;
+          font-size: 0.76rem;
           opacity: 0.85;
           margin-bottom: 6px;
           padding-bottom: 6px;
@@ -546,8 +549,8 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
 
         .message-text {
-          font-size: 0.95rem;
-          line-height: 1.5;
+          font-size: 1.04rem;
+          line-height: 1.55;
           margin: 0;
           white-space: pre-wrap;
           word-break: break-word;

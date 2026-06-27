@@ -665,6 +665,27 @@ export default function Home() {
 
   return (
     <div className="app-layout">
+      {/* 0. CABECERA MÓVIL SUPERIOR (Fija en móvil) */}
+      <header className="mobile-header">
+        <div 
+          className="mobile-header-brand" 
+          onClick={() => handleSelectDoor(null)}
+          title="Ir al chat con Kyma"
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+        >
+          <LogoIcon size={30} />
+          <span className="font-serif text-white" style={{ fontSize: '1.25rem', fontWeight: 600, letterSpacing: '0.02em' }}>Kyma</span>
+        </div>
+        
+        <button 
+          className="menu-toggle-btn" 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          title="Menú de módulos"
+        >
+          {mobileMenuOpen ? <Icons.X size={24} /> : <Icons.Menu size={24} />}
+        </button>
+      </header>
+
       {/* 1. SIDEBAR (Escritorio y menú móvil) */}
       <aside className={`sidebar glass-panel ${mobileMenuOpen ? 'mobile-open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div 
@@ -820,15 +841,7 @@ export default function Home() {
           </div>
         )}
 
-        <header className="mobile-header">
-          <button className="menu-toggle-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <Icons.X size={20} /> : <Icons.Menu size={20} />}
-          </button>
-          <div className="mobile-header-brand" onClick={() => handleSelectDoor(null)}>
-            <LogoIcon size={32} />
-          </div>
-          <div style={{ width: 24 }} />
-        </header>
+
 
         {selectedDoorId === null ? (
           <div className="home-view animate-fade-in">
@@ -1675,29 +1688,7 @@ export default function Home() {
         />
       </section>
 
-      {/* 4. BARRA DE NAVEGACIÓN MÓVIL */}
-      <nav className="mobile-tab-bar">
-        <button 
-          className={`tab-item ${mobileTab === 'chat' ? 'active' : ''}`}
-          onClick={() => setMobileTab('chat')}
-        >
-          <Icons.MessageSquare size={20} />
-          <span>Kyma</span>
-        </button>
-        
-        <button 
-          className={`tab-item ${mobileTab === 'panel' ? 'active' : ''}`}
-          onClick={() => {
-            setMobileTab('panel');
-            if (selectedDoorId === null) {
-              setMobileMenuOpen(true);
-            }
-          }}
-        >
-          <Icons.LayoutDashboard size={20} />
-          <span>Mi Panel</span>
-        </button>
-      </nav>
+
 
       {/* 5. DETALLE MODAL */}
       {selectedItem && (
@@ -2571,6 +2562,10 @@ export default function Home() {
         .text-secondary { color: var(--text-secondary); }
         .text-muted { color: var(--text-muted); }
 
+        .mobile-header {
+          display: none;
+        }
+
         /* RESPONSIVE MEDIA QUERIES (Mobile and Tablet) */
         @media (max-width: 1024px) {
           .chat-pane {
@@ -2581,6 +2576,32 @@ export default function Home() {
         @media (max-width: 768px) {
           .app-layout {
             flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+          }
+
+          /* Header on Mobile */
+          .mobile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 16px;
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+            z-index: 60;
+            position: relative;
+          }
+          .menu-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
 
           /* Reset sidebar width overrides on mobile */
@@ -2590,13 +2611,13 @@ export default function Home() {
             position: fixed;
             top: 56px;
             left: 0;
-            height: calc(100% - 116px);
+            height: calc(100% - 56px);
             background: var(--bg-primary);
             border-right: none;
             border-bottom: 1px solid var(--border-subtle);
             transform: translateX(-100%);
             transition: transform 0.3s ease;
-            z-index: 40;
+            z-index: 50;
           }
           
           .sidebar.mobile-open {
@@ -2622,7 +2643,6 @@ export default function Home() {
             pointer-events: auto !important;
           }
 
-          
           .logo-text {
             display: none;
           }
@@ -2631,29 +2651,12 @@ export default function Home() {
             color: var(--text-primary);
           }
 
-          /* Header on Mobile */
-          .mobile-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 56px;
-            border-bottom: 1px solid var(--border-subtle);
-            padding: 0 16px;
-            background: var(--bg-secondary);
-            flex-shrink: 0;
-          }
-          .menu-toggle-btn {
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            cursor: pointer;
-            padding: 4px;
-          }
-
           /* Active tab handling */
           .content-pane {
             padding: 16px;
-            height: calc(100% - 116px);
+            height: calc(100vh - 56px);
+            flex: 1;
+            overflow-y: auto;
           }
           .content-pane.mobile-hidden {
             display: none;
@@ -2664,43 +2667,17 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            height: calc(100% - 116px);
+            height: calc(100vh - 56px);
+            flex: 1;
             border-left: none;
-            padding: 16px;
+            padding: 12px 12px 16px 12px;
+            overflow: hidden;
           }
           .chat-pane.mobile-hidden {
             display: none;
           }
           .chat-pane.mobile-visible {
             display: flex;
-          }
-
-          /* Mobile Bottom Tab Bar */
-          .mobile-tab-bar {
-            display: flex;
-            height: 60px;
-            border-top: 1px solid var(--border-subtle);
-            background: var(--bg-secondary);
-            z-index: 50;
-            width: 100%;
-            flex-shrink: 0;
-          }
-          
-          .tab-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.75rem;
-          }
-          .tab-item.active {
-            color: var(--accent-purple);
           }
 
           /* Adjust headings */
