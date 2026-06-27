@@ -9,8 +9,8 @@ Eres Kyma, un asistente de autoconocimiento y diario personal lento. Tu tono es 
 PRINCIPIOS FUNDAMENTALES:
 - Espejo, no juez: Ante cosas personales o afectivas, pregunta antes de aconsejar. Usa lenguaje de hipótesis, nada clínico, sin etiquetas.
 - Una sola voz: Hablas siempre en primera persona del singular ("yo", "mi"). Eres la única voz que el usuario escucha.
-- El sistema sugiere, el usuario decide: En temas de Mapa (intereses, vínculos, reflexiones), tú propones o indagas con preguntas abiertas.
-- Acuses en línea (Utilidad): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado o actualizado una ficha de utilidad, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado en tu agenda: [Título del evento]."), continuando la charla fluida sin cortar el hilo.
+- El sistema sugiere, el usuario decide: En temas de Mapa (intereses, vínculos, reflexiones, estela), tú propones o indagas con preguntas abiertas.
+- Acuses en línea (Fichas registradas): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado o actualizado una ficha en cualquier puerta (ej. agenda o estela de vida), debes acusar recibo de manera breve y natural en tu respuesta (ej: "Guardado en tu Estela de vida: [Título]."), continuando la charla fluida sin cortar el hilo.
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
 - Compleitud: Concluye siempre tus oraciones y pensamientos de forma completa.
@@ -45,16 +45,18 @@ export async function processKymaTurn(
     const recentMsgs = messages.slice(-5).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join('\n');
 
     const triagePrompt = `
-Analiza la siguiente frase del usuario dentro del contexto reciente y determina si contiene información que deba guardarse o actualizarse en una de las 6 puertas del sistema.
+Analiza la siguiente frase del usuario dentro del contexto reciente y determina si contiene información que deba guardarse o actualizarse en una de las 7 puertas del sistema.
 Puertas de UTILIDAD: agenda (fechas/citas/cambios de hora), tareas (acciones pendientes), notas (ideas/apuntes/números de teléfono).
-Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos), estela (hitos históricos del pasado/recuerdos/línea de tiempo).
+Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos), estela (hitos históricos del pasado / recuerdos de la infancia o juventud / viajes pasados / eventos vividos en un año específico como 2010, 2018, etc.).
 
 HISTORIAL RECIENTE CONVERSACIONAL:
 ${recentMsgs}
 
 FRASE ACTUAL DEL USUARIO: "${userText}"
 
-REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato (por ejemplo, indicar de quién es un número de teléfono o nota recién apuntada), clasifícalo en la misma puerta (ej: "notas") para actualizar esa ficha existente.
+REGLAS ESPECÍFICAS DE TRIAGE:
+1. SI EL USUARIO MENCIONA UN RECUERDO, ANÉCDOTA PASADA, O UN AÑO PASADO (ej. "en 2010", "recuerdo cuando", "un momento importante de mi vida", "un viaje que hice"), CLASIFÍCALO OBLIGATORIAMENTE EN LA PUERTA "estela" (Categoría: mapa) CON CONFIDENCIA ALTA (>= 0.85).
+2. REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato, clasifícalo en la misma puerta previa.
 
 Devuelve UNICAMENTE un JSON con este formato:
 {
@@ -90,7 +92,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   // Step 2: Extraction execution if confidence is sufficient
   let extractedResult: { item?: KymaItem; action: 'create' | 'enrich' | 'none' } = { action: 'none' };
 
-  if (triage.isFicheable && triage.confidence >= 0.6 && triage.doorId) {
+  if (triage.isFicheable && triage.confidence >= 0.55 && triage.doorId) {
     const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
     extractedResult = await executeExtractionWorker(
       triage.doorId,
@@ -118,6 +120,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   const userItemsContext = allUserItems.map(item => {
     let details = `[${item.doorId.toUpperCase()}] "${item.title}"`;
     if (item.eventDate) details += ` (Fecha: ${item.eventDate}${item.eventTime ? ' a las ' + item.eventTime : ''})`;
+    if (item.year) details += ` (Año: ${item.year}${item.lugar ? ' en ' + item.lugar : ''})`;
     if (item.content) details += `: ${item.content}`;
     return details;
   }).join('\n');
@@ -142,7 +145,10 @@ Devuelve UNICAMENTE un JSON con este formato:
 
   let extraInstruction = '';
   if (extractedResult.item) {
-    if (triage.category === 'utilidad') {
+    if (extractedResult.item.doorId === 'estela') {
+      const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
+      extraInstruction = `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un hito/recuerdo en la puerta "Estela de vida" titulado "${extractedResult.item.title}". DEBES incluir un acuse de recibo cálido e integrado en tu respuesta (ej: "Guardado en tu Estela de vida: ${extractedResult.item.title}.").`;
+    } else if (triage.category === 'utilidad') {
       const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
       extraInstruction = `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado en tu agenda: ${extractedResult.item.title}.").`;
     } else if (triage.category === 'mapa') {
@@ -158,7 +164,7 @@ FECHA DE MAÑANA: ${tomorrowStr} (${tomorrow.toLocaleDateString('es-ES', { weekd
 FICHAS GUARDADAS EN EL ESPACIO DEL USUARIO:
 ${userItemsContext || 'No hay fichas guardadas actualmente.'}
 
-REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene para hoy, para mañana o sobre sus tareas/notas/agenda, REVISA estrictamente la lista anterior de fichas guardadas y dale una respuesta precisa y directa citando los eventos, horas y detalles.
+REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene para hoy, para mañana o sobre sus tareas/notas/agenda/estela de vida, REVISA estrictamente la lista anterior de fichas guardadas y dale una respuesta precisa y directa citando los eventos, horas y detalles.
 `;
 
   const systemInstruction = {
