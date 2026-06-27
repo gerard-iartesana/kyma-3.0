@@ -190,8 +190,23 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     }
 
     let extractedPeso = result.extractedData.peso || 1;
-    if (doorId === 'estela' && /importante|hito|crucial|mundial|marcó/i.test(userMessage)) {
-      extractedPeso = 3;
+    let extractedEmocion = result.extractedData.emocion;
+
+    if (doorId === 'estela') {
+      if (/importante|hito|crucial|mundial|marcó|marco|momento|inolvidable/i.test(userMessage)) {
+        extractedPeso = 3;
+      }
+      if (/más triste|mas triste|golpe durísimo|golpe durisimo|terrible|fallecimiento|muerte|desgracia|pérdida|perdida|doloroso/i.test(userMessage)) {
+        extractedEmocion = 1;
+        extractedPeso = 3;
+      } else if (/triste|pena|dolor|lloré de pena/i.test(userMessage) && !extractedEmocion) {
+        extractedEmocion = 2;
+      } else if (/calma|paz|tranquilidad|tranquilo/i.test(userMessage) && !extractedEmocion) {
+        extractedEmocion = 3;
+      } else if (/increíble|increible|más feliz|mas feliz|lloré de alegría|llore de alegria|mejor día|mejor dia|maravilloso|triunfo|campeones/i.test(userMessage)) {
+        extractedEmocion = 5;
+        extractedPeso = 3;
+      }
     }
 
     if (result.action === 'enrich' && result.targetItemId) {
@@ -214,7 +229,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           year: extractedYear || existing.year,
           dateStr: result.extractedData.dateStr || existing.dateStr,
           lugar: result.extractedData.lugar || existing.lugar,
-          emocion: result.extractedData.emocion || existing.emocion || 4,
+          emocion: extractedEmocion || existing.emocion || 4,
           tags: mergedTags,
           origen
         }, userId, sbClient);
@@ -241,7 +256,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       year: extractedYear,
       dateStr: result.extractedData.dateStr,
       lugar: result.extractedData.lugar,
-      emocion: result.extractedData.emocion || (doorId === 'estela' ? 4 : undefined),
+      emocion: extractedEmocion || (doorId === 'estela' ? 4 : undefined),
       origen
     }, userId, sbClient);
 

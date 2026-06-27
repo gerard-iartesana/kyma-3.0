@@ -81,10 +81,11 @@ Identifica pensamientos profundos redactados en primera persona del singular.`
       'TÍTULOS CORTOS: Máximo 3-4 palabras sobre el recuerdo o hito (ej: "Viaje a Japón", "Graduación Universitaria", "Nacimiento de mi hija").',
       'AÑO Y FECHA: Extrae siempre el año mencionado (ej. 2018) en "year" y la época o día específico ("Verano", "14 de Mayo", "Junio") en "dateStr".',
       'LUGAR EXPLICITO: Si se menciona un lugar o ciudad (ej. "Japón", "Madrid", "París"), extraelo en "lugar".',
-      'HITO CRUCIAL / IMPACTANTE: Si el usuario expresa que fue un evento que marcó su vida o cambió su rumbo, asigna peso = 3 (destacado con estrella).',
+      'TONO EMOCIONAL (emocion): Determina el sentimiento del recuerdo en una escala de 1 a 5 (1: Muy triste / doloroso, 2: Triste, 3: Calma / neutro, 4: Alegre, 5: Muy alegre / euforia / victoria).',
+      'HITO CRUCIAL / IMPACTANTE: Si el usuario expresa que fue un evento que marcó su vida, cambió su rumbo o fue "uno de los momentos más tristes/felices de mi vida", asigna peso = 3 (destacado con estrella).',
       'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: "Viajé a...", "Me gradué...", "Nació mi..."'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Estela de vida.
-Extrae recuerdos e hitos históricos del pasado para construir un timeline vital. Extrae año, fecha/estación, lugar y peso=3 si fue un momento crucial que marcó su vida.`
+Extrae recuerdos e hitos históricos del pasado para construir un timeline vital. Extrae año, fecha/estación, lugar, el tono emocional (emocion: 1=muy triste, 2=triste, 3=calma, 4=alegre, 5=muy alegre) y peso=3 si fue un momento crucial que marcó su vida o fue de un impacto emocional muy intenso.`
   }
 };
