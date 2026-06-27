@@ -1,4 +1,5 @@
 import { dbClient, KymaItem } from '../db/client';
+import { createSupabaseClient } from '../supabase';
 import { DOOR_PACKAGES } from './doorPackages';
 import { DoorId, ExtractionResult } from './types';
 
@@ -6,6 +7,7 @@ export async function executeExtractionWorker(
   doorId: DoorId,
   userMessage: string,
   userId?: string,
+  accessToken?: string,
   contextSnippet?: string
 ): Promise<{ item?: KymaItem; action: 'create' | 'enrich' | 'none' }> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -17,8 +19,10 @@ export async function executeExtractionWorker(
   const pkg = DOOR_PACKAGES[doorId];
   if (!pkg) return { action: 'none' };
 
+  const sbClient = createSupabaseClient(accessToken);
+
   // Fetch existing items for context (e.g., checking interests or existing people)
-  const existingItems = await dbClient.getItems(doorId, userId);
+  const existingItems = await dbClient.getItems(doorId, userId, sbClient);
   const existingSummary = existingItems.map(i => ({
     id: i.id,
     title: i.title,
@@ -107,7 +111,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           content: updatedContent,
           tags: mergedTags,
           origen
-        }, userId);
+        }, userId, sbClient);
         return { item: updatedItem, action: 'enrich' };
       }
     }
@@ -124,7 +128,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       completed: result.extractedData.completed,
       cercania: result.extractedData.cercania || (doorId === 'personas' ? 'orbita' : undefined),
       origen
-    }, userId);
+    }, userId, sbClient);
 
     return { item: newItem, action: 'create' };
 

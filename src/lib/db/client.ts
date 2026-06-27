@@ -319,9 +319,10 @@ export function setDbState(state: 'populated' | 'empty') {
 // Client Database API
 export const dbClient = {
   // Sync tag names to public.tags and create relations in elemento_tags
-  async syncElementTags(elementoId: string, userId: string, tagNames: string[]): Promise<void> {
+  async syncElementTags(elementoId: string, userId: string, tagNames: string[], customClient?: any): Promise<void> {
+    const sb = customClient || supabase;
     // 1. Delete existing associations
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await sb
       .from('elemento_tags')
       .delete()
       .eq('elemento_id', elementoId);
@@ -337,15 +338,15 @@ export const dbClient = {
     const normalizedTags = Array.from(
       new Set(
         tagNames
-          .map(t => t.trim().toLowerCase())
-          .filter(t => t.startsWith('#'))
+          .map((t: string) => t.trim().toLowerCase())
+          .filter((t: string) => t.startsWith('#'))
       )
     );
     
     if (normalizedTags.length === 0) return;
 
     // 3. Bulk upsert tags into public.tags
-    const tagsData = normalizedTags.map(nombre => {
+    const tagsData = normalizedTags.map((nombre: string) => {
       const systemicTags = ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones'];
       const tipo = systemicTags.includes(nombre) ? 'sistemico' : 'tematico';
       return {
@@ -355,7 +356,7 @@ export const dbClient = {
       };
     });
 
-    const { data: upsertedTags, error: tagsError } = await supabase
+    const { data: upsertedTags, error: tagsError } = await sb
       .from('tags')
       .upsert(tagsData, { onConflict: 'user_id,nombre' })
       .select('id, nombre');
@@ -366,12 +367,12 @@ export const dbClient = {
     }
 
     // 4. Link elements to tags in public.elemento_tags
-    const linksData = (upsertedTags || []).map(t => ({
+    const linksData = (upsertedTags || []).map((t: any) => ({
       elemento_id: elementoId,
       tag_id: t.id
     }));
 
-    const { error: linkError } = await supabase
+    const { error: linkError } = await sb
       .from('elemento_tags')
       .insert(linksData);
 
@@ -382,11 +383,12 @@ export const dbClient = {
   },
 
   // Items CRUD
-  async getItems(doorId?: string, overrideUserId?: string): Promise<KymaItem[]> {
+  async getItems(doorId?: string, overrideUserId?: string, customClient?: any): Promise<KymaItem[]> {
+    const sb = customClient || supabase;
     try {
       const userId = await getCurrentUserId(overrideUserId);
       
-      let query = supabase
+      let query = sb
         .from('elementos')
         .select(`
           *,
@@ -419,7 +421,7 @@ export const dbClient = {
         return [];
       }
       
-      return (data || []).map(dbItem => {
+      return (data || []).map((dbItem: any) => {
         const tagNames = (dbItem.elemento_tags || [])
           .map((et: any) => et.tags?.nombre)
           .filter(Boolean);
@@ -431,9 +433,10 @@ export const dbClient = {
     }
   },
 
-  async getItemById(id: string, overrideUserId?: string): Promise<KymaItem | undefined> {
+  async getItemById(id: string, overrideUserId?: string, customClient?: any): Promise<KymaItem | undefined> {
+    const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('elementos')
       .select(`
         *,
@@ -458,7 +461,8 @@ export const dbClient = {
     return mapDbToKymaItem(data, tagNames);
   },
 
-  async createItem(item: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>, overrideUserId?: string): Promise<KymaItem> {
+  async createItem(item: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
+    const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
     
     // 1. Map to DB fields
@@ -466,7 +470,7 @@ export const dbClient = {
     dbItemFields.user_id = userId;
     
     // 2. Insert into elementos
-    const { data: createdDbItem, error: insertError } = await supabase
+    const { data: createdDbItem, error: insertError } = await sb
       .from('elementos')
       .insert(dbItemFields)
       .select()
@@ -495,22 +499,23 @@ export const dbClient = {
     if (item.content && (!item.tags || item.tags.length === 0)) {
       const mentioned = item.content.match(/#[a-zA-Z0-9-]+/g);
       if (mentioned) {
-        tagsToLink = Array.from(new Set([...tagsToLink, ...mentioned.map(t => t.toLowerCase())]));
+        tagsToLink = Array.from(new Set([...tagsToLink, ...mentioned.map((t: string) => t.toLowerCase())]));
       }
     }
     
     if (tagsToLink.length > 0) {
-      await this.syncElementTags(createdDbItem.id, userId, tagsToLink);
+      await this.syncElementTags(createdDbItem.id, userId, tagsToLink, sb);
     }
     
     return mapDbToKymaItem(createdDbItem, tagsToLink);
   },
 
-  async updateItem(id: string, updates: Partial<Omit<KymaItem, 'id' | 'userId'>>, overrideUserId?: string): Promise<KymaItem> {
+  async updateItem(id: string, updates: Partial<Omit<KymaItem, 'id' | 'userId'>>, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
+    const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
     
     // 1. Fetch current element
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing, error: fetchError } = await sb
       .from('elementos')
       .select(`
         *,
@@ -558,7 +563,7 @@ export const dbClient = {
     dbItemFields.updated_at = new Date().toISOString();
     
     // 4. Update element
-    const { data: updatedDbItem, error: updateError } = await supabase
+    const { data: updatedDbItem, error: updateError } = await sb
       .from('elementos')
       .update(dbItemFields)
       .eq('id', id)
@@ -571,7 +576,7 @@ export const dbClient = {
     
     // 5. Sync tags
     if (finalTags !== undefined) {
-      await this.syncElementTags(id, userId, finalTags);
+      await this.syncElementTags(id, userId, finalTags, sb);
     } else {
       finalTags = currentTags;
     }
@@ -579,9 +584,10 @@ export const dbClient = {
     return mapDbToKymaItem(updatedDbItem, finalTags);
   },
 
-  async deleteItem(id: string, overrideUserId?: string): Promise<void> {
+  async deleteItem(id: string, overrideUserId?: string, customClient?: any): Promise<void> {
+    const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
-    const { error } = await supabase
+    const { error } = await sb
       .from('elementos')
       .delete()
       .eq('user_id', userId)
@@ -592,12 +598,12 @@ export const dbClient = {
     }
   },
 
-  async confirmItem(id: string, overrideUserId?: string): Promise<KymaItem> {
-    return this.updateItem(id, { origen: 'kyma_confirmado' }, overrideUserId);
+  async confirmItem(id: string, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
+    return this.updateItem(id, { origen: 'kyma_confirmado' }, overrideUserId, customClient);
   },
 
-  async discardItem(id: string, overrideUserId?: string): Promise<void> {
-    return this.deleteItem(id, overrideUserId);
+  async discardItem(id: string, overrideUserId?: string, customClient?: any): Promise<void> {
+    return this.deleteItem(id, overrideUserId, customClient);
   },
 
   // Messages API

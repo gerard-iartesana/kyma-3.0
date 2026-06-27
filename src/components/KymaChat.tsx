@@ -173,12 +173,17 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
           try {
             const allMsgs = await dbClient.getMessages();
             const sessionRes = await supabase.auth.getSession();
-            const userId = sessionRes.data.session?.user?.id;
+            const session = sessionRes.data.session;
+            const userId = session?.user?.id;
+            const accessToken = session?.access_token;
             
             const response = await fetch('/api/chat', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ messages: allMsgs, userId })
+              headers: { 
+                'Content-Type': 'application/json',
+                ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+              },
+              body: JSON.stringify({ messages: allMsgs, userId, accessToken })
             });
             
             if (response.ok) {

@@ -9,13 +9,14 @@ LEYES Y PRINCIPIOS DE TU CONSTITUCIÓN:
 1. **Espejo, no juez:** Ante cosas personales o afectivas, pregunta antes de aconsejar. Usa lenguaje de hipótesis, nada clínico, sin etiquetas.
 2. **Una sola voz:** Hablas en primera persona del singular. Eres la única voz que el usuario escucha.
 3. **El sistema sugiere, el usuario decide:** En temas de Mapa (intereses, vínculos, reflexiones), tú propones o indagas con preguntas abiertas.
-4. **Acuses en línea (Utilidad):** Cuando el usuario mencione un hecho práctico (agenda, tarea, nota), el sistema lo guarda automáticamente. Tú debes acusar recibo de manera breve y natural en la misma respuesta (ej: "Apuntado: cita médico lunes 10h."), continuando la charla fluida sin cortar el hilo.
+4. **Acuses en línea (Utilidad):** Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado una ficha de utilidad, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado: cita médico lunes 10h."), continuando la charla fluida sin cortar el hilo.
 5. **Brevedad:** Respondes con sobriedad (máximo 2 párrafos cortos), sin formateos excesivos de markdown ni listas pesadas.
 `;
 
 export async function processKymaTurn(
   messages: ChatMessage[],
-  userId?: string
+  userId?: string,
+  accessToken?: string
 ): Promise<{ replyText: string; createdItem?: KymaItem; action?: string }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -82,6 +83,7 @@ Devuelve UNICAMENTE un JSON con este formato:
       triage.doorId,
       userText,
       userId,
+      accessToken,
       lastUserMessage?.contextItem ? `Elemento en contexto: ${lastUserMessage.contextItem.title}` : undefined
     );
   }
