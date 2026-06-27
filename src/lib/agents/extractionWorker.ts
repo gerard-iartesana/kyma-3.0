@@ -143,7 +143,8 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) return { action: 'none' };
 
-    const result: ExtractionResult = JSON.parse(rawText);
+    const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const result: ExtractionResult = JSON.parse(cleanJson);
 
     if (result.action === 'none' || !result.extractedData) {
       return { action: 'none' };
@@ -152,6 +153,20 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     // Determine origen based on category
     const origen = pkg.category === 'utilidad' ? 'kyma_confirmado' : 'kyma_sugerido';
     const calculatedFreq = getFrequencyScore(result.extractedData.frecuenciaContacto) ?? result.extractedData.frecuencia;
+
+    // Fallback for year and peso in estela
+    let extractedYear = result.extractedData.year;
+    if (doorId === 'estela' && !extractedYear) {
+      const yearMatch = userMessage.match(/\b(19\d\d|20[0-2]\d)\b/);
+      if (yearMatch) {
+        extractedYear = parseInt(yearMatch[1]);
+      }
+    }
+
+    let extractedPeso = result.extractedData.peso || 1;
+    if (doorId === 'estela' && /importante|hito|crucial|mundial|marcó/i.test(userMessage)) {
+      extractedPeso = 3;
+    }
 
     if (result.action === 'enrich' && result.targetItemId) {
       const existing = existingItems.find(i => i.id === result.targetItemId);
@@ -165,11 +180,11 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           content: updatedContent,
           eventDate: result.extractedData.eventDate || existing.eventDate,
           eventTime: result.extractedData.eventTime || existing.eventTime,
-          peso: result.extractedData.peso || existing.peso,
+          peso: extractedPeso || existing.peso,
           completed: result.extractedData.completed !== undefined ? result.extractedData.completed : existing.completed,
           cercania: result.extractedData.cercania || existing.cercania,
           frecuencia: calculatedFreq !== undefined ? calculatedFreq : existing.frecuencia,
-          year: result.extractedData.year || existing.year,
+          year: extractedYear || existing.year,
           dateStr: result.extractedData.dateStr || existing.dateStr,
           lugar: result.extractedData.lugar || existing.lugar,
           tags: mergedTags,
@@ -186,16 +201,16 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     const newItem = await dbClient.createItem({
       doorId,
-      title: result.extractedData.title || 'Nueva ficha',
-      content: result.extractedData.content || '',
-      peso: result.extractedData.peso || 1,
+      title: result.extractedData.title || (doorId === 'estela' ? 'Recuerdo especial' : 'Nueva ficha'),
+      content: result.extractedData.content || userMessage,
+      peso: extractedPeso,
       tags: initialTags.length > 0 ? initialTags : [`#${doorId}`],
       eventDate,
       eventTime: result.extractedData.eventTime,
       completed: result.extractedData.completed,
       cercania: result.extractedData.cercania || (doorId === 'personas' ? 'orbita' : undefined),
       frecuencia: calculatedFreq !== undefined ? calculatedFreq : (doorId === 'personas' ? 50 : undefined),
-      year: result.extractedData.year,
+      year: extractedYear,
       dateStr: result.extractedData.dateStr,
       lugar: result.extractedData.lugar,
       origen

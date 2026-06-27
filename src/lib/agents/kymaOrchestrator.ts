@@ -81,11 +81,19 @@ Devuelve UNICAMENTE un JSON con este formato:
         const triageData = await triageRes.json();
         const rawTriage = triageData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawTriage) {
-          triage = JSON.parse(rawTriage);
+          const cleanJson = rawTriage.replace(/```json/gi, '').replace(/```/g, '').trim();
+          triage = JSON.parse(cleanJson);
         }
       }
     } catch (e) {
       console.error('Error en triage:', e);
+    }
+
+    // Deterministic override for memories, past years, and life milestones
+    const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
+    const memoryKeywords = /acordaba|acuerdo|recuerdo|infancia|juventud|momento de mi vida|hito|viaje a|en mi vida|mundial/i;
+    if (pastYearMatch || memoryKeywords.test(userText)) {
+      triage = { isFicheable: true, category: 'mapa', doorId: 'estela', confidence: 0.95 };
     }
   }
 
