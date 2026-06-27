@@ -924,7 +924,7 @@ export default function Home() {
                 )}
 
                 {/* Simplified/Compact View Toggle Button */}
-                {!isVelado && selectedDoorId !== 'configuracion' &&
+                {!isVelado && !['configuracion', 'ayuda'].includes(selectedDoorId || '') &&
                  (selectedDoorId !== 'estela' || estelaViewMode === 'grid') &&
                  (!selectedDoorId || 
                   (selectedDoorId !== 'personas' || personasViewMode === 'grid') && 
@@ -950,7 +950,7 @@ export default function Home() {
                   </button>
                 )}
 
-                {currentDoor?.category === 'utility' && selectedDoorId !== 'configuracion' && !showAddForm && (
+                {currentDoor?.category === 'utility' && !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && !showAddForm && (
                   <button 
                     className="btn btn-primary" 
                     onClick={() => setShowAddForm(true)}
