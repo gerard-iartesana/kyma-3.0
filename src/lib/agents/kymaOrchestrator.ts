@@ -19,7 +19,8 @@ PRINCIPIOS FUNDAMENTALES:
 export async function processKymaTurn(
   messages: ChatMessage[],
   userId?: string,
-  accessToken?: string
+  accessToken?: string,
+  userProfile?: { nombre?: string; edad?: string; lugarResidencia?: string; idioma?: string }
 ): Promise<{ replyText: string; createdItem?: KymaItem; action?: string }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -186,8 +187,19 @@ Devuelve UNICAMENTE un JSON con este formato:
     }
   }
 
+  const userName = userProfile?.nombre || 'Usuario';
+  const userAge = userProfile?.edad || 'No especificada';
+  const userResidence = userProfile?.lugarResidencia || 'No especificado';
+  const userLang = userProfile?.idioma || 'Español';
+
   const userContextInstruction = `
-\n\n[INFORMACIÓN DEL ESPACIO Y AGENDA DEL USUARIO]:
+\n\n[DATOS DE CONTEXTO PERSONAL DEL USUARIO]:
+NOMBRE DEL USUARIO: ${userName} (Dirígete a él de forma cercana y natural llamándolo por su nombre cuando corresponda).
+EDAD: ${userAge}
+LUGAR DE RESIDENCIA: ${userResidence}
+IDIOMA PREFERIDO: ${userLang}
+
+[INFORMACIÓN DEL ESPACIO Y AGENDA DEL USUARIO]:
 FECHA DE HOY: ${todayStr} (${now.toLocaleDateString('es-ES', { weekday: 'long' })})
 FECHA DE MAÑANA: ${tomorrowStr} (${tomorrow.toLocaleDateString('es-ES', { weekday: 'long' })})
 

@@ -236,13 +236,21 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
             const userId = session?.user?.id;
             const accessToken = session?.access_token;
             
+            let userProfile = undefined;
+            if (typeof window !== 'undefined') {
+              const savedProf = localStorage.getItem('kyma_user_profile');
+              if (savedProf) {
+                try { userProfile = JSON.parse(savedProf); } catch (e) {}
+              }
+            }
+
             const response = await fetch('/api/chat', {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
                 ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
               },
-              body: JSON.stringify({ messages: allMsgs, userId, accessToken })
+              body: JSON.stringify({ messages: allMsgs, userId, accessToken, userProfile })
             });
             
             if (response.ok) {

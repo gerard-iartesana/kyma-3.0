@@ -6,14 +6,14 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization');
     const headerToken = authHeader ? authHeader.replace('Bearer ', '') : undefined;
 
-    const { messages, userId, accessToken: bodyToken } = await request.json();
+    const { messages, userId, accessToken: bodyToken, userProfile } = await request.json();
     const accessToken = headerToken || bodyToken;
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ text: 'Hola. ¿De qué te apetece conversar hoy?' });
     }
 
-    const result = await processKymaTurn(messages, userId, accessToken);
+    const result = await processKymaTurn(messages, userId, accessToken, userProfile);
 
     return NextResponse.json({
       text: result.replyText,
