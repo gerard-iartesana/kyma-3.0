@@ -548,17 +548,17 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
 
         .message-text {
-          font-size: 0.95rem;
-          line-height: 1.5;
+          font-size: 0.95rem !important;
+          line-height: 1.5 !important;
           margin: 0;
           white-space: pre-wrap;
           word-break: break-word;
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 768px) {
           .message-text {
-            font-size: 1.18rem;
-            line-height: 1.38;
+            font-size: 1.06rem !important;
+            line-height: 1.5 !important;
           }
         }
 
