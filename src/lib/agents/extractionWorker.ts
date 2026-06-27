@@ -111,11 +111,20 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     if (result.action === 'enrich' && result.targetItemId) {
       const existing = existingItems.find(i => i.id === result.targetItemId);
       if (existing) {
-        const updatedContent = `${existing.content}\n\n[Actualización]: ${result.extractedData.content}`;
+        let updatedContent = existing.content;
+        if (result.extractedData.content && !existing.content.includes(result.extractedData.content)) {
+          updatedContent = existing.content ? `${existing.content}. ${result.extractedData.content}` : result.extractedData.content;
+        }
         const mergedTags = Array.from(new Set([...(existing.tags || []), ...(result.extractedData.tags || [])]));
         
         const updatedItem = await dbClient.updateItem(existing.id, {
+          title: (result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title,
           content: updatedContent,
+          eventDate: result.extractedData.eventDate || existing.eventDate,
+          eventTime: result.extractedData.eventTime || existing.eventTime,
+          peso: result.extractedData.peso || existing.peso,
+          completed: result.extractedData.completed !== undefined ? result.extractedData.completed : existing.completed,
+          cercania: result.extractedData.cercania || existing.cercania,
           tags: mergedTags,
           origen
         }, userId, sbClient);
