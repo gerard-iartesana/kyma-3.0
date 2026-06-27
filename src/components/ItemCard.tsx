@@ -147,38 +147,49 @@ export function ItemCard({
         );
       case 'estela':
         return (
-          <div className="estela-badge-box" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(139, 92, 246, 0.12)',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
-            borderRadius: '8px',
-            padding: '6px 12px',
-            gap: '2px',
-            minWidth: '72px',
-            flexShrink: 0
-          }}>
-            <span style={{
-              fontSize: '0.92rem',
-              fontWeight: 700,
-              color: '#c084fc',
-              letterSpacing: '0.04em',
-              whiteSpace: 'nowrap'
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            {item.peso === 3 && (
+              <Star 
+                size={16} 
+                color="var(--accent-purple)" 
+                fill="none"
+                style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }} 
+              />
+            )}
+            <div className="agenda-badge-box" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(0, 0, 0, 0.35)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              padding: '6px 11px',
+              gap: '2px',
+              minWidth: '68px',
+              flexShrink: 0
             }}>
-              {item.year || (item.eventDate ? item.eventDate.split('-')[0] : 'Hito')}
-            </span>
-            {item.dateStr && (
               <span style={{
-                fontSize: '0.68rem',
-                color: 'var(--text-secondary, #94a3b8)',
-                fontWeight: 500,
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                color: '#ffffff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.02em',
                 whiteSpace: 'nowrap'
               }}>
-                {item.dateStr}
+                {item.dateStr ? item.dateStr.toUpperCase() : (item.year || 'HITO')}
               </span>
-            )}
+              {item.dateStr && item.year && (
+                <span style={{
+                  fontSize: '0.68rem',
+                  color: '#8a8a93',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap'
+                }}>
+                  {item.year}
+                </span>
+              )}
+            </div>
           </div>
         );
       default:
@@ -195,10 +206,10 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' && item.doorId !== 'estela' ? 'card-tentative' : ''}`}
       onClick={() => onClick(item)}
     >
-      {item.origen === 'kyma_sugerido' && (
+      {item.origen === 'kyma_sugerido' && item.doorId !== 'estela' && (
         <div 
           className="tentative-banner" 
           onClick={(e) => e.stopPropagation()}
@@ -252,14 +263,6 @@ export function ItemCard({
                 <Square size={18} className="text-muted" />
               )}
             </button>
-          )}
-          {item.doorId === 'estela' && item.peso === 3 && (
-            <Star 
-              size={16} 
-              color="var(--accent-purple)" 
-              fill="none"
-              style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0, marginTop: '3px' }} 
-            />
           )}
           <h3 className={`card-title ${item.completed ? 'title-completed' : ''}`}>
             {item.title}
