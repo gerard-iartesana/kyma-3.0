@@ -51,9 +51,17 @@ export const DOOR_MODULES: DoorModule[] = [
   {
     id: 'reflexiones',
     title: 'Reflexiones',
-    icon: 'Activity', // Or mirror/user style icon
+    icon: 'Lightbulb',
     category: 'map',
     description: 'Diario interior y conversaciones socráticas profundas.',
     emptyPromise: 'Esta puerta está velada. Cuando converses con Kyma en modo espejo para examinar una idea, tus aprendizajes e introspecciones se guardarán en este lienzo de autodescubrimiento.'
+  },
+  {
+    id: 'estela',
+    title: 'Estela de vida',
+    icon: 'Activity',
+    category: 'map',
+    description: 'Línea de tiempo de hitos históricos, recuerdos y momentos que han marcado tu vida.',
+    emptyPromise: 'Esta puerta está velada. Cuéntale a Kyma tus recuerdos más significativos, viajes o momentos del pasado para construir gradualmente tu línea de tiempo vital aquí.'
   }
 ];

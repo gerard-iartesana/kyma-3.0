@@ -34,6 +34,9 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
   const [cercania, setCercania] = useState<'nucleo' | 'cercana' | 'orbita'>(item.cercania || 'orbita');
   const [frecuencia, setFrecuencia] = useState(() => snapFrequency(item.frecuencia));
   const [eventTime, setEventTime] = useState(item.eventTime || '');
+  const [year, setYear] = useState<number>(item.year || (item.eventDate ? parseInt(item.eventDate.split('-')[0]) : 2026));
+  const [dateStr, setDateStr] = useState(item.dateStr || '');
+  const [lugar, setLugar] = useState(item.lugar || '');
 
   // Sync state if item changes
   useEffect(() => {
@@ -46,6 +49,9 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
     setCercania(item.cercania || 'orbita');
     setFrecuencia(snapFrequency(item.frecuencia));
     setEventTime(item.eventTime || '');
+    setYear(item.year || (item.eventDate ? parseInt(item.eventDate.split('-')[0]) : 2026));
+    setDateStr(item.dateStr || '');
+    setLugar(item.lugar || '');
   }, [item]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -70,7 +76,10 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
         eventDate: item.doorId === 'agenda' ? eventDate : undefined,
         eventTime: item.doorId === 'agenda' ? eventTime : undefined,
         cercania: item.doorId === 'personas' ? cercania : undefined,
-        frecuencia: item.doorId === 'personas' ? frecuencia : undefined
+        frecuencia: item.doorId === 'personas' ? frecuencia : undefined,
+        year: item.doorId === 'estela' ? year : undefined,
+        dateStr: item.doorId === 'estela' ? dateStr : undefined,
+        lugar: item.doorId === 'estela' ? lugar : undefined
       };
 
       // If person is edited, adjust weight based on closeness
@@ -271,6 +280,41 @@ ${content}
                     <option value="25">Anual (25%)</option>
                     <option value="0">Nada (0%)</option>
                   </select>
+                </div>
+              </>
+            )}
+
+            {item.doorId === 'estela' && (
+              <>
+                <div className="form-group flex-1">
+                  <label className="form-label">Año del Hito</label>
+                  <input 
+                    type="number" 
+                    className="input-field" 
+                    value={year} 
+                    onChange={e => setYear(Number(e.target.value))}
+                    required
+                  />
+                </div>
+                <div className="form-group flex-1">
+                  <label className="form-label">Fecha / Época</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="ej: 14 de Mayo, Verano"
+                    value={dateStr} 
+                    onChange={e => setDateStr(e.target.value)}
+                  />
+                </div>
+                <div className="form-group flex-1">
+                  <label className="form-label">Lugar</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="ej: París, Francia"
+                    value={lugar} 
+                    onChange={e => setLugar(e.target.value)}
+                  />
                 </div>
               </>
             )}

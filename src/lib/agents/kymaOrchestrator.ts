@@ -47,7 +47,7 @@ export async function processKymaTurn(
     const triagePrompt = `
 Analiza la siguiente frase del usuario dentro del contexto reciente y determina si contiene información que deba guardarse o actualizarse en una de las 6 puertas del sistema.
 Puertas de UTILIDAD: agenda (fechas/citas/cambios de hora), tareas (acciones pendientes), notas (ideas/apuntes/números de teléfono).
-Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos/filosóficos).
+Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos), estela (hitos históricos del pasado/recuerdos/línea de tiempo).
 
 HISTORIAL RECIENTE CONVERSACIONAL:
 ${recentMsgs}
@@ -60,7 +60,7 @@ Devuelve UNICAMENTE un JSON con este formato:
 {
   "isFicheable": boolean,
   "category": "utilidad" | "mapa",
-  "doorId": "agenda" | "tareas" | "notas" | "intereses" | "personas" | "reflexiones",
+  "doorId": "agenda" | "tareas" | "notas" | "intereses" | "personas" | "reflexiones" | "estela",
   "confidence": number (0 a 1)
 }
 `;

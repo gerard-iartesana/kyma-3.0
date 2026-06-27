@@ -3,18 +3,21 @@ import { supabase } from '../supabase';
 export interface KymaItem {
   id: string;
   userId: string;
-  doorId: 'agenda' | 'tareas' | 'notas' | 'intereses' | 'personas' | 'reflexiones';
+  doorId: 'agenda' | 'tareas' | 'notas' | 'intereses' | 'personas' | 'reflexiones' | 'estela';
   title: string;
   content: string;
   createdAt: string;
   tags: string[];
-  peso: 1 | 2 | 3; // 1: Normal/Orbita/Curiosidad, 2: Destacado/Cercana, 3: Urgente/Nucleo/Pasion
+  peso: 1 | 2 | 3; // 1: Normal/Orbita/Curiosidad, 2: Destacado/Cercana, 3: Urgente/Nucleo/Pasion/Hito Vital
   origen?: 'manual' | 'kyma_sugerido' | 'kyma_confirmado';
   completed?: boolean; // Specific to tareas
   eventDate?: string; // Specific to agenda
   eventTime?: string; // Specific to agenda (HH:MM)
   cercania?: 'nucleo' | 'cercana' | 'orbita'; // Specific to personas
   frecuencia?: number; // Specific to personas (0-100)
+  year?: number; // Specific to estela (e.g. 2018)
+  dateStr?: string; // Specific to estela (e.g. "14 de Mayo" or "Verano")
+  lugar?: string; // Specific to estela (e.g. "París, Francia")
 }
 
 export interface ChatMessage {
@@ -208,6 +211,29 @@ const SEED_ITEMS: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>[] = [
     tags: ['#reflexiones', '#filosofia'],
     peso: 2,
     origen: 'manual'
+  },
+  // Estela de vida
+  {
+    doorId: 'estela',
+    title: 'Viaje a Japón e hito vital',
+    content: 'Un viaje que cambió mi perspectiva sobre la calma, el respeto y la artesanía. Recorrí Tokio, Kioto y los templos de Nara.',
+    year: 2018,
+    dateStr: 'Verano',
+    lugar: 'Japón',
+    tags: ['#estela', '#viaje', '#japon', '#hito'],
+    peso: 3,
+    origen: 'manual'
+  },
+  {
+    doorId: 'estela',
+    title: 'Graduación Universitaria',
+    content: 'Finalización de mis estudios tras años de esfuerzo y entrega. Celebración con mi familia y amigos cercanos.',
+    year: 2021,
+    dateStr: '15 de Junio',
+    lugar: 'Madrid, España',
+    tags: ['#estela', '#graduacion', '#madrid'],
+    peso: 2,
+    origen: 'manual'
   }
 ];
 
@@ -238,7 +264,8 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
     nota: 'notas',
     interes: 'intereses',
     vinculo: 'personas',
-    reflexion: 'reflexiones'
+    reflexion: 'reflexiones',
+    estela: 'estela'
   };
 
   const doorId = doorIdMap[dbItem.tipo] || 'notas';
@@ -264,6 +291,10 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
   } else if (doorId === 'personas') {
     item.cercania = datos.cercania || 'orbita';
     item.frecuencia = typeof datos.frecuencia_score === 'number' ? datos.frecuencia_score : 50;
+  } else if (doorId === 'estela') {
+    item.year = typeof datos.year === 'number' ? datos.year : (datos.fecha ? parseInt(datos.fecha.split('-')[0]) : undefined);
+    item.dateStr = datos.dateStr || datos.fecha_redactada || '';
+    item.lugar = datos.lugar || '';
   }
 
   return item;
@@ -285,7 +316,8 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
       notas: 'nota',
       intereses: 'interes',
       personas: 'vinculo',
-      reflexiones: 'reflexion'
+      reflexiones: 'reflexion',
+      estela: 'estela'
     };
     dbItem.tipo = tipoMap[item.doorId];
   }
@@ -296,6 +328,9 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   if (item.eventTime !== undefined) datos.hora = item.eventTime;
   if (item.cercania !== undefined) datos.cercania = item.cercania;
   if (item.frecuencia !== undefined) datos.frecuencia_score = item.frecuencia;
+  if (item.year !== undefined) datos.year = item.year;
+  if (item.dateStr !== undefined) datos.dateStr = item.dateStr;
+  if (item.lugar !== undefined) datos.lugar = item.lugar;
   
   if (Object.keys(datos).length > 0) {
     dbItem.datos = datos;

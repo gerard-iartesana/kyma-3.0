@@ -1,6 +1,6 @@
 import React from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles } from 'lucide-react';
+import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface ItemCardProps {
@@ -145,6 +145,42 @@ export function ItemCard({
             )}
           </div>
         );
+      case 'estela':
+        return (
+          <div className="estela-badge-box" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(139, 92, 246, 0.12)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            gap: '2px',
+            minWidth: '72px',
+            flexShrink: 0
+          }}>
+            <span style={{
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              color: '#c084fc',
+              letterSpacing: '0.04em',
+              whiteSpace: 'nowrap'
+            }}>
+              {item.year || (item.eventDate ? item.eventDate.split('-')[0] : 'Hito')}
+            </span>
+            {item.dateStr && (
+              <span style={{
+                fontSize: '0.68rem',
+                color: 'var(--text-secondary, #94a3b8)',
+                fontWeight: 500,
+                whiteSpace: 'nowrap'
+              }}>
+                {item.dateStr}
+              </span>
+            )}
+          </div>
+        );
       default:
         return item.peso === 3 ? (
           <Star 
@@ -240,6 +276,25 @@ export function ItemCard({
         <p className={`card-content ${item.completed ? 'content-completed' : ''}`}>
           {item.content}
         </p>
+      )}
+
+      {!isCompact && item.doorId === 'estela' && item.lugar && (
+        <div className="estela-lugar-badge" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '5px',
+          fontSize: '0.76rem',
+          color: '#c084fc',
+          marginBottom: '10px',
+          background: 'rgba(139, 92, 246, 0.08)',
+          padding: '3px 9px',
+          borderRadius: '12px',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          width: 'fit-content'
+        }}>
+          <MapPin size={12} />
+          <span>{item.lugar}</span>
+        </div>
       )}
 
       {!isCompact && item.doorId === 'personas' && item.frecuencia !== undefined && (

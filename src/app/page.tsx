@@ -9,6 +9,7 @@ import { ItemDetailModal } from '../components/ItemDetailModal';
 import { OrbitsView } from '../components/OrbitsView';
 import { InterestsMapView } from '../components/InterestsMapView';
 import { CalendarView } from '../components/CalendarView';
+import { EstelaTimelineView } from '../components/EstelaTimelineView';
 import { KymaChat } from '../components/KymaChat';
 import * as Icons from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -957,6 +958,12 @@ export default function Home() {
                 <CalendarView 
                   items={filteredItems}
                   onItemClick={(item) => setSelectedItem(item)}
+                />
+              ) : selectedDoorId === 'estela' ? (
+                <EstelaTimelineView
+                  items={filteredItems}
+                  onItemClick={(item) => setSelectedItem(item)}
+                  onAskKyma={(item, e) => handleAskKyma(item, e)}
                 />
               ) : (
                 <div className={`grid-layout ${isCompactView ? 'compact-layout' : ''} animate-fade-in`}>

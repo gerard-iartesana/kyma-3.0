@@ -1,6 +1,6 @@
 import { KymaItem } from '../db/client';
 
-export type DoorId = 'agenda' | 'tareas' | 'notas' | 'intereses' | 'personas' | 'reflexiones';
+export type DoorId = 'agenda' | 'tareas' | 'notas' | 'intereses' | 'personas' | 'reflexiones' | 'estela';
 export type DoorCategory = 'utilidad' | 'mapa';
 
 export interface TriageResult {
@@ -21,6 +21,9 @@ export interface ExtractedItemData {
   cercania?: 'nucleo' | 'cercana' | 'orbita';
   frecuenciaContacto?: 'diario' | 'semanal' | 'mensual' | 'anual';
   frecuencia?: number;
+  year?: number;
+  dateStr?: string;
+  lugar?: string;
   tags?: string[];
 }
 

@@ -111,7 +111,10 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "eventTime": "HH:MM" (solo si es agenda),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
-    "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" (solo si es personas. Ej. si dice "cada día", "lo veo cada día" o "hablo a diario" usa "diario"),
+    "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" (solo si es personas),
+    "year": 2018 (número de 4 dígitos, solo si es estela),
+    "dateStr": "14 de Mayo" o "Verano" (solo si es estela),
+    "lugar": "París, Francia" (solo si es estela),
     "tags": ["#Agenda", "#Playa", "#Rafa", "#Son Bou", "#Ocio"]
   },
   "reasoning": "Breve justificación interna"
@@ -166,6 +169,9 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           completed: result.extractedData.completed !== undefined ? result.extractedData.completed : existing.completed,
           cercania: result.extractedData.cercania || existing.cercania,
           frecuencia: calculatedFreq !== undefined ? calculatedFreq : existing.frecuencia,
+          year: result.extractedData.year || existing.year,
+          dateStr: result.extractedData.dateStr || existing.dateStr,
+          lugar: result.extractedData.lugar || existing.lugar,
           tags: mergedTags,
           origen
         }, userId, sbClient);
@@ -189,6 +195,9 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       completed: result.extractedData.completed,
       cercania: result.extractedData.cercania || (doorId === 'personas' ? 'orbita' : undefined),
       frecuencia: calculatedFreq !== undefined ? calculatedFreq : (doorId === 'personas' ? 50 : undefined),
+      year: result.extractedData.year,
+      dateStr: result.extractedData.dateStr,
+      lugar: result.extractedData.lugar,
       origen
     }, userId, sbClient);
 

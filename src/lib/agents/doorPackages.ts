@@ -72,5 +72,19 @@ Extrae menciones de personas significativas. REDACTA EL CONTENIDO EN PRIMERA PER
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Reflexiones.
 Identifica pensamientos profundos redactados en primera persona del singular.`
+  },
+  estela: {
+    doorId: 'estela',
+    category: 'mapa',
+    guardrails: [
+      'Captura hitos históricos, recuerdos significativos, viajes o eventos del pasado que hayan marcado la vida del usuario para construir su línea de tiempo (timeline).',
+      'TÍTULOS CORTOS: Máximo 3-4 palabras sobre el recuerdo o hito (ej: "Viaje a Japón", "Graduación Universitaria", "Nacimiento de mi hija").',
+      'AÑO Y FECHA: Extrae siempre el año mencionado (ej. 2018) en "year" y la época o día específico ("Verano", "14 de Mayo", "Junio") en "dateStr".',
+      'LUGAR EXPLICITO: Si se menciona un lugar o ciudad (ej. "Japón", "Madrid", "París"), extraelo en "lugar".',
+      'HITO CRUCIAL / IMPACTANTE: Si el usuario expresa que fue un evento que marcó su vida o cambió su rumbo, asigna peso = 3 (destacado con estrella).',
+      'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: "Viajé a...", "Me gradué...", "Nació mi..."'
+    ],
+    systemInstruction: `Eres el trabajador de extracción para la puerta Estela de vida.
+Extrae recuerdos e hitos históricos del pasado para construir un timeline vital. Extrae año, fecha/estación, lugar y peso=3 si fue un momento crucial que marcó su vida.`
   }
 };
