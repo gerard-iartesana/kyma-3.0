@@ -617,35 +617,12 @@ export default function Home() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sidebar-action-bar" style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            width: '100%',
-            padding: '6px',
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '14px',
-            gap: '6px'
-          }}>
+          <div className="sidebar-action-bar">
             <button 
               type="button"
               className={`sidebar-footer-action-btn ${selectedDoorId === 'configuracion' ? 'active' : ''}`}
               onClick={() => handleSelectDoor('configuracion')}
               title="Configuración y Contexto"
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '38px',
-                borderRadius: '10px',
-                border: selectedDoorId === 'configuracion' ? '1px solid var(--accent-purple)' : '1px solid transparent',
-                background: selectedDoorId === 'configuracion' ? 'rgba(139, 92, 246, 0.18)' : 'transparent',
-                color: selectedDoorId === 'configuracion' ? '#ffffff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
             >
               <Icons.Settings size={18} />
             </button>
@@ -655,19 +632,6 @@ export default function Home() {
               className={`sidebar-footer-action-btn ${selectedDoorId === 'busqueda' ? 'active' : ''}`}
               onClick={() => handleSelectDoor('busqueda')}
               title="Búsqueda Global"
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '38px',
-                borderRadius: '10px',
-                border: selectedDoorId === 'busqueda' ? '1px solid var(--accent-purple)' : '1px solid transparent',
-                background: selectedDoorId === 'busqueda' ? 'rgba(139, 92, 246, 0.18)' : 'transparent',
-                color: selectedDoorId === 'busqueda' ? '#ffffff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
             >
               <Icons.Search size={18} />
             </button>
@@ -677,19 +641,6 @@ export default function Home() {
               className={`sidebar-footer-action-btn ${selectedDoorId === 'ayuda' ? 'active' : ''}`}
               onClick={() => handleSelectDoor('ayuda')}
               title="Ayuda y Consejos de Uso"
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '38px',
-                borderRadius: '10px',
-                border: selectedDoorId === 'ayuda' ? '1px solid var(--accent-purple)' : '1px solid transparent',
-                background: selectedDoorId === 'ayuda' ? 'rgba(139, 92, 246, 0.18)' : 'transparent',
-                color: selectedDoorId === 'ayuda' ? '#ffffff' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
             >
               <Icons.HelpCircle size={18} />
             </button>
@@ -1685,9 +1636,37 @@ export default function Home() {
         /* Sidebar Footer and Settings styling */
         .sidebar-footer {
           width: 100%;
-          border-top: 1px solid var(--border-subtle);
-          padding-top: 16px;
+          border-top: none;
+          padding-top: 8px;
           margin-top: auto;
+        }
+        .sidebar-action-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          width: 100%;
+          gap: 4px;
+        }
+        .sidebar-footer-action-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 38px;
+          border-radius: 10px;
+          border: none;
+          background: transparent;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .sidebar-footer-action-btn:hover {
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .sidebar-footer-action-btn.active {
+          color: #ffffff;
+          background: rgba(139, 92, 246, 0.18);
         }
         .user-profile-btn {
           display: flex;
