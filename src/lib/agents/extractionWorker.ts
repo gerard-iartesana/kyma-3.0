@@ -60,10 +60,10 @@ MENSAJE O CONTEXTO DEL USUARIO:
 "${userMessage}"
 ${contextSnippet ? `Contexto adicional: "${contextSnippet}"` : ''}
 
-REGLAS DE REESCRITURA Y ENRIQUECIMIENTO (cuando action = "enrich"):
-1. "title": Actualiza el título si hay más precisión (ej. de "Torneo" a "Torneo de Pádel con Alejandro").
-2. "content": NUNCA CONCATENES FRASES REPETIDAS. Redacta de cero una descripción limpia, coherente y sintética que integre la información previa y los nuevos datos.
-3. "tags": Extrae OBLIGATORIAMENTE todas las etiquetas temáticas relevantes (ej. nombres de personas como "#alejandro", tipo de deporte/actividad como "#padel", lugares, etc.) empezando siempre con '#'.
+REGLAS DE FORMATO Y ENRIQUECIMIENTO (tanto para create como para enrich):
+1. "title": DEBE SER DIRECTO Y CORTO (máximo 3-4 palabras, ej: "Torneo de Pádel", "Cita Médica"). NUNCA incluyas personas, lugares ni horas en el título.
+2. "content": Redacta los detalles prácticos (con quién es, lugar o notas). PARA AGENDA: OMITE totalmente la fecha y la hora en la redacción del texto del contenido, ya que la fecha y la hora se guardan en sus campos dedicados (eventDate, eventTime). NUNCA repitas ni concatenes frases absurdas.
+3. "tags": Extrae OBLIGATORIAMENTE todas las etiquetas temáticas relevantes que identifiques (ej. deportes como "#padel", personas como "#alejandro", lugares como "#padelone", categorías como "#deporte") empezando siempre con '#'.
 
 REGLAS DE SALIDA:
 Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
@@ -71,14 +71,14 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
   "action": "create" | "enrich" | "none",
   "targetItemId": "ID del elemento existente a enriquecer si action es 'enrich'",
   "extractedData": {
-    "title": "Título claro y conciso",
-    "content": "Cuerpo o detalle estructurado sintetizado",
+    "title": "Título corto y directo (ej: 'Torneo de Pádel')",
+    "content": "Detalles del con quién y dónde sin incluir fechas ni horas (ej: 'Con Alejandro en PadelOne')",
     "peso": 1 | 2 | 3,
     "eventDate": "YYYY-MM-DD" (OBLIGATORIO si es agenda),
     "eventTime": "HH:MM" (solo si es agenda),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
-    "tags": ["#agenda", "#padel", "#alejandro"]
+    "tags": ["#agenda", "#deporte", "#padel", "#alejandro", "#padelone"]
   },
   "reasoning": "Breve justificación interna"
 }
