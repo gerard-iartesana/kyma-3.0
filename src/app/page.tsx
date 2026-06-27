@@ -2724,6 +2724,19 @@ export default function Home() {
           .chat-pane.mobile-visible {
             display: flex;
           }
+
+          /* Hide scrollbars on mobile views */
+          .content-pane, .chat-pane, .sidebar {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+          .content-pane::-webkit-scrollbar, 
+          .chat-pane::-webkit-scrollbar, 
+          .sidebar::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
         }
 
           /* Adjust headings */

@@ -513,6 +513,13 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           .messages-area {
             padding-top: calc(128px + env(safe-area-inset-top, 0px)) !important;
             padding-bottom: 24px !important;
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+          .messages-area::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
           }
         }
 
