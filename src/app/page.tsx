@@ -2687,17 +2687,18 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Active tab handling: Unified Mobile Layout for Browser & Standalone */
+          /* Active tab handling: Full-height underlay for translucent glass header scroll */
           .content-pane {
-            padding: 36px 16px 36px 16px !important;
-            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
+            padding: calc(84px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
+            margin-top: 0 !important;
+            height: 100dvh !important;
+            height: 100vh !important;
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
           }
           .door-view {
-            padding-top: 16px !important;
+            padding-top: 0 !important;
           }
           .content-pane.mobile-hidden {
             display: none;
@@ -2708,8 +2709,9 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
+            margin-top: 0 !important;
+            height: 100dvh !important;
+            height: 100vh !important;
             flex: 1;
             border-left: none;
             padding: 0 !important;
@@ -2721,23 +2723,6 @@ export default function Home() {
           }
           .chat-pane.mobile-visible {
             display: flex;
-          }
-        }
-
-        /* SPECIFIC PWA STANDALONE APP OVERRIDES */
-        @media all and (display-mode: standalone) and (max-width: 1024px) {
-          .sidebar, .sidebar.collapsed {
-            top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
-          }
-          .content-pane {
-            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
-            padding-top: 36px !important;
-          }
-          .chat-pane {
-            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
           }
         }
 
