@@ -253,6 +253,14 @@ export function ItemCard({
               )}
             </button>
           )}
+          {item.doorId === 'estela' && item.peso === 3 && (
+            <Star 
+              size={16} 
+              color="var(--accent-purple)" 
+              fill="none"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0, marginTop: '3px' }} 
+            />
+          )}
           <h3 className={`card-title ${item.completed ? 'title-completed' : ''}`}>
             {item.title}
           </h3>
@@ -342,10 +350,10 @@ export function ItemCard({
           <button 
             className="ask-kyma-btn btn"
             onClick={(e) => onAskKyma(item, e)}
-            title="Explorar con Kyma sobre esto"
+            title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
           >
             <LogoIcon size={13} className="kyma-btn-icon" />
-            <span>Explorar</span>
+            <span>{item.doorId === 'estela' ? 'Recordar' : 'Explorar'}</span>
           </button>
         </div>
       )}

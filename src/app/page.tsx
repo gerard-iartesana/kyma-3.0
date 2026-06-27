@@ -40,6 +40,9 @@ export default function Home() {
   // View mode for Intereses ('orbits' | 'grid')
   const [interesesViewMode, setInteresesViewMode] = useState<'orbits' | 'grid'>('grid');
 
+  // Sort direction for Estela de vida
+  const [estelaSortAsc, setEstelaSortAsc] = useState(false);
+
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -758,6 +761,28 @@ export default function Home() {
                   </div>
                 )}
 
+                {selectedDoorId === 'estela' && !isVelado && (
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => setEstelaSortAsc(!estelaSortAsc)}
+                    title={estelaSortAsc ? "Ordenar: Más antiguos primero" : "Ordenar: Más recientes primero"}
+                    style={{ 
+                      width: '38px', 
+                      height: '38px', 
+                      padding: 0, 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      marginRight: '6px',
+                      background: 'var(--bg-tertiary)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    {estelaSortAsc ? <Icons.ArrowUp size={16} /> : <Icons.ArrowDown size={16} />}
+                  </button>
+                )}
+
                 {/* Simplified/Compact View Toggle Button */}
                 {!isVelado && 
                  (!selectedDoorId || 
@@ -963,8 +988,10 @@ export default function Home() {
                 <EstelaTimelineView
                   items={filteredItems}
                   isCompact={isCompactView}
+                  sortAsc={estelaSortAsc}
                   onItemClick={(item) => setSelectedItem(item)}
                   onAskKyma={(item, e) => handleAskKyma(item, e)}
+                  onTagSelect={(tag) => setSelectedTag(tag)}
                 />
               ) : (
                 <div className={`grid-layout ${isCompactView ? 'compact-layout' : ''} animate-fade-in`}>
