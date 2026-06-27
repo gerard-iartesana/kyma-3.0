@@ -455,7 +455,9 @@ ${content}
         }
         .modal-content {
           width: 100%;
-          max-width: 600px;
+          max-width: 620px;
+          max-height: 86vh;
+          overflow-y: auto;
           border-radius: var(--border-radius-lg);
           padding: 28px;
           display: flex;
@@ -463,6 +465,18 @@ ${content}
           gap: 20px;
           border: 1px solid var(--border-focus);
           animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .modal-content::-webkit-scrollbar {
+          width: 6px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 4px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+          background: rgba(139, 92, 246, 0.3);
+          border-radius: 4px;
         }
 
         @keyframes modalSlide {
