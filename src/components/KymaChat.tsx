@@ -351,7 +351,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
   };
 
   return (
-    <div className="chat-container glass-panel">
+    <div className="chat-container">
       <button 
         type="button"
         className="clear-chat-floating-btn" 
@@ -463,17 +463,17 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           display: flex;
           flex-direction: column;
           height: 100%;
-          border-radius: var(--border-radius-lg);
+          border-radius: 0;
           overflow: hidden;
           position: relative;
-          background: var(--bg-surface);
-          border: 1px solid var(--border-subtle);
+          background: transparent;
+          border: none;
         }
 
         .clear-chat-floating-btn {
           position: absolute;
-          top: 14px;
-          right: 14px;
+          top: 0;
+          right: 0;
           z-index: 10;
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid var(--border-subtle);
@@ -495,7 +495,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         .messages-area {
           flex: 1;
           overflow-y: auto;
-          padding: 20px;
+          padding: 12px 4px 20px 4px;
           display: flex;
           flex-direction: column;
           gap: 16px;
@@ -658,11 +658,9 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         .chat-input-form {
           display: flex;
           gap: 10px;
-          padding: 16px 20px;
-          background: var(--bg-secondary);
+          padding: 16px 0 0 0;
+          background: transparent;
           border-top: 1px solid var(--border-subtle);
-          border-bottom-left-radius: var(--border-radius-lg);
-          border-bottom-right-radius: var(--border-radius-lg);
         }
         .chat-input {
           flex: 1;

@@ -2167,7 +2167,8 @@ export default function Home() {
         .chat-pane {
           width: 400px;
           height: 100%;
-          padding: 24px 16px;
+          padding: 24px 20px 24px 16px;
+          border-left: 1px solid var(--border-subtle);
           flex-shrink: 0;
           display: flex;
           flex-direction: column;
