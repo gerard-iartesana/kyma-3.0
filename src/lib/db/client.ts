@@ -18,6 +18,7 @@ export interface KymaItem {
   year?: number; // Specific to estela (e.g. 2018)
   dateStr?: string; // Specific to estela (e.g. "14 de Mayo" or "Verano")
   lugar?: string; // Specific to estela (e.g. "París, Francia")
+  emocion?: 1 | 2 | 3 | 4 | 5; // Specific to estela (1: muy triste, 2: triste, 3: calma, 4: alegre, 5: muy alegre)
 }
 
 export interface ChatMessage {
@@ -298,6 +299,7 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
     item.year = typeof datos.year === 'number' ? datos.year : (datos.fecha ? parseInt(datos.fecha.split('-')[0]) : undefined);
     item.dateStr = datos.dateStr || datos.fecha_redactada || '';
     item.lugar = datos.lugar || '';
+    item.emocion = (typeof datos.emocion === 'number' ? datos.emocion : 4) as 1 | 2 | 3 | 4 | 5;
   }
 
   return item;
@@ -326,7 +328,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   }
 
   const datos: any = {};
-  if (item.doorId === 'estela' || item.year !== undefined || item.dateStr !== undefined || item.lugar !== undefined) {
+  if (item.doorId === 'estela' || item.year !== undefined || item.dateStr !== undefined || item.lugar !== undefined || item.emocion !== undefined) {
     datos.is_estela = true;
   }
   if (item.completed !== undefined) datos.hecha = item.completed;
@@ -337,6 +339,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   if (item.year !== undefined) datos.year = item.year;
   if (item.dateStr !== undefined) datos.dateStr = item.dateStr;
   if (item.lugar !== undefined) datos.lugar = item.lugar;
+  if (item.emocion !== undefined) datos.emocion = item.emocion;
   
   if (Object.keys(datos).length > 0) {
     dbItem.datos = datos;

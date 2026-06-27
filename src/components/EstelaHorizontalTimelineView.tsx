@@ -1,12 +1,34 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Star, Sparkles } from 'lucide-react';
+import { Star, Sparkles, MapPin, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface EstelaHorizontalTimelineViewProps {
   items: KymaItem[];
   sortAsc?: boolean;
   onItemClick: (item: KymaItem) => void;
 }
+
+const getEmotionColor = (emocion?: number): string => {
+  switch (emocion) {
+    case 1: return '#3b82f6'; // Muy triste (Azul frío)
+    case 2: return '#06b6d4'; // Triste (Cian)
+    case 3: return '#10b981'; // Calma (Verde)
+    case 4: return '#f59e0b'; // Alegre (Ámbar)
+    case 5: return '#ec4899'; // Muy alegre (Rosa/Magenta)
+    default: return '#f59e0b';
+  }
+};
+
+const getEmotionLabel = (emocion?: number): string => {
+  switch (emocion) {
+    case 1: return 'Muy triste';
+    case 2: return 'Triste';
+    case 3: return 'Calma';
+    case 4: return 'Alegre';
+    case 5: return 'Muy alegre';
+    default: return 'Alegre';
+  }
+};
 
 export function EstelaHorizontalTimelineView({ 
   items, 
@@ -24,6 +46,47 @@ export function EstelaHorizontalTimelineView({
     }
     return sortAsc ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt);
   });
+
+  // Pan & Zoom State
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hoveredItem, setHoveredItem] = useState<KymaItem | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Wheel zoom handler
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    setScale(prev => Math.min(Math.max(prev * zoomFactor, 0.4), 3.0));
+  };
+
+  // Mouse drag handlers for panning
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only drag if clicking on background or line (not interactive circles)
+    if ((e.target as HTMLElement).closest('.timeline-circle-node')) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const resetTransform = () => {
+    setScale(1);
+    setPan({ x: 0, y: 0 });
+  };
 
   if (estelaItems.length === 0) {
     return (
@@ -60,228 +123,405 @@ export function EstelaHorizontalTimelineView({
   }
 
   return (
-    <div className="horizontal-timeline-container animate-fade-in">
-      <div className="horizontal-timeline-scroll">
-        <div className="horizontal-timeline-track">
-          {/* Center horizontal line */}
-          <div className="timeline-center-line" />
+    <div className="interactive-timeline-viewport animate-fade-in">
+      {/* Zoom Controls Overlay */}
+      <div className="timeline-zoom-controls glass-panel">
+        <button 
+          className="zoom-btn" 
+          onClick={() => setScale(prev => Math.min(prev * 1.2, 3.0))} 
+          title="Acercar zoom"
+        >
+          <ZoomIn size={16} />
+        </button>
+        <button 
+          className="zoom-btn" 
+          onClick={() => setScale(prev => Math.max(prev * 0.8, 0.4))} 
+          title="Alejar zoom"
+        >
+          <ZoomOut size={16} />
+        </button>
+        <button 
+          className="zoom-btn" 
+          onClick={resetTransform} 
+          title="Restablecer vista"
+        >
+          <RotateCcw size={16} />
+        </button>
+        <span className="zoom-level-text">{Math.round(scale * 100)}%</span>
+      </div>
 
-          <div className="timeline-nodes-wrapper">
-            {sortedItems.map((item, index) => {
-              const isEven = index % 2 === 0; // Alternates UP (even) and DOWN (odd)
-              const displayYear = item.year || (item.eventDate ? item.eventDate.split('-')[0] : '');
-              const isMilestone = item.peso === 3;
+      {/* Main Pan/Zoom Canvas Area */}
+      <div 
+        ref={containerRef}
+        className={`timeline-canvas ${isDragging ? 'dragging' : ''}`}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <div 
+          className="timeline-transform-layer"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+            transformOrigin: 'center center',
+            transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)'
+          }}
+        >
+          <div className="timeline-graph-wrapper">
+            {/* Center Axis Line */}
+            <div className="horizontal-axis-line" />
 
-              return (
-                <div 
-                  key={item.id} 
-                  className={`timeline-node-item ${isEven ? 'node-up' : 'node-down'}`}
-                >
-                  {/* Card Bubble */}
+            {/* Nodes */}
+            <div className="timeline-nodes-sequence">
+              {sortedItems.map((item, index) => {
+                const isEven = index % 2 === 0; // Alternates UP (even) and DOWN (odd)
+                const displayYear = item.year || (item.eventDate ? item.eventDate.split('-')[0] : '');
+                const isMilestone = item.peso === 3;
+                const emotionColor = getEmotionColor(item.emocion);
+
+                return (
                   <div 
-                    className="timeline-bubble glass-panel"
-                    onClick={() => onItemClick(item)}
-                    title="Ver detalle del hito"
+                    key={item.id} 
+                    className={`timeline-node-column ${isEven ? 'column-up' : 'column-down'}`}
                   >
-                    <div className="bubble-content">
-                      {isMilestone && (
-                        <Star 
-                          size={15} 
-                          color="var(--accent-purple)" 
-                          fill="none" 
-                          style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }}
-                        />
-                      )}
-                      <span className="bubble-title">{item.title}</span>
+                    {/* Filled Circle with Stem Line */}
+                    <div className="stem-and-circle-group">
+                      <div 
+                        className="timeline-circle-node"
+                        style={{
+                          background: emotionColor,
+                          boxShadow: `0 0 16px ${emotionColor}aa, inset 0 0 4px rgba(255,255,255,0.6)`
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onItemClick(item);
+                        }}
+                        onMouseEnter={() => setHoveredItem(item)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                      >
+                        {isMilestone && (
+                          <Star size={14} color="#ffffff" fill="#ffffff" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
+                        )}
+                        
+                        {/* Tooltip on Hover */}
+                        {hoveredItem?.id === item.id && (
+                          <div className={`node-tooltip glass-panel ${isEven ? 'tooltip-above' : 'tooltip-below'}`}>
+                            <div className="tooltip-header">
+                              <span className="tooltip-title">{item.title}</span>
+                              {isMilestone && <Star size={12} color="#c084fc" fill="#c084fc" />}
+                            </div>
+                            <div className="tooltip-details">
+                              {displayYear && <span className="tooltip-year">{displayYear}</span>}
+                              {item.lugar && (
+                                <span className="tooltip-lugar">
+                                  <MapPin size={10} />
+                                  {item.lugar}
+                                </span>
+                              )}
+                              <span className="tooltip-emotion" style={{ color: emotionColor }}>
+                                {getEmotionLabel(item.emocion)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Vertical Stem Line connecting filled circle to horizontal axis */}
+                      <div 
+                        className="stem-line"
+                        style={{ background: `linear-gradient(${isEven ? '180deg' : '0deg'}, ${emotionColor}bb, rgba(139, 92, 246, 0.3))` }}
+                      />
                     </div>
-                    {displayYear && (
-                      <span className="bubble-year">{displayYear}</span>
-                    )}
-                  </div>
 
-                  {/* Vertical Connector Line */}
-                  <div className="connector-line" />
+                    {/* Small Dot on Horizontal Axis */}
+                    <div className="axis-anchor-dot" />
 
-                  {/* Dot on Center Axis */}
-                  <div className={`center-dot ${isMilestone ? 'milestone-dot' : ''}`}>
-                    <div className="dot-inner" />
+                    {/* Quick Year/Title Label near Axis */}
+                    <div className={`axis-label-box ${isEven ? 'label-below' : 'label-above'}`}>
+                      <span className="axis-year">{displayYear}</span>
+                      <span className="axis-title-preview">{item.title}</span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .horizontal-timeline-container {
-          width: 100%;
-          padding: 40px 0;
+        .interactive-timeline-viewport {
           position: relative;
-        }
-
-        .horizontal-timeline-scroll {
           width: 100%;
-          overflow-x: auto;
-          padding: 80px 20px;
-          scroll-behavior: smooth;
+          height: 520px;
+          background: rgba(10, 10, 14, 0.6);
+          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+          border-radius: 16px;
+          overflow: hidden;
+          user-select: none;
         }
 
-        .horizontal-timeline-scroll::-webkit-scrollbar {
-          height: 6px;
-        }
-        .horizontal-timeline-scroll::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.03);
-          border-radius: 4px;
-        }
-        .horizontal-timeline-scroll::-webkit-scrollbar-thumb {
-          background: rgba(139, 92, 246, 0.3);
-          border-radius: 4px;
-        }
-        .horizontal-timeline-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(139, 92, 246, 0.6);
+        .timeline-zoom-controls {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 20;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 20px;
+          background: rgba(20, 20, 28, 0.85);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .horizontal-timeline-track {
+        .zoom-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-muted, #a1a1aa);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 4px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+        }
+        .zoom-btn:hover {
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .zoom-level-text {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-muted, #94a3b8);
+          margin-left: 6px;
+          min-width: 36px;
+        }
+
+        .timeline-canvas {
+          width: 100%;
+          height: 100%;
+          cursor: grab;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .timeline-canvas.dragging {
+          cursor: grabbing;
+        }
+
+        .timeline-transform-layer {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 100px 200px;
+        }
+
+        .timeline-graph-wrapper {
           position: relative;
           min-width: max-content;
           display: flex;
           align-items: center;
-          padding: 0 40px;
         }
 
-        .timeline-center-line {
+        .horizontal-axis-line {
           position: absolute;
-          left: 0;
-          right: 0;
+          left: -100px;
+          right: -100px;
           top: 50%;
-          height: 3px;
-          background: linear-gradient(90deg, rgba(139, 92, 246, 0.2), rgba(192, 132, 252, 0.8), rgba(139, 92, 246, 0.2));
+          height: 4px;
+          background: linear-gradient(90deg, rgba(139,92,246,0.1), rgba(192,132,252,0.85), rgba(139,92,246,0.1));
           transform: translateY(-50%);
           z-index: 1;
-          box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+          box-shadow: 0 0 14px rgba(139, 92, 246, 0.5);
+          border-radius: 2px;
         }
 
-        .timeline-nodes-wrapper {
+        .timeline-nodes-sequence {
           display: flex;
-          gap: 60px;
+          gap: 140px;
           position: relative;
           z-index: 2;
+          padding: 0 60px;
         }
 
-        .timeline-node-item {
+        .timeline-node-column {
           display: flex;
           flex-direction: column;
-          alignItems: center;
+          align-items: center;
           position: relative;
-          width: 220px;
+          width: 40px;
         }
 
-        .node-up {
-          margin-bottom: 70px; /* Positions bubble above center line */
+        .column-up {
+          flex-direction: column-reverse;
+          padding-bottom: 2px;
         }
 
-        .node-down {
-          margin-top: 70px; /* Positions bubble below center line */
+        .column-down {
+          flex-direction: column;
+          padding-top: 2px;
+        }
+
+        .stem-and-circle-group {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+        }
+
+        .column-up .stem-and-circle-group {
+          flex-direction: column;
+        }
+
+        .column-down .stem-and-circle-group {
           flex-direction: column-reverse;
         }
 
-        .center-dot {
-          width: 16px;
-          height: 16px;
+        .stem-line {
+          width: 3px;
+          height: 90px;
+          border-radius: 2px;
+        }
+
+        .timeline-circle-node {
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
-          background: var(--bg-primary, #0f0f12);
-          border: 2px solid var(--accent-purple, #8b5cf6);
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+          position: relative;
+          z-index: 10;
+        }
+
+        .timeline-circle-node:hover {
+          transform: scale(1.35);
+          z-index: 30;
+        }
+
+        .axis-anchor-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 2px solid var(--accent-purple, #8b5cf6);
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          z-index: 3;
-          box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+          z-index: 5;
+          box-shadow: 0 0 8px rgba(255,255,255,0.8);
         }
 
-        .node-up .center-dot {
-          bottom: -78px;
-          top: auto;
-        }
-
-        .node-down .center-dot {
-          top: -78px;
-        }
-
-        .milestone-dot {
-          border-color: #c084fc;
-          box-shadow: 0 0 12px rgba(192, 132, 252, 0.9);
-          width: 20px;
-          height: 20px;
-        }
-        .node-up .milestone-dot { bottom: -80px; }
-        .node-down .milestone-dot { top: -80px; }
-
-        .dot-inner {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #c084fc;
-        }
-
-        .connector-line {
-          width: 2px;
-          height: 40px;
-          background: rgba(139, 92, 246, 0.4);
-        }
-
-        .timeline-bubble {
-          background: var(--bg-card, rgba(20, 20, 26, 0.75));
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
-          border-radius: 12px;
-          padding: 14px 18px;
-          cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          width: 100%;
+        .axis-label-box {
+          position: absolute;
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          backdrop-filter: blur(12px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .timeline-bubble:hover {
-          transform: translateY(-3px);
-          border-color: rgba(192, 132, 252, 0.5);
-          box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
-          background: rgba(25, 25, 34, 0.85);
-        }
-
-        .bubble-content {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          overflow: hidden;
-        }
-
-        .bubble-title {
-          font-size: 0.88rem;
-          font-weight: 600;
-          color: var(--text-primary, #ffffff);
           white-space: nowrap;
+          pointer-events: none;
+        }
+
+        .column-up .axis-label-box {
+          top: 18px;
+        }
+
+        .column-down .axis-label-box {
+          bottom: 18px;
+        }
+
+        .axis-year {
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #c084fc;
+          letterSpacing: 0.04em;
+        }
+
+        .axis-title-preview {
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: var(--text-secondary, #a1a1aa);
+          max-width: 120px;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
-        .bubble-year {
+        /* Tooltip Styling */
+        .node-tooltip {
+          position: absolute;
+          min-width: 180px;
+          max-width: 240px;
+          padding: 10px 14px;
+          border-radius: 12px;
+          background: rgba(18, 18, 26, 0.95);
+          border: 1px solid rgba(192, 132, 252, 0.4);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+          pointer-events: none;
+          z-index: 40;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .tooltip-above {
+          bottom: 42px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        .tooltip-below {
+          top: 42px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        .tooltip-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        .tooltip-title {
+          font-size: 0.84rem;
+          font-weight: 600;
+          color: #ffffff;
+          line-height: 1.3;
+        }
+
+        .tooltip-details {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
           font-size: 0.72rem;
-          font-weight: 700;
+        }
+
+        .tooltip-year {
+          background: rgba(139, 92, 246, 0.2);
           color: #c084fc;
-          background: rgba(139, 92, 246, 0.15);
-          border: 1px solid rgba(139, 92, 246, 0.3);
-          padding: 2px 8px;
-          border-radius: 8px;
-          flex-shrink: 0;
+          padding: 1px 6px;
+          border-radius: 6px;
+          font-weight: 600;
+        }
+
+        .tooltip-lugar {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          color: var(--text-muted, #a1a1aa);
+        }
+
+        .tooltip-emotion {
+          font-weight: 600;
+          margin-left: auto;
         }
       `}</style>
     </div>

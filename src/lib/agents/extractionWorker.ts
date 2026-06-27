@@ -214,6 +214,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           year: extractedYear || existing.year,
           dateStr: result.extractedData.dateStr || existing.dateStr,
           lugar: result.extractedData.lugar || existing.lugar,
+          emocion: result.extractedData.emocion || existing.emocion || 4,
           tags: mergedTags,
           origen
         }, userId, sbClient);
@@ -240,6 +241,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       year: extractedYear,
       dateStr: result.extractedData.dateStr,
       lugar: result.extractedData.lugar,
+      emocion: result.extractedData.emocion || (doorId === 'estela' ? 4 : undefined),
       origen
     }, userId, sbClient);
 

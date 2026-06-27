@@ -50,6 +50,28 @@ export function ItemCard({
 
   const isHighlighted = item.doorId === 'agenda' ? isTodayEvent() : item.peso === 3;
 
+  const getEmotionColor = (emocion?: number): string => {
+    switch (emocion) {
+      case 1: return '#3b82f6';
+      case 2: return '#06b6d4';
+      case 3: return '#10b981';
+      case 4: return '#f59e0b';
+      case 5: return '#ec4899';
+      default: return '#f59e0b';
+    }
+  };
+
+  const getEmotionLabel = (emocion?: number): string => {
+    switch (emocion) {
+      case 1: return 'Muy triste';
+      case 2: return 'Triste';
+      case 3: return 'Calma';
+      case 4: return 'Alegre';
+      case 5: return 'Muy alegre';
+      default: return 'Alegre';
+    }
+  };
+
   const getFrequencyLabel = (freq: number) => {
     if (freq >= 100) return 'diario';
     if (freq >= 75) return 'semanal';
@@ -296,7 +318,7 @@ export function ItemCard({
           gap: '5px',
           fontSize: '0.76rem',
           color: '#c084fc',
-          marginBottom: '10px',
+          marginBottom: '8px',
           background: 'rgba(139, 92, 246, 0.08)',
           padding: '3px 9px',
           borderRadius: '12px',
@@ -305,6 +327,24 @@ export function ItemCard({
         }}>
           <MapPin size={12} />
           <span>{item.lugar}</span>
+        </div>
+      )}
+
+      {!isCompact && item.doorId === 'estela' && (
+        <div className="frequency-decay-bar" style={{ marginTop: '2px', marginBottom: '8px' }}>
+          <div className="frequency-label">
+            <span>Tono Emocional</span>
+            <span style={{ fontWeight: 600, color: getEmotionColor(item.emocion) }}>{getEmotionLabel(item.emocion)}</span>
+          </div>
+          <div className="frequency-progress-bg">
+            <div 
+              className="frequency-progress-fill" 
+              style={{ 
+                width: `${(item.emocion || 4) * 20}%`,
+                background: `linear-gradient(90deg, #3b82f6 0%, ${getEmotionColor(item.emocion)} 100%)`
+              }}
+            />
+          </div>
         </div>
       )}
 

@@ -37,6 +37,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
   const [year, setYear] = useState<number>(item.year || (item.eventDate ? parseInt(item.eventDate.split('-')[0]) : 2026));
   const [dateStr, setDateStr] = useState(item.dateStr || '');
   const [lugar, setLugar] = useState(item.lugar || '');
+  const [emocion, setEmocion] = useState<1 | 2 | 3 | 4 | 5>(item.emocion || 4);
 
   // Sync state if item changes
   useEffect(() => {
@@ -52,6 +53,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
     setYear(item.year || (item.eventDate ? parseInt(item.eventDate.split('-')[0]) : 2026));
     setDateStr(item.dateStr || '');
     setLugar(item.lugar || '');
+    setEmocion(item.emocion || 4);
   }, [item]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -79,7 +81,8 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
         frecuencia: item.doorId === 'personas' ? frecuencia : undefined,
         year: item.doorId === 'estela' ? year : undefined,
         dateStr: item.doorId === 'estela' ? dateStr : undefined,
-        lugar: item.doorId === 'estela' ? lugar : undefined
+        lugar: item.doorId === 'estela' ? lugar : undefined,
+        emocion: item.doorId === 'estela' ? emocion : undefined
       };
 
       // If person is edited, adjust weight based on closeness
@@ -317,6 +320,46 @@ ${content}
                   />
                 </div>
               </>
+            )}
+
+            {item.doorId === 'estela' && (
+              <div className="form-group" style={{ width: '100%', marginTop: '14px' }}>
+                <label className="form-label">Tono Emocional del Recuerdo</label>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                  {[
+                    { level: 1, label: 'Muy triste', color: '#3b82f6' },
+                    { level: 2, label: 'Triste', color: '#06b6d4' },
+                    { level: 3, label: 'Calma', color: '#10b981' },
+                    { level: 4, label: 'Alegre', color: '#f59e0b' },
+                    { level: 5, label: 'Muy alegre', color: '#ec4899' }
+                  ].map(opt => (
+                    <button
+                      key={opt.level}
+                      type="button"
+                      onClick={() => setEmocion(opt.level as any)}
+                      style={{
+                        flex: 1,
+                        padding: '8px 4px',
+                        borderRadius: '8px',
+                        border: `1px solid ${emocion === opt.level ? opt.color : 'rgba(255, 255, 255, 0.1)'}`,
+                        background: emocion === opt.level ? `${opt.color}25` : 'rgba(255, 255, 255, 0.03)',
+                        color: emocion === opt.level ? '#ffffff' : 'var(--text-muted)',
+                        fontSize: '0.75rem',
+                        fontWeight: emocion === opt.level ? 600 : 400,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: opt.color, boxShadow: emocion === opt.level ? `0 0 8px ${opt.color}` : 'none' }} />
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             {item.doorId !== 'personas' && (

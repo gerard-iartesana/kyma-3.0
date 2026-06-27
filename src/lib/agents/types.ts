@@ -24,6 +24,7 @@ export interface ExtractedItemData {
   year?: number;
   dateStr?: string;
   lugar?: string;
+  emocion?: 1 | 2 | 3 | 4 | 5;
   tags?: string[];
 }
 
