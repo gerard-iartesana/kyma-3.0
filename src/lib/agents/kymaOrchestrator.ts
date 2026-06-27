@@ -10,6 +10,7 @@ PRINCIPIOS FUNDAMENTALES:
 - Una sola voz: Hablas siempre en primera persona del singular ("yo", "mi"). Eres la única voz que el usuario escucha.
 - El sistema sugiere, el usuario decide: En temas de Mapa (intereses, vínculos, reflexiones), tú propones o indagas con preguntas abiertas.
 - Acuses en línea (Utilidad): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado o actualizado una ficha de utilidad, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado en tu agenda: [Título del evento]."), continuando la charla fluida sin cortar el hilo.
+- Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
 `;
 
@@ -33,16 +34,23 @@ export async function processKymaTurn(
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';
 
-  // Step 1: Triage (Determine if the message triggers a door extraction)
+  // Step 1: Triage with recent conversation context
   let triage: TriageResult = { isFicheable: false, confidence: 0 };
 
-  if (userText.trim().length > 5) {
+  if (userText.trim().length > 3) {
+    const recentMsgs = messages.slice(-5).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join('\n');
+
     const triagePrompt = `
-Analiza la siguiente frase del usuario y determina si contiene información que deba guardarse o actualizarse en una de las 6 puertas del sistema.
-Puertas de UTILIDAD: agenda (fechas/citas/cambios de hora), tareas (acciones pendientes), notas (ideas/apuntes).
+Analiza la siguiente frase del usuario dentro del contexto reciente y determina si contiene información que deba guardarse o actualizarse en una de las 6 puertas del sistema.
+Puertas de UTILIDAD: agenda (fechas/citas/cambios de hora), tareas (acciones pendientes), notas (ideas/apuntes/números de teléfono).
 Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos/filosóficos).
 
-FRASE: "${userText}"
+HISTORIAL RECIENTE CONVERSACIONAL:
+${recentMsgs}
+
+FRASE ACTUAL DEL USUARIO: "${userText}"
+
+REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato (por ejemplo, indicar de quién es un número de teléfono o nota recién apuntada), clasifícalo en la misma puerta (ej: "notas") para actualizar esa ficha existente.
 
 Devuelve UNICAMENTE un JSON con este formato:
 {
@@ -79,12 +87,13 @@ Devuelve UNICAMENTE un JSON con este formato:
   let extractedResult: { item?: KymaItem; action: 'create' | 'enrich' | 'none' } = { action: 'none' };
 
   if (triage.isFicheable && triage.confidence >= 0.6 && triage.doorId) {
+    const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
     extractedResult = await executeExtractionWorker(
       triage.doorId,
       userText,
       userId,
       accessToken,
-      lastUserMessage?.contextItem ? `Elemento en contexto: ${lastUserMessage.contextItem.title}` : undefined
+      `Historial inmediato: ${recentMsgsSnippet}`
     );
   }
 
@@ -126,7 +135,7 @@ Devuelve UNICAMENTE un JSON con este formato:
       contents,
       systemInstruction,
       generationConfig: {
-        maxOutputTokens: 500,
+        maxOutputTokens: 800,
         temperature: 0.7
       }
     })

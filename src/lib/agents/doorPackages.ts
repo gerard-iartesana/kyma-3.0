@@ -30,12 +30,13 @@ Extrae acciones pendientes o compromisos personales.`
     doorId: 'notas',
     category: 'utilidad',
     guardrails: [
-      'Captura ideas, citas, pensamientos breves o materia prima de conocimiento.',
-      'TÍTULOS CONCISOS: Máximo 3-5 palabras.',
-      'Si el usuario extiende o aclara una nota reciente, usa action = "enrich" indicando su targetItemId.'
+      'Captura ideas, citas, números de teléfono, datos de contacto o materia prima de conocimiento.',
+      'TÍTULOS CONCISOS: Máximo 3-4 palabras (ej: "Teléfono de David", "Idea de Proyecto").',
+      'ENRIQUECIMIENTO CONTINUO: Si el usuario indica a quién pertenece un número o aclara una nota previa recién creada, usa OBLIGATORIAMENTE action = "enrich" indicando su targetItemId y actualiza el título (ej: de "Número de teléfono" a "Teléfono de David") y el contenido sintético.',
+      'CONSERVACIÓN EXACTA DE DATOS: Mantén números de teléfono y códigos numéricos de forma exacta y completa sin alterar dígitos.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Notas.
-Extrae fragmentos de ideas, citas o apuntes informales.`
+Extrae o actualiza apuntes, números de teléfono e ideas. Si el usuario aclara a quién pertenece una nota o teléfono reciente, usa action="enrich" indicando su targetItemId y actualiza su título y contenido.`
   },
   intereses: {
     doorId: 'intereses',
