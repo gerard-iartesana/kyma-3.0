@@ -393,7 +393,7 @@ export const dbClient = {
 
     // 3. Bulk upsert tags into public.tags
     const tagsData = normalizedTags.map((nombre: string) => {
-      const systemicTags = ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones'];
+      const systemicTags = ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones', '#estela'];
       const tipo = systemicTags.includes(nombre.toLowerCase()) ? 'sistemico' : 'tematico';
       return {
         user_id: userId,
@@ -453,7 +453,8 @@ export const dbClient = {
           notas: 'nota',
           intereses: 'interes',
           personas: 'vinculo',
-          reflexiones: 'reflexion'
+          reflexiones: 'reflexion',
+          estela: 'estela'
         };
         const tipo = tipoMap[doorId];
         if (tipo) {
@@ -535,7 +536,8 @@ export const dbClient = {
         notas: '#notas',
         intereses: '#intereses',
         personas: '#vinculos',
-        reflexiones: '#reflexiones'
+        reflexiones: '#reflexiones',
+        estela: '#estela'
       };
       if (doorTagMap[item.doorId]) {
         tagsToLink = [doorTagMap[item.doorId]];
@@ -590,7 +592,7 @@ export const dbClient = {
       const mentioned = updates.content.match(/#[a-zA-Z0-9-]+/g);
       if (mentioned) {
         const systemicTags = currentTags.filter((t: string) => 
-          ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones'].includes(t)
+          ['#agenda', '#tareas', '#notas', '#intereses', '#personas', '#vinculos', '#reflexiones', '#estela'].includes(t)
         );
         finalTags = Array.from(new Set([...systemicTags, ...mentioned.map((t: string) => t.toLowerCase())]));
       }
