@@ -2,11 +2,47 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, dbClient, KymaItem } from '../lib/db/client';
 import { supabase } from '../lib/supabase';
 import { Send, X, Sparkles, PlusCircle, Trash2, Mic } from 'lucide-react';
+import { LogoIcon } from './Logo';
 
 interface KymaChatProps {
   contextItem: KymaItem | null;
   onClearContext: () => void;
   onItemAddedOrModified: (item?: KymaItem, action?: string) => void;
+}
+
+function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string; isLatest: boolean; onCharacterTyped?: () => void }) {
+  const [displayedText, setDisplayedText] = useState(isLatest ? '' : text);
+
+  useEffect(() => {
+    if (!isLatest) {
+      setDisplayedText(text);
+      return;
+    }
+
+    setDisplayedText('');
+    let index = 0;
+    const speed = 16; // Smooth natural typing speed in ms per character
+
+    const interval = setInterval(() => {
+      index++;
+      setDisplayedText(text.slice(0, index));
+      if (onCharacterTyped) onCharacterTyped();
+      if (index >= text.length) {
+        clearInterval(interval);
+      }
+    }, speed);
+
+    return () => clearInterval(interval);
+  }, [text, isLatest]);
+
+  const isStillTyping = isLatest && displayedText.length < text.length;
+
+  return (
+    <p className="message-text">
+      {displayedText}
+      {isStillTyping && <span className="typing-cursor" />}
+    </p>
+  );
 }
 
 export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }: KymaChatProps) {
@@ -166,7 +202,6 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
       setIsTyping(true);
 
       const timer = setTimeout(async () => {
-        setIsTyping(false);
         try {
           let kymaText = '';
           
@@ -203,14 +238,16 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
             kymaText = await generateResponse(userText, contextItem);
           }
 
+          setIsTyping(false);
           const kymaMsg = await dbClient.receiveKymaMessage(kymaText);
           setMessages(prev => [...prev, kymaMsg]);
-          onItemAddedOrModified(); // Refresh items in case Kyma created one
         } catch (err) {
+          setIsTyping(false);
           console.error(err);
         }
-      }, 1200);
+      }, 800);
     } catch (err) {
+      setIsTyping(false);
       console.error(err);
     }
   };
@@ -284,30 +321,40 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
 
       {/* Messages area */}
       <div className="messages-area">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`message-wrapper ${msg.sender === 'user' ? 'wrapper-user' : 'wrapper-kyma'}`}>
-            <div className={`message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-kyma'}`}>
-              {msg.contextItem && (
-                <div className="bubble-context-ref">
-                  <Sparkles size={10} />
-                  <span>Sobre: {msg.contextItem.title}</span>
-                </div>
-              )}
-              <p className="message-text">{msg.text}</p>
-              <span className="message-time">
-                {new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-              </span>
+        {messages.map((msg, idx) => {
+          const isLatestKyma = msg.sender === 'kyma' && idx === messages.length - 1;
+          return (
+            <div key={msg.id} className={`message-wrapper ${msg.sender === 'user' ? 'wrapper-user' : 'wrapper-kyma'}`}>
+              <div className={`message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-kyma'}`}>
+                {msg.contextItem && (
+                  <div className="bubble-context-ref">
+                    <Sparkles size={10} />
+                    <span>Sobre: {msg.contextItem.title}</span>
+                  </div>
+                )}
+                {msg.sender === 'kyma' ? (
+                  <TypewriterMessage 
+                    text={msg.text} 
+                    isLatest={isLatestKyma} 
+                    onCharacterTyped={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })} 
+                  />
+                ) : (
+                  <p className="message-text">{msg.text}</p>
+                )}
+                <span className="message-time">
+                  {new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
         {isTyping && (
-          <div className="message-wrapper wrapper-kyma">
-            <div className="message-bubble bubble-kyma typing-bubble">
-              <div className="typing-dots">
-                <span className="dot" />
-                <span className="dot" />
-                <span className="dot" />
+          <div className="message-wrapper wrapper-kyma animate-fade-in">
+            <div className="message-bubble bubble-kyma thinking-bubble">
+              <div className="thinking-content">
+                <LogoIcon size={18} className="thinking-logo-icon spin-pulse" />
+                <span className="thinking-text">Pensando...</span>
               </div>
             </div>
           </div>
@@ -349,30 +396,30 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
               right: '12px',
               background: 'none',
               border: 'none',
-              color: isListening ? '#ef4444' : 'var(--text-secondary)',
+              color: isListening ? '#ef4444' : 'var(--text-muted)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '28px',
-              height: '28px',
+              padding: '6px',
               borderRadius: '50%',
-              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-              zIndex: 10
+              transition: 'all 0.2s ease'
             }}
           >
-            <Mic size={16} />
+            <Mic size={18} />
           </button>
         </div>
-        <button type="submit" className="btn btn-primary send-btn" aria-label="Enviar">
-          <Send size={16} />
+
+        <button type="submit" className="btn btn-primary send-btn" disabled={!inputText.trim()}>
+          <Send size={18} />
         </button>
       </form>
 
       <div className="input-tips">
-        <span>Consejo: escribe "crear nota [texto]" para capturar al vuelo.</span>
+        Consejo: escribe "crear nota [texto]" para capturar al vuelo.
       </div>
 
+      {/* STYLES */}
       <style jsx>{`
         .chat-container {
           display: flex;
@@ -380,168 +427,169 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
           height: 100%;
           border-radius: var(--border-radius-lg);
           overflow: hidden;
-          border-color: var(--border-subtle);
           position: relative;
+          background: var(--bg-surface);
+          border: 1px solid var(--border-subtle);
         }
 
-        .chat-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid var(--border-subtle);
-          background: rgba(20, 20, 23, 0.4);
-        }
-        .header-title {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .header-title h2 {
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-        
         .clear-chat-floating-btn {
           position: absolute;
-          top: 16px;
-          right: 20px;
-          z-index: 30;
-          background: rgba(20, 20, 23, 0.6);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
+          top: 14px;
+          right: 14px;
+          z-index: 10;
+          background: rgba(255, 255, 255, 0.05);
           border: 1px solid var(--border-subtle);
-          color: var(--text-secondary);
+          color: var(--text-muted);
+          padding: 6px;
+          border-radius: 50%;
           cursor: pointer;
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          transition: all 0.2s ease;
-          box-shadow: var(--shadow-sm);
         }
         .clear-chat-floating-btn:hover {
-          color: var(--danger);
+          color: #ef4444;
           background: rgba(239, 68, 68, 0.15);
-          border-color: rgba(239, 68, 68, 0.25);
-          box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+          border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* Messages area */
         .messages-area {
           flex: 1;
           overflow-y: auto;
-          padding: 52px 20px 20px 20px;
+          padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 16px;
-          background: rgba(8, 8, 10, 0.2);
         }
 
         .message-wrapper {
           display: flex;
-          gap: 10px;
-          max-width: 85%;
+          width: 100%;
         }
         .wrapper-user {
-          align-self: flex-end;
-          flex-direction: row-reverse;
+          justify-content: flex-end;
         }
         .wrapper-kyma {
-          align-self: flex-start;
+          justify-content: flex-start;
         }
-
-        /* Avatars removed to keep it cleaner */
 
         .message-bubble {
-          padding: 12px 16px;
-          border-radius: var(--border-radius-md);
+          max-width: 82%;
+          padding: 14px 18px;
+          border-radius: 18px;
           position: relative;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
+          box-shadow: var(--shadow-sm);
         }
         .bubble-user {
-          background: var(--accent-gradient);
-          color: #fff;
-          border-bottom-right-radius: 2px;
-          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+          background: var(--gradient-accent);
+          color: #ffffff;
+          border-bottom-right-radius: 4px;
         }
         .bubble-kyma {
-          background: var(--bg-tertiary);
+          background: var(--bg-secondary);
           color: var(--text-primary);
           border: 1px solid var(--border-subtle);
-          border-bottom-left-radius: 2px;
+          border-bottom-left-radius: 4px;
         }
 
         .bubble-context-ref {
-          display: inline-flex;
+          display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 6px;
           font-size: 0.72rem;
-          color: rgba(255, 255, 255, 0.8);
-          background: rgba(255, 255, 255, 0.12);
-          padding: 2px 6px;
-          border-radius: 4px;
-          width: fit-content;
-        }
-        .bubble-kyma .bubble-context-ref {
-          color: var(--accent-purple);
-          background: rgba(139, 92, 246, 0.08);
+          opacity: 0.85;
+          margin-bottom: 6px;
+          padding-bottom: 6px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .message-text {
-          font-size: 0.9rem;
+          font-size: 0.95rem;
           line-height: 1.5;
+          margin: 0;
+          white-space: pre-wrap;
           word-break: break-word;
         }
+
+        .typing-cursor {
+          display: inline-block;
+          width: 2px;
+          height: 1.1em;
+          background-color: var(--accent-purple, #a855f7);
+          margin-left: 3px;
+          vertical-align: middle;
+          animation: blinkCursor 0.8s infinite;
+        }
+
+        @keyframes blinkCursor {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+
         .message-time {
-          font-size: 0.7rem;
-          color: rgba(255, 255, 255, 0.6);
-          align-self: flex-end;
-        }
-        .bubble-kyma .message-time {
-          color: var(--text-muted);
+          display: block;
+          font-size: 0.68rem;
+          opacity: 0.6;
+          margin-top: 6px;
+          text-align: right;
         }
 
-        /* Typing animations */
-        .typing-bubble {
-          padding: 12px 18px;
+        /* Thinking indicator styling */
+        .thinking-bubble {
+          padding: 10px 16px !important;
+          background: rgba(139, 92, 246, 0.08) !important;
+          border: 1px solid rgba(139, 92, 246, 0.25) !important;
         }
-        .typing-dots {
+
+        .thinking-content {
           display: flex;
-          gap: 4px;
           align-items: center;
-          height: 16px;
-        }
-        .typing-dots .dot {
-          width: 5px;
-          height: 5px;
-          background: var(--text-secondary);
-          border-radius: 50%;
-          animation: dotBounce 1.4s infinite ease-in-out both;
-        }
-        .typing-dots .dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dots .dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes dotBounce {
-          0%, 80%, 100% { transform: scale(0); }
-          40% { transform: scale(1); }
+          gap: 10px;
+          color: var(--accent-purple, #a855f7);
         }
 
-        /* Context bar */
+        .spin-pulse {
+          animation: spinPulse 2s infinite linear;
+        }
+
+        @keyframes spinPulse {
+          0% {
+            transform: rotate(0deg) scale(1);
+            opacity: 0.85;
+          }
+          50% {
+            transform: rotate(180deg) scale(1.18);
+            opacity: 1;
+          }
+          100% {
+            transform: rotate(360deg) scale(1);
+            opacity: 0.85;
+          }
+        }
+
+        .thinking-text {
+          font-size: 0.88rem;
+          font-weight: 500;
+          color: var(--text-secondary, #94a3b8);
+          letter-spacing: 0.02em;
+          animation: pulseText 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseText {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+
+        /* Context Bar */
         .chat-context-bar {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           padding: 10px 16px;
-          background: rgba(139, 92, 246, 0.08);
-          border-top: 1px solid rgba(139, 92, 246, 0.15);
-          border-bottom: 1px solid rgba(139, 92, 246, 0.15);
-          font-size: 0.8rem;
+          background: rgba(139, 92, 246, 0.1);
+          border-top: 1px solid rgba(139, 92, 246, 0.2);
+          font-size: 0.82rem;
         }
         .context-info {
           display: flex;
