@@ -27,6 +27,8 @@ export async function executeExtractionWorker(
     id: i.id,
     title: i.title,
     content: i.content,
+    eventDate: i.eventDate,
+    eventTime: i.eventTime,
     tags: i.tags
   }));
 
@@ -58,6 +60,11 @@ MENSAJE O CONTEXTO DEL USUARIO:
 "${userMessage}"
 ${contextSnippet ? `Contexto adicional: "${contextSnippet}"` : ''}
 
+REGLAS DE REESCRITURA Y ENRIQUECIMIENTO (cuando action = "enrich"):
+1. "title": Actualiza el título si hay más precisión (ej. de "Torneo" a "Torneo de Pádel con Alejandro").
+2. "content": NUNCA CONCATENES FRASES REPETIDAS. Redacta de cero una descripción limpia, coherente y sintética que integre la información previa y los nuevos datos.
+3. "tags": Extrae OBLIGATORIAMENTE todas las etiquetas temáticas relevantes (ej. nombres de personas como "#alejandro", tipo de deporte/actividad como "#padel", lugares, etc.) empezando siempre con '#'.
+
 REGLAS DE SALIDA:
 Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 {
@@ -65,13 +72,13 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
   "targetItemId": "ID del elemento existente a enriquecer si action es 'enrich'",
   "extractedData": {
     "title": "Título claro y conciso",
-    "content": "Cuerpo o detalle estructurado",
+    "content": "Cuerpo o detalle estructurado sintetizado",
     "peso": 1 | 2 | 3,
-    "eventDate": "YYYY-MM-DD" (OBLIGATORIO si es agenda. Si dice hoy o esta tarde usa "${currentDateStr}"),
+    "eventDate": "YYYY-MM-DD" (OBLIGATORIO si es agenda),
     "eventTime": "HH:MM" (solo si es agenda),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
-    "tags": ["#tag1", "#tag2"]
+    "tags": ["#agenda", "#padel", "#alejandro"]
   },
   "reasoning": "Breve justificación interna"
 }
@@ -111,11 +118,9 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     if (result.action === 'enrich' && result.targetItemId) {
       const existing = existingItems.find(i => i.id === result.targetItemId);
       if (existing) {
-        let updatedContent = existing.content;
-        if (result.extractedData.content && !existing.content.includes(result.extractedData.content)) {
-          updatedContent = existing.content ? `${existing.content}. ${result.extractedData.content}` : result.extractedData.content;
-        }
-        const mergedTags = Array.from(new Set([...(existing.tags || []), ...(result.extractedData.tags || [])]));
+        const updatedContent = result.extractedData.content || existing.content;
+        const rawTags = [...(existing.tags || []), ...(result.extractedData.tags || [])];
+        const mergedTags = Array.from(new Set(rawTags.map(t => t.trim().toLowerCase()).filter(t => t.startsWith('#'))));
         
         const updatedItem = await dbClient.updateItem(existing.id, {
           title: (result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title,
@@ -134,13 +139,15 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     // Default to create
     const eventDate = doorId === 'agenda' ? (result.extractedData.eventDate || currentDateStr) : result.extractedData.eventDate;
+    const rawTags = result.extractedData.tags || [`#${doorId}`];
+    const initialTags = Array.from(new Set(rawTags.map(t => t.trim().toLowerCase()).filter(t => t.startsWith('#'))));
 
     const newItem = await dbClient.createItem({
       doorId,
       title: result.extractedData.title || 'Nueva ficha',
       content: result.extractedData.content || '',
       peso: result.extractedData.peso || 1,
-      tags: result.extractedData.tags || [`#${doorId}`],
+      tags: initialTags.length > 0 ? initialTags : [`#${doorId}`],
       eventDate,
       eventTime: result.extractedData.eventTime,
       completed: result.extractedData.completed,

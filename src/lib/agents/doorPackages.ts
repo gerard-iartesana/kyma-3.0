@@ -7,13 +7,15 @@ export const DOOR_PACKAGES: Record<DoorId, DoorPackage> = {
     guardrails: [
       'Captura fecha y hora exactas o aproximadas mencionadas.',
       'Si el usuario aporta nuevos detalles (ej. con quién es, lugar, tipo de deporte o actividad) sobre un evento ya creado en su agenda, usa action = "enrich" indicando su targetItemId para actualizar la ficha existente en lugar de crear un duplicado.',
+      'Al enriquecer (action = "enrich"), reescribe el contenido de cero sintetizando la información completa sin repetir frases absurdas.',
+      'EXTRAE SIEMPRE TAGS ESPECÍFICOS: Añade etiquetas de deportes o actividades mencionadas (ej. #padel, #futbol) y personas involucradas (ej. #alejandro, #marta) además de las generales.',
       'Si la fecha es ambigua (ej. "el lunes" sin especificar), no inventes; captura lo que haya.',
       'Nunca inventar hora si el usuario no la mencionó.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Agenda. 
 Extrae o actualiza eventos concretos con fecha y hora indicadas por el usuario.
-Si el mensaje del usuario complementa o especifica un evento ya agendado, usa action="enrich" indicando su targetItemId y actualiza su título/contenido con la información completa.
-Asigna peso (1: normal, 2: destacado/social, 3: urgente/importante) y tags relevantes (ej. #agenda, #deporte, #cita, #trabajo).`
+Si el mensaje del usuario complementa o especifica un evento ya agendado, usa action="enrich" indicando su targetItemId y actualiza su título/contenido de forma limpia y sintetizada. Extrae siempre tags específicos (ej. #padel, #alejandro).
+Asigna peso (1: normal, 2: destacado/social, 3: urgente/importante) y tags relevantes (ej. #agenda, #deporte, #padel, #alejandro, #cita, #trabajo).`
   },
   tareas: {
     doorId: 'tareas',

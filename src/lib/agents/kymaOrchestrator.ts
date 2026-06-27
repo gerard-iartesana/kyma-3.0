@@ -9,11 +9,11 @@ PRINCIPIOS FUNDAMENTALES:
 - Espejo, no juez: Ante cosas personales o afectivas, pregunta antes de aconsejar. Usa lenguaje de hipótesis, nada clínico, sin etiquetas.
 - Una sola voz: Hablas siempre en primera persona del singular ("yo", "mi"). Eres la única voz que el usuario escucha.
 - El sistema sugiere, el usuario decide: En temas de Mapa (intereses, vínculos, reflexiones), tú propones o indagas con preguntas abiertas.
-- Acuses en línea (Utilidad): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado una ficha de utilidad, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado: cita médico lunes 10h."), continuando la charla fluida sin cortar el hilo.
+- Acuses en línea (Utilidad): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado una ficha de utilidad o un cambio en ella, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado el cambio: torneo de pádel hoy a las 19:00h."), continuando la charla fluida sin cortar el hilo.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 2 párrafos cortos), en texto plano fluido o markdown muy ligero.
 
-REGLA DE FORMATO DIRECTO:
-Habla DIRECTAMENTE al usuario. NUNCA incluyas encabezados internos, listas de verificación de tu proceso, nombres de fases (como "Final Polish" o "Step 5") ni ningún texto metanarrativo.
+REGLA ESTRICTA DE SALIDA DIRECTA:
+Responde DIRECTAMENTE al usuario en español. Queda estrictamente PROHIBIDO incluir cualquier tipo de pensamiento previo, evaluación interna, lista de verificación de reglas (como "transition? Yes", "First person singular?", "Final Polish", etc.) o meta-análisis. Tu respuesta debe empezar directamente con tus palabras para el usuario.
 `;
 
 export async function processKymaTurn(
@@ -41,8 +41,8 @@ export async function processKymaTurn(
 
   if (userText.trim().length > 5) {
     const triagePrompt = `
-Analiza la siguiente frase del usuario y determina si contiene información que deba guardarse en una de las 6 puertas del sistema.
-Puertas de UTILIDAD: agenda (fechas/citas), tareas (acciones pendientes), notas (ideas/apuntes).
+Analiza la siguiente frase del usuario y determina si contiene información que deba guardarse o actualizarse en una de las 6 puertas del sistema.
+Puertas de UTILIDAD: agenda (fechas/citas/cambios de hora), tareas (acciones pendientes), notas (ideas/apuntes).
 Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos/filosóficos).
 
 FRASE: "${userText}"
@@ -111,7 +111,8 @@ Devuelve UNICAMENTE un JSON con este formato:
   let extraInstruction = '';
   if (extractedResult.item) {
     if (triage.category === 'utilidad') {
-      extraInstruction = `\n\n[SISTEMA]: Se ha registrado automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado: ${extractedResult.item.title}.").`;
+      const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
+      extraInstruction = `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado el cambio: ${extractedResult.item.title}.").`;
     } else if (triage.category === 'mapa') {
       extraInstruction = `\n\n[SISTEMA]: El usuario ha compartido una inquietud/interés de Mapa. Se ha preparado una propuesta tentative en segundo plano. Tu cometido ahora es INDAGAR curiosamente y hacer una pregunta socrática o reflexiva abierta sobre ello antes de dar nada por sentado.`;
     }
@@ -141,7 +142,9 @@ Devuelve UNICAMENTE un JSON con este formato:
   const kymaData = await kymaRes.json();
   let replyText = kymaData.candidates?.[0]?.content?.parts?.[0]?.text || 'No he podido procesar una respuesta en este momento.';
 
-  // Sanitize any accidental meta tags or headers from LLM output
+  // Sanitize any accidental meta tags, thinking artifacts, or headers from LLM output
+  replyText = replyText.replace(/^[\s\S]*?(?:transition\?\s*yes|\*\s*first\s*person[^*?]*\?|\w+\?\s*yes)[^"\n]*["`']?/gi, '');
+  replyText = replyText.replace(/^(?:transition\?|\*?\s*first person|final polish)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^['"]|['"]$/g, '').trim();
