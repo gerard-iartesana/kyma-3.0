@@ -673,7 +673,7 @@ export default function Home() {
           title="Ir al chat con Kyma"
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
-          <LogoFull height={28} className="text-white" />
+          <LogoFull height={36} className="text-white" />
         </div>
         
         <button 
@@ -681,7 +681,7 @@ export default function Home() {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           title="Menú de módulos"
         >
-          {mobileMenuOpen ? <Icons.X size={24} /> : <Icons.Menu size={24} />}
+          {mobileMenuOpen ? <Icons.X size={26} /> : <Icons.Menu size={26} />}
         </button>
       </header>
 
@@ -2567,12 +2567,6 @@ export default function Home() {
 
         /* RESPONSIVE MEDIA QUERIES (Mobile and Tablet) */
         @media (max-width: 1024px) {
-          .chat-pane {
-            width: 320px;
-          }
-        }
-
-        @media (max-width: 768px) {
           .app-layout {
             flex-direction: column;
             height: 100vh;
