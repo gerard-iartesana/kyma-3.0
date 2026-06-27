@@ -132,58 +132,39 @@ export function ItemCard({
         return null;
       case 'agenda':
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-            {item.recurrencia && item.recurrencia !== 'none' && (
+          <div className="agenda-badge-box" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.35)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '8px',
+            padding: '6px 11px',
+            gap: '2px',
+            minWidth: '68px',
+            flexShrink: 0
+          }}>
+            <span style={{
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              color: '#ffffff',
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap'
+            }}>
+              {formatDate(item.eventDate)}
+            </span>
+            {item.eventTime && (
               <span style={{
                 fontSize: '0.68rem',
-                fontWeight: 600,
-                color: '#c084fc',
-                background: 'rgba(139, 92, 246, 0.15)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: '6px',
-                padding: '4px 7px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '3px',
-                textTransform: 'capitalize'
-              }}>
-                🔄 {item.recurrencia}
-              </span>
-            )}
-            <div className="agenda-badge-box" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(0, 0, 0, 0.35)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
-              padding: '6px 11px',
-              gap: '2px',
-              minWidth: '68px',
-              flexShrink: 0
-            }}>
-              <span style={{
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                color: '#ffffff',
-                textTransform: 'uppercase',
-                letterSpacing: '0.02em',
+                color: '#8a8a93',
+                fontWeight: 500,
                 whiteSpace: 'nowrap'
               }}>
-                {formatDate(item.eventDate)}
+                {item.eventTime} h
               </span>
-              {item.eventTime && (
-                <span style={{
-                  fontSize: '0.68rem',
-                  color: '#8a8a93',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap'
-                }}>
-                  {item.eventTime} h
-                </span>
-              )}
-            </div>
+            )}
           </div>
         );
       case 'estela':
@@ -307,6 +288,17 @@ export function ItemCard({
           )}
           <h3 className={`card-title ${item.completed ? 'title-completed' : ''}`}>
             {item.title}
+            {item.doorId === 'agenda' && item.recurrencia && item.recurrencia !== 'none' && (
+              <span style={{ 
+                fontSize: '0.82rem', 
+                color: 'var(--text-muted)', 
+                fontWeight: 400, 
+                marginLeft: '8px',
+                textTransform: 'lowercase'
+              }}>
+                ({item.recurrencia})
+              </span>
+            )}
           </h3>
         </div>
         {isCompact ? (
