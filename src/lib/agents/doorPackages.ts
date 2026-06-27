@@ -7,13 +7,13 @@ export const DOOR_PACKAGES: Record<DoorId, DoorPackage> = {
     guardrails: [
       'Captura fecha y hora exactas o aproximadas mencionadas.',
       'TÍTULOS CORTOS Y DIRECTOS: El título debe ser conciso y directo (máximo 3-4 palabras, ej: "Torneo de Pádel", "Cita Médica", "Cena"). NUNCA incluyas personas, lugares ni horas en el título.',
-      'DESCRIPCIÓN SIN FECHA NI HORA: En el contenido de la ficha, detalla el con quién y el dónde (ej: "Con Alejandro en PadelOne"). OMITE la fecha y la hora en el texto del contenido, ya que se muestran en el apartado independiente de la ficha.',
+      'DESCRIPCIÓN EN PRIMERA PERSONA SIN FECHA NI HORA: Redacta el contenido en primera persona (ej: "He quedado con Alejandro en PadelOne"). OMITE la fecha y la hora en el texto del contenido, ya que se muestran en el apartado independiente.',
       'Si el usuario aporta nuevos detalles sobre un evento ya creado, usa action = "enrich" indicando su targetItemId.',
       'EXTRAE SIEMPRE TAGS ESPECÍFICOS: Añade etiquetas temáticas como deportes (#padel), personas (#alejandro), lugares (#padelone) y categorías (#deporte, #agenda).'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Agenda. 
 Extrae o actualiza eventos concretos con fecha y hora indicadas por el usuario.
-Mantén títulos muy cortos y limpios (ej: "Torneo de Pádel"). En el contenido incluye solo quién y dónde, omitiendo fechas y horas redactadas.`
+Redacta el contenido en primera persona del singular ("He quedado con..."). Mantén títulos muy cortos.`
   },
   tareas: {
     doorId: 'tareas',
@@ -21,10 +21,11 @@ Mantén títulos muy cortos y limpios (ej: "Torneo de Pádel"). En el contenido 
     guardrails: [
       'Detecta acciones pendientes explicitadas por el usuario.',
       'TÍTULOS DIRECTOS: Título corto y conciso sobre la acción pendiente.',
+      'REDACCIÓN EN PRIMERA PERSONA: "Tengo que...", "Debo...".',
       'Si el usuario modifica o añade detalles a una tarea pendiente existente, usa action = "enrich" indicando su targetItemId.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Tareas.
-Extrae acciones pendientes o compromisos personales.`
+Extrae acciones pendientes o compromisos personales redactados en primera persona.`
   },
   notas: {
     doorId: 'notas',
@@ -32,21 +33,23 @@ Extrae acciones pendientes o compromisos personales.`
     guardrails: [
       'Captura ideas, citas, números de teléfono, datos de contacto o materia prima de conocimiento.',
       'TÍTULOS CONCISOS: Máximo 3-4 palabras (ej: "Teléfono de David", "Idea de Proyecto").',
-      'ENRIQUECIMIENTO CONTINUO: Si el usuario indica a quién pertenece un número o aclara una nota previa recién creada, usa OBLIGATORIAMENTE action = "enrich" indicando su targetItemId y actualiza el título (ej: de "Número de teléfono" a "Teléfono de David") y el contenido sintético.',
-      'CONSERVACIÓN EXACTA DE DATOS: Mantén números de teléfono y códigos numéricos de forma exacta y completa sin alterar dígitos.'
+      'REDACCIÓN EN PRIMERA PERSONA: Escribe como apuntes en mi propio diario.',
+      'ENRIQUECIMIENTO CONTINUO: Si el usuario indica a quién pertenece un número o aclara una nota previa recién creada, usa OBLIGATORIAMENTE action = "enrich" indicando su targetItemId.',
+      'CONSERVACIÓN EXACTA DE DATOS: Mantén números de teléfono y códigos numéricos de forma exacta.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Notas.
-Extrae o actualiza apuntes, números de teléfono e ideas. Si el usuario aclara a quién pertenece una nota o teléfono reciente, usa action="enrich" indicando su targetItemId y actualiza su título y contenido.`
+Extrae o actualiza apuntes en primera persona del singular.`
   },
   intereses: {
     doorId: 'intereses',
     category: 'mapa',
     guardrails: [
       'Comprueba siempre la lista de intereses existentes del usuario.',
+      'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: El texto es un diario personal del usuario. Usa "Me apasiona...", "Me encanta...", "Mi película favorita...". NUNCA uses tercera persona ("Le apasiona", "Le encanta", "Su película").',
       'Si el tema o gusto expresado ya encaja con un interés existente, enriquécelo (action = "enrich").'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Intereses.
-Analiza pasiones, hobbies, temas de estudio o gustos culturales expresados.`
+Analiza pasiones y gustos expresados. REDACTA SIEMPRE EL CONTENIDO EN PRIMERA PERSONA DEL SINGULAR ("Me apasiona...", "Me encanta..."). NUNCA uses tercera persona.`
   },
   personas: {
     doorId: 'personas',
@@ -54,18 +57,20 @@ Analiza pasiones, hobbies, temas de estudio o gustos culturales expresados.`
     guardrails: [
       'Crear fichas de persona requiere tacto. Extrae solo cuando la persona mencionada tenga peso afectivo o recurrencia.',
       'TÍTULO: Nombre de la persona exclusivamente (ej: "Alejandro", "Marta", "David").',
-      'FRECUENCIA DE CONTACTO: Si el usuario indica con qué asiduidad ve, habla o interactúa con esa persona (ej: "cada día", "diariamente" -> "diario"; "cada semana" -> "semanal"; "una vez al mes" -> "mensual"), debes extraer o actualizar OBLIGATORIAMENTE su frecuenciaContacto.'
+      'REDACCIÓN EN PRIMERA PERSONA: Describe la relación desde mi punto de vista ("Es mi hermano...", "Jugamos juntos a pádel...", "Hablo con él de cine..."). NUNCA en tercera persona ("Lo ve cada día").',
+      'FRECUENCIA DE CONTACTO: Si el usuario indica con qué asiduidad ve o interactúa con esa persona, asigna o actualiza su frecuenciaContacto.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Vínculos (Personas).
-Extrae menciones de personas significativas. Si el usuario indica la frecuencia con la que interactúa con ella (ej: cada día -> diario), actualiza o asigna su frecuenciaContacto.`
+Extrae menciones de personas significativas. REDACTA EL CONTENIDO EN PRIMERA PERSONA DEL SINGULAR ("Es mi hermano", "Hablo con él...").`
   },
   reflexiones: {
     doorId: 'reflexiones',
     category: 'mapa',
     guardrails: [
-      'Solo propone una reflexión cuando el usuario esté en un modo introspectivo explícito.'
+      'Solo propone una reflexión cuando el usuario esté en un modo introspectivo explícito.',
+      'REDACCIÓN EN PRIMERA PERSONA: "Siento que...", "Me doy cuenta de..."'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Reflexiones.
-Identifica pensamientos profundos o aprendizajes existenciales.`
+Identifica pensamientos profundos redactados en primera persona del singular.`
   }
 };
