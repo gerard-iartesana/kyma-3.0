@@ -457,7 +457,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       </form>
 
       {/* STYLES */}
-      <style jsx>{`
+      <style jsx global>{`
         .chat-container {
           display: flex;
           flex-direction: column;
