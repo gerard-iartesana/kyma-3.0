@@ -293,6 +293,7 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
   } else if (doorId === 'agenda') {
     item.eventDate = datos.fecha || '';
     item.eventTime = datos.hora || '';
+    item.recurrencia = datos.recurrencia || 'none';
   } else if (doorId === 'personas') {
     item.cercania = datos.cercania || 'orbita';
     item.frecuencia = typeof datos.frecuencia_score === 'number' ? datos.frecuencia_score : 50;
@@ -335,6 +336,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   if (item.completed !== undefined) datos.hecha = item.completed;
   if (item.eventDate !== undefined) datos.fecha = item.eventDate;
   if (item.eventTime !== undefined) datos.hora = item.eventTime;
+  if (item.recurrencia !== undefined) datos.recurrencia = item.recurrencia;
   if (item.cercania !== undefined) datos.cercania = item.cercania;
   if (item.frecuencia !== undefined) datos.frecuencia_score = item.frecuencia;
   if (item.year !== undefined) datos.year = item.year;

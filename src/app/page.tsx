@@ -279,6 +279,18 @@ export default function Home() {
     }
   };
 
+  const handleSelectItem = (item: KymaItem) => {
+    if (item.id && item.id.includes('-rec-')) {
+      const realId = item.id.split('-rec-')[0];
+      const realItem = items.find(i => i.id === realId);
+      if (realItem) {
+        setSelectedItem(realItem);
+        return;
+      }
+    }
+    setSelectedItem(item);
+  };
+
   const handleAskKyma = (item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setChatContextItem(item);
@@ -315,9 +327,46 @@ export default function Home() {
     return <IconComponent size={size} className={className} />;
   };
 
+  const expandRecurringAgendaItems = (agendaItems: KymaItem[]): KymaItem[] => {
+    const expanded: KymaItem[] = [];
+    for (const item of agendaItems) {
+      expanded.push(item);
+      if (item.recurrencia && item.recurrencia !== 'none' && item.eventDate) {
+        const parts = item.eventDate.split('-');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0]);
+          const month = parseInt(parts[1]) - 1;
+          const day = parseInt(parts[2]);
+          for (let k = 1; k <= 12; k++) {
+            const nextDate = new Date(year, month, day);
+            if (item.recurrencia === 'semanal') {
+              nextDate.setDate(nextDate.getDate() + k * 7);
+            } else if (item.recurrencia === 'mensual') {
+              nextDate.setMonth(nextDate.getMonth() + k);
+            } else if (item.recurrencia === 'anual') {
+              nextDate.setFullYear(nextDate.getFullYear() + k);
+            }
+            const yyyy = nextDate.getFullYear();
+            const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(nextDate.getDate()).padStart(2, '0');
+            expanded.push({
+              ...item,
+              id: `${item.id}-rec-${k}`,
+              eventDate: `${yyyy}-${mm}-${dd}`
+            });
+          }
+        }
+      }
+    }
+    return expanded;
+  };
+
+  const baseDoorItems = selectedDoorId
+    ? (selectedDoorId === 'agenda' ? expandRecurringAgendaItems(items.filter(item => item.doorId === 'agenda')) : items.filter(item => item.doorId === selectedDoorId))
+    : [];
+
   const filteredItems = selectedDoorId 
-    ? items
-        .filter(item => item.doorId === selectedDoorId)
+    ? baseDoorItems
         .filter(item => !selectedTag || item.tags.includes(selectedTag))
         .filter(item => {
           if (selectedDoorId === 'agenda' && !showPastAgendaEvents) {
@@ -1397,31 +1446,31 @@ export default function Home() {
               ) : selectedDoorId === 'personas' && personasViewMode === 'orbits' ? (
                 <OrbitsView 
                   people={filteredItems}
-                  onPersonClick={(person) => setSelectedItem(person)}
+                  onPersonClick={(person) => handleSelectItem(person)}
                 />
               ) : selectedDoorId === 'intereses' && interesesViewMode === 'orbits' ? (
                 <InterestsMapView 
                   interests={filteredItems}
-                  onInterestClick={(interest) => setSelectedItem(interest)}
+                  onInterestClick={(interest) => handleSelectItem(interest)}
                   onTagSelect={setSelectedTag}
                 />
               ) : selectedDoorId === 'agenda' && agendaViewMode === 'calendar' ? (
                 <CalendarView 
                   items={filteredItems}
-                  onItemClick={(item) => setSelectedItem(item)}
+                  onItemClick={(item) => handleSelectItem(item)}
                 />
               ) : selectedDoorId === 'estela' && estelaViewMode === 'timeline' ? (
                 <EstelaHorizontalTimelineView
                   items={filteredItems}
                   sortAsc={estelaSortAsc}
-                  onItemClick={(item) => setSelectedItem(item)}
+                  onItemClick={(item) => handleSelectItem(item)}
                 />
               ) : selectedDoorId === 'estela' ? (
                 <EstelaTimelineView
                   items={filteredItems}
                   isCompact={isCompactView}
                   sortAsc={estelaSortAsc}
-                  onItemClick={(item) => setSelectedItem(item)}
+                  onItemClick={(item) => handleSelectItem(item)}
                   onAskKyma={(item, e) => handleAskKyma(item, e)}
                   onTagSelect={(tag) => setSelectedTag(tag)}
                 />
@@ -1432,7 +1481,7 @@ export default function Home() {
                       key={item.id}
                       item={item}
                       isCompact={isCompactView}
-                      onClick={(clickedItem) => setSelectedItem(clickedItem)}
+                      onClick={(clickedItem) => handleSelectItem(clickedItem)}
                       onAskKyma={(item, e) => handleAskKyma(item, e)}
                       onToggleComplete={selectedDoorId === 'tareas' ? handleToggleComplete : undefined}
                       onConfirmItem={(item, e) => handleConfirmItem(item, e)}
