@@ -41,8 +41,10 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
     }
   }
 
-  // 2. Edad
+  // 2. Edad o Fecha de Nacimiento (calculada automáticamente)
   const ageMatch = text.match(/(?:tengo|mi edad es|cumplí|cumpli|tengo unos|tengo la edad de) (\d{1,3}) (?:años|anos)/i);
+  const birthDateMatch = text.match(/(?:nací el|nací en|naci el|naci en|mi fecha de nacimiento es|nacimiento|fecha de nacimiento)(?: el)?\s*(\d{1,2})?\s*(?:de\s+([a-zñáéíóú]+)\s+de\s+|\/|-)?\s*(19\d\d|20[0-2]\d)/i);
+
   if (ageMatch) {
     const newAge = ageMatch[1];
     if (newAge !== updated.edad) {
@@ -50,6 +52,36 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
       hasChanges = true;
       key = 'edad';
       val = newAge;
+    }
+  } else if (birthDateMatch) {
+    const day = birthDateMatch[1] ? parseInt(birthDateMatch[1]) : null;
+    const monthStr = birthDateMatch[2] ? birthDateMatch[2].toLowerCase() : null;
+    const birthYear = parseInt(birthDateMatch[3]);
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    let calculatedAge = currentYear - birthYear;
+
+    if (monthStr && day) {
+      const monthsMap: { [k: string]: number } = {
+        enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+        julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
+      };
+      const birthMonth = monthsMap[monthStr];
+      if (birthMonth !== undefined) {
+        const currentMonth = now.getMonth();
+        const currentDay = now.getDate();
+        if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < day)) {
+          calculatedAge--;
+        }
+      }
+    }
+
+    if (calculatedAge > 0 && calculatedAge < 120 && String(calculatedAge) !== updated.edad) {
+      updated.edad = String(calculatedAge);
+      hasChanges = true;
+      key = 'edad';
+      val = `${calculatedAge} años (calculada a partir de tu fecha de nacimiento en ${birthYear})`;
     }
   }
 
