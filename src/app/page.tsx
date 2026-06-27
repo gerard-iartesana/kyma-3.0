@@ -80,6 +80,10 @@ export default function Home() {
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
+  // Search state for Búsqueda global
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchDoorFilter, setSearchDoorFilter] = useState<string | null>(null);
+
   // Chat view state ('normal' | 'expanded' | 'hidden')
   const [chatState, setChatState] = useState<'normal' | 'expanded' | 'hidden'>('normal');
 
@@ -324,8 +328,12 @@ export default function Home() {
     : [];
   const currentDoor = selectedDoorId === 'configuracion'
     ? { id: 'configuracion', title: 'Configuración y Contexto', icon: 'Settings', category: 'utility' as const, description: 'Ajustes del espacio y datos de contexto personal.', emptyPromise: '' }
+    : selectedDoorId === 'busqueda'
+    ? { id: 'busqueda', title: 'Búsqueda Global', icon: 'Search', category: 'utility' as const, description: 'Encuentra cualquier recuerdo, tarea, persona o nota.', emptyPromise: '' }
+    : selectedDoorId === 'ayuda'
+    ? { id: 'ayuda', title: 'Ayuda y Consejos de Uso', icon: 'HelpCircle', category: 'utility' as const, description: 'Guía y recomendaciones para exprimir al máximo tu espacio con Kyma.', emptyPromise: '' }
     : DOOR_MODULES.find(d => d.id === selectedDoorId);
-  const isVelado = selectedDoorId !== 'configuracion' && currentDoor?.category === 'map' && filteredItems.length === 0;
+  const isVelado = !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && currentDoor?.category === 'map' && filteredItems.length === 0;
 
   // Render Premium Loading Screen before mounting completes or session is loading
   if (!isMounted || loadingSession) {
@@ -609,27 +617,82 @@ export default function Home() {
         </nav>
 
         <div className="sidebar-footer">
-          <div 
-            className={`user-profile-btn ${selectedDoorId === 'configuracion' ? 'active' : ''}`} 
-            onClick={() => handleSelectDoor('configuracion')} 
-            title="Configuración y Preferencias"
-          >
-            {user.user_metadata?.avatar_url ? (
-              <img 
-                src={user.user_metadata.avatar_url} 
-                alt="Avatar" 
-                className="user-avatar" 
-              />
-            ) : (
-              <div className="user-avatar-placeholder">
-                <Icons.User size={16} />
-              </div>
-            )}
-            <div className="user-info-text">
-              <span className="user-name">{userProfile.nombre || user.user_metadata?.full_name || 'Usuario Kyma'}</span>
-              <span className="user-email">{user.email}</span>
-            </div>
-            <Icons.Settings size={16} className="settings-gear" />
+          <div className="sidebar-action-bar" style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            width: '100%',
+            padding: '6px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '14px',
+            gap: '6px'
+          }}>
+            <button 
+              type="button"
+              className={`sidebar-footer-action-btn ${selectedDoorId === 'configuracion' ? 'active' : ''}`}
+              onClick={() => handleSelectDoor('configuracion')}
+              title="Configuración y Contexto"
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '38px',
+                borderRadius: '10px',
+                border: selectedDoorId === 'configuracion' ? '1px solid var(--accent-purple)' : '1px solid transparent',
+                background: selectedDoorId === 'configuracion' ? 'rgba(139, 92, 246, 0.18)' : 'transparent',
+                color: selectedDoorId === 'configuracion' ? '#ffffff' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Icons.Settings size={18} />
+            </button>
+
+            <button 
+              type="button"
+              className={`sidebar-footer-action-btn ${selectedDoorId === 'busqueda' ? 'active' : ''}`}
+              onClick={() => handleSelectDoor('busqueda')}
+              title="Búsqueda Global"
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '38px',
+                borderRadius: '10px',
+                border: selectedDoorId === 'busqueda' ? '1px solid var(--accent-purple)' : '1px solid transparent',
+                background: selectedDoorId === 'busqueda' ? 'rgba(139, 92, 246, 0.18)' : 'transparent',
+                color: selectedDoorId === 'busqueda' ? '#ffffff' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Icons.Search size={18} />
+            </button>
+
+            <button 
+              type="button"
+              className={`sidebar-footer-action-btn ${selectedDoorId === 'ayuda' ? 'active' : ''}`}
+              onClick={() => handleSelectDoor('ayuda')}
+              title="Ayuda y Consejos de Uso"
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '38px',
+                borderRadius: '10px',
+                border: selectedDoorId === 'ayuda' ? '1px solid var(--accent-purple)' : '1px solid transparent',
+                background: selectedDoorId === 'ayuda' ? 'rgba(139, 92, 246, 0.18)' : 'transparent',
+                color: selectedDoorId === 'ayuda' ? '#ffffff' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Icons.HelpCircle size={18} />
+            </button>
           </div>
         </div>
       </aside>
@@ -1170,6 +1233,169 @@ export default function Home() {
                         <Icons.UserX size={16} />
                         <span>Borrar Cuenta Permanentemente</span>
                       </button>
+                    </div>
+                  </div>
+                </div>
+              ) : selectedDoorId === 'busqueda' ? (
+                <div className="busqueda-section animate-fade-in" style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  maxWidth: '900px',
+                  margin: '0 auto',
+                  padding: '10px 0 40px 0'
+                }}>
+                  <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ position: 'relative', width: '100%' }}>
+                      <Icons.Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input 
+                        type="text"
+                        className="input-field"
+                        placeholder="Busca cualquier recuerdo, tarea, persona, fecha o tag..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        autoFocus
+                        style={{ paddingLeft: '48px', paddingRight: searchQuery ? '44px' : '16px', fontSize: '1rem', height: '48px', borderRadius: '12px' }}
+                      />
+                      {searchQuery && (
+                        <button 
+                          onClick={() => setSearchQuery('')} 
+                          style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                        >
+                          <Icons.X size={18} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginRight: '4px' }}>Filtrar por puerta:</span>
+                      <button 
+                        className={`btn btn-secondary ${searchDoorFilter === null ? 'active' : ''}`}
+                        onClick={() => setSearchDoorFilter(null)}
+                        style={{ padding: '4px 12px', fontSize: '0.78rem', borderRadius: '20px' }}
+                      >
+                        Todas
+                      </button>
+                      {DOOR_MODULES.map(door => (
+                        <button 
+                          key={door.id}
+                          className={`btn btn-secondary ${searchDoorFilter === door.id ? 'active' : ''}`}
+                          onClick={() => setSearchDoorFilter(searchDoorFilter === door.id ? null : door.id)}
+                          style={{ padding: '4px 12px', fontSize: '0.78rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          {renderIcon(door.icon, 12)}
+                          <span>{door.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Search Results */}
+                  {(() => {
+                    const q = searchQuery.trim().toLowerCase();
+                    const results = items.filter(item => {
+                      if (searchDoorFilter && item.doorId !== searchDoorFilter) return false;
+                      if (!q) return true;
+                      const inTitle = item.title.toLowerCase().includes(q);
+                      const inContent = item.content.toLowerCase().includes(q);
+                      const inTags = item.tags.some(t => t.toLowerCase().includes(q));
+                      const inLugar = (item.lugar || '').toLowerCase().includes(q);
+                      return inTitle || inContent || inTags || inLugar;
+                    });
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
+                          <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                            {q ? `Resultados para "${searchQuery}"` : 'Todos tus elementos'} ({results.length})
+                          </span>
+                        </div>
+
+                        {results.length === 0 ? (
+                          <div className="glass-panel" style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', borderRadius: '16px' }}>
+                            <Icons.Search size={32} style={{ margin: '0 auto 12px auto', opacity: 0.5 }} />
+                            <p>No se han encontrado elementos que coincidan con tu búsqueda.</p>
+                          </div>
+                        ) : (
+                          <div className={`grid-layout ${isCompactView ? 'compact-layout' : ''}`}>
+                            {results.map(item => (
+                              <ItemCard
+                                key={item.id}
+                                item={item}
+                                isCompact={isCompactView}
+                                onClick={(clickedItem) => setSelectedItem(clickedItem)}
+                                onAskKyma={(item, e) => handleAskKyma(item, e)}
+                                onToggleComplete={item.doorId === 'tareas' ? handleToggleComplete : undefined}
+                                onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                                onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                                onTagSelect={(tag) => setSelectedTag(tag)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : selectedDoorId === 'ayuda' ? (
+                <div className="ayuda-section animate-fade-in" style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  maxWidth: '800px',
+                  margin: '0 auto',
+                  padding: '10px 0 40px 0'
+                }}>
+                  <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '14px' }}>
+                      <Icons.HelpCircle size={24} className="text-purple" />
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Guía y Consejos de uso de Kyma</h2>
+                    </div>
+
+                    <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                      Kyma es tu espejo inteligente y espacio de autoconocimiento. Diseñado para acompañarte sin juzgarte, organizando de forma fluida tus ideas, tareas, vínculos afectivos y recuerdos.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginTop: '12px' }}>
+                      <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-subtle)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-purple)', fontWeight: 600, fontSize: '0.9rem' }}>
+                          <Icons.MessageSquare size={16} />
+                          <span>Conversa naturalmente</span>
+                        </div>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                          Háblale a Kyma de lo que has vivido hoy, de tus proyectos o emociones. Kyma extraerá automáticamente los momentos relevantes a su puerta correspondiente.
+                        </p>
+                      </div>
+
+                      <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-subtle)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-purple)', fontWeight: 600, fontSize: '0.9rem' }}>
+                          <Icons.Sparkles size={16} />
+                          <span>Actualizaciones en vivo</span>
+                        </div>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                          Si en la conversación dices algo como <em>"Nací el 11 de agosto de 1980"</em> o <em>"Me llamo David"</em>, Kyma calculará y actualizará tu perfil de configuración en tiempo real.
+                        </p>
+                      </div>
+
+                      <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-subtle)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-purple)', fontWeight: 600, fontSize: '0.9rem' }}>
+                          <Icons.Sliders size={16} />
+                          <span>Ecualizador emocional</span>
+                        </div>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                          En la Estela de Vida puedes asignar 5 tonos emocionales a tus hitos (desde "Muy triste" en azul hasta "Muy alegre" en magenta) para ver su resplandor en la línea de tiempo.
+                        </p>
+                      </div>
+
+                      <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-subtle)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-purple)', fontWeight: 600, fontSize: '0.9rem' }}>
+                          <Icons.Layers size={16} />
+                          <span>Modos de visión alternativos</span>
+                        </div>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                          Explora tus Vínculos e Intereses en vista de Órbitas, tu Agenda en vista de Calendario, y tu Estela de vida en vista de Línea de tiempo horizontal.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
