@@ -2687,18 +2687,17 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Active tab handling: full height underlay so content scrolls behind glass header */
+          /* Active tab handling: Browser mode (default mobile) */
           .content-pane {
-            padding: calc(78px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
-            margin-top: 0 !important;
-            height: 100dvh !important;
-            height: 100vh !important;
+            padding: 24px 16px 32px 16px !important;
+            margin-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px)) !important;
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
           }
           .door-view {
-            padding-top: 0 !important;
+            padding-top: 8px !important;
           }
           .content-pane.mobile-hidden {
             display: none;
@@ -2709,9 +2708,8 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            margin-top: 0 !important;
-            height: 100dvh !important;
-            height: 100vh !important;
+            margin-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px)) !important;
             flex: 1;
             border-left: none;
             padding: 0 !important;
@@ -2724,6 +2722,23 @@ export default function Home() {
           .chat-pane.mobile-visible {
             display: flex;
           }
+        }
+
+        /* SPECIFIC PWA STANDALONE APP OVERRIDES (Installed App on Mobile) */
+        @media all and (display-mode: standalone) and (max-width: 1024px) {
+          .content-pane {
+            padding-top: calc(76px + env(safe-area-inset-top, 0px)) !important;
+            margin-top: 0 !important;
+            height: 100dvh !important;
+          }
+          .door-view {
+            padding-top: 0 !important;
+          }
+          .chat-pane {
+            margin-top: 0 !important;
+            height: 100dvh !important;
+          }
+        }
 
           /* Adjust headings */
           .serif-title {
