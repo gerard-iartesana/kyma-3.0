@@ -423,7 +423,6 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           <input
             type="text"
             className="input-field chat-input"
-            style={{ paddingRight: '48px', width: '100%', height: '52px', fontSize: '1.12rem' }}
             placeholder={contextItem ? "Responde a Kyma..." : "Háblale a Kyma, o captura una nota/tarea..."}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -452,7 +451,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           </button>
         </div>
 
-        <button type="submit" className="btn btn-primary send-btn" disabled={!inputText.trim()} style={{ width: '48px', height: '48px' }}>
+        <button type="submit" className="btn btn-primary send-btn" disabled={!inputText.trim()}>
           <Send size={20} />
         </button>
       </form>
@@ -549,11 +548,18 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
 
         .message-text {
-          font-size: 1.18rem;
-          line-height: 1.38;
+          font-size: 0.95rem;
+          line-height: 1.5;
           margin: 0;
           white-space: pre-wrap;
           word-break: break-word;
+        }
+
+        @media (max-width: 1024px) {
+          .message-text {
+            font-size: 1.18rem;
+            line-height: 1.38;
+          }
         }
 
         .typing-cursor {
@@ -667,6 +673,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
         .chat-input {
           flex: 1;
+          padding-right: 48px;
         }
         .send-btn {
           flex-shrink: 0;
@@ -674,6 +681,16 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           height: 42px;
           border-radius: var(--border-radius-md);
           padding: 0;
+        }
+        @media (max-width: 1024px) {
+          .chat-input {
+            height: 52px;
+            font-size: 1.12rem;
+          }
+          .send-btn {
+            width: 52px;
+            height: 52px;
+          }
         }
         .mic-btn:hover {
           color: var(--accent-purple) !important;
