@@ -10,6 +10,7 @@ import { OrbitsView } from '../components/OrbitsView';
 import { InterestsMapView } from '../components/InterestsMapView';
 import { CalendarView } from '../components/CalendarView';
 import { EstelaTimelineView } from '../components/EstelaTimelineView';
+import { EstelaHorizontalTimelineView } from '../components/EstelaHorizontalTimelineView';
 import { KymaChat } from '../components/KymaChat';
 import * as Icons from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -39,6 +40,9 @@ export default function Home() {
 
   // View mode for Intereses ('orbits' | 'grid')
   const [interesesViewMode, setInteresesViewMode] = useState<'orbits' | 'grid'>('grid');
+
+  // View mode for Estela de vida ('grid' | 'timeline')
+  const [estelaViewMode, setEstelaViewMode] = useState<'grid' | 'timeline'>('grid');
 
   // Sort direction for Estela de vida
   const [estelaSortAsc, setEstelaSortAsc] = useState(false);
@@ -762,6 +766,25 @@ export default function Home() {
                 )}
 
                 {selectedDoorId === 'estela' && !isVelado && (
+                  <div className="view-mode-selector radio-group">
+                    <button 
+                      className={`radio-label ${estelaViewMode === 'grid' ? 'active' : ''}`}
+                      onClick={() => setEstelaViewMode('grid')}
+                    >
+                      <Icons.Grid size={14} />
+                      <span>Lista</span>
+                    </button>
+                    <button 
+                      className={`radio-label ${estelaViewMode === 'timeline' ? 'active' : ''}`}
+                      onClick={() => setEstelaViewMode('timeline')}
+                    >
+                      <Icons.GitCommit size={14} />
+                      <span>Línea</span>
+                    </button>
+                  </div>
+                )}
+
+                {selectedDoorId === 'estela' && !isVelado && (
                   <button 
                     className="btn btn-secondary"
                     onClick={() => setEstelaSortAsc(!estelaSortAsc)}
@@ -773,7 +796,6 @@ export default function Home() {
                       display: 'inline-flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
-                      marginRight: '6px',
                       background: 'var(--bg-tertiary)',
                       borderColor: 'var(--border-subtle)',
                       color: 'var(--text-secondary)'
@@ -785,6 +807,7 @@ export default function Home() {
 
                 {/* Simplified/Compact View Toggle Button */}
                 {!isVelado && 
+                 (selectedDoorId !== 'estela' || estelaViewMode === 'grid') &&
                  (!selectedDoorId || 
                   (selectedDoorId !== 'personas' || personasViewMode === 'grid') && 
                   (selectedDoorId !== 'intereses' || interesesViewMode === 'grid') && 
@@ -982,6 +1005,12 @@ export default function Home() {
               ) : selectedDoorId === 'agenda' && agendaViewMode === 'calendar' ? (
                 <CalendarView 
                   items={filteredItems}
+                  onItemClick={(item) => setSelectedItem(item)}
+                />
+              ) : selectedDoorId === 'estela' && estelaViewMode === 'timeline' ? (
+                <EstelaHorizontalTimelineView
+                  items={filteredItems}
+                  sortAsc={estelaSortAsc}
                   onItemClick={(item) => setSelectedItem(item)}
                 />
               ) : selectedDoorId === 'estela' ? (
