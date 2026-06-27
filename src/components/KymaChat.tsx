@@ -516,15 +516,6 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           }
         }
 
-        @media all and (display-mode: standalone) and (max-width: 1024px) {
-          .clear-chat-floating-btn {
-            top: calc(76px + env(safe-area-inset-top, 0px)) !important;
-          }
-          .messages-area {
-            padding-top: calc(128px + env(safe-area-inset-top, 0px)) !important;
-          }
-        }
-
         .messages-area {
           flex: 1;
           overflow-y: auto;

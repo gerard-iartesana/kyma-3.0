@@ -2687,17 +2687,17 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Active tab handling: Browser mode (default mobile) */
+          /* Active tab handling: Unified Mobile Layout for Browser & Standalone */
           .content-pane {
-            padding: 24px 16px 32px 16px !important;
-            margin-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px)) !important;
+            padding: 36px 16px 36px 16px !important;
+            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
           }
           .door-view {
-            padding-top: 8px !important;
+            padding-top: 16px !important;
           }
           .content-pane.mobile-hidden {
             display: none;
@@ -2708,8 +2708,8 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            margin-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px)) !important;
+            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
             flex: 1;
             border-left: none;
             padding: 0 !important;
@@ -2724,19 +2724,20 @@ export default function Home() {
           }
         }
 
-        /* SPECIFIC PWA STANDALONE APP OVERRIDES (Installed App on Mobile) */
+        /* SPECIFIC PWA STANDALONE APP OVERRIDES */
         @media all and (display-mode: standalone) and (max-width: 1024px) {
-          .content-pane {
-            padding-top: calc(76px + env(safe-area-inset-top, 0px)) !important;
-            margin-top: 0 !important;
-            height: 100dvh !important;
+          .sidebar, .sidebar.collapsed {
+            top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
           }
-          .door-view {
-            padding-top: 0 !important;
+          .content-pane {
+            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
+            padding-top: 36px !important;
           }
           .chat-pane {
-            margin-top: 0 !important;
-            height: 100dvh !important;
+            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
           }
         }
 
