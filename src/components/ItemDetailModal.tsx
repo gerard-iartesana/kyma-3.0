@@ -34,7 +34,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
   const [cercania, setCercania] = useState<'nucleo' | 'cercana' | 'orbita'>(item.cercania || 'orbita');
   const [frecuencia, setFrecuencia] = useState(() => snapFrequency(item.frecuencia));
   const [eventTime, setEventTime] = useState(item.eventTime || '');
-  const [recurrencia, setRecurrencia] = useState<'none' | 'semanal' | 'mensual' | 'anual'>(item.recurrencia || 'none');
+  const [recurrencia, setRecurrencia] = useState<string>(item.recurrencia || 'none');
   const [year, setYear] = useState<number>(item.year || (item.eventDate ? parseInt(item.eventDate.split('-')[0]) : 2026));
   const [dateStr, setDateStr] = useState(item.dateStr || '');
   const [lugar, setLugar] = useState(item.lugar || '');
@@ -250,6 +250,8 @@ ${content}
                     <option value="semanal">Semanal</option>
                     <option value="mensual">Mensual</option>
                     <option value="anual">Anual</option>
+                    <option value="primer_lunes_mes">Primer lunes de cada mes</option>
+                    <option value="ultimo_viernes_mes">Último viernes de cada mes</option>
                   </select>
                 </div>
               </>

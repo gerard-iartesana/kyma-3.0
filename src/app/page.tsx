@@ -338,13 +338,29 @@ export default function Home() {
           const month = parseInt(parts[1]) - 1;
           const day = parseInt(parts[2]);
           for (let k = 1; k <= 12; k++) {
-            const nextDate = new Date(year, month, day);
+            let nextDate = new Date(year, month, day);
             if (item.recurrencia === 'semanal') {
               nextDate.setDate(nextDate.getDate() + k * 7);
             } else if (item.recurrencia === 'mensual') {
               nextDate.setMonth(nextDate.getMonth() + k);
             } else if (item.recurrencia === 'anual') {
               nextDate.setFullYear(nextDate.getFullYear() + k);
+            } else if (item.recurrencia === 'primer_lunes_mes') {
+              const targetMonth = (month + k) % 12;
+              const targetYear = year + Math.floor((month + k) / 12);
+              nextDate = new Date(targetYear, targetMonth, 1);
+              while (nextDate.getDay() !== 1) { // 1 is Monday
+                nextDate.setDate(nextDate.getDate() + 1);
+              }
+            } else if (item.recurrencia === 'ultimo_viernes_mes') {
+              const targetMonth = (month + k) % 12;
+              const targetYear = year + Math.floor((month + k) / 12);
+              nextDate = new Date(targetYear, targetMonth + 1, 0); // Last day of month
+              while (nextDate.getDay() !== 5) { // 5 is Friday
+                nextDate.setDate(nextDate.getDate() - 1);
+              }
+            } else {
+              break;
             }
             const yyyy = nextDate.getFullYear();
             const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
@@ -1038,6 +1054,8 @@ export default function Home() {
                           <option value="semanal">Semanal</option>
                           <option value="mensual">Mensual</option>
                           <option value="anual">Anual</option>
+                          <option value="primer_lunes_mes">Primer lunes de cada mes</option>
+                          <option value="ultimo_viernes_mes">Último viernes de cada mes</option>
                         </select>
                       </div>
                     </>

@@ -296,7 +296,7 @@ export function ItemCard({
                 marginLeft: '8px',
                 textTransform: 'lowercase'
               }}>
-                ({item.recurrencia})
+                ({item.recurrencia === 'primer_lunes_mes' ? 'primer lunes del mes' : item.recurrencia === 'ultimo_viernes_mes' ? 'último viernes del mes' : item.recurrencia.replace(/_/g, ' ')})
               </span>
             )}
           </h3>

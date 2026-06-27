@@ -156,7 +156,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "peso": 1 | 2 | 3,
     "eventDate": "YYYY-MM-DD" (OBLIGATORIO si es agenda),
     "eventTime": "HH:MM" (solo si es agenda),
-    "recurrencia": "none" | "semanal" | "mensual" | "anual" (solo si es agenda, detecta palabras como "todos los lunes", "cada semana", "cada mes", "anualmente"),
+    "recurrencia": "none" | "semanal" | "mensual" | "anual" | "primer_lunes_mes" | "ultimo_viernes_mes" (solo si es agenda, detecta expresiones como "todos los lunes", "primer lunes de cada mes", "último viernes del mes"),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
     "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" (solo si es personas),

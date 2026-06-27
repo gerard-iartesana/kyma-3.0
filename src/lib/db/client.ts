@@ -19,7 +19,7 @@ export interface KymaItem {
   dateStr?: string; // Specific to estela (e.g. "14 de Mayo" or "Verano")
   lugar?: string; // Specific to estela (e.g. "París, Francia")
   emocion?: 1 | 2 | 3 | 4 | 5; // Specific to estela (1: muy triste, 2: triste, 3: calma, 4: alegre, 5: muy alegre)
-  recurrencia?: 'none' | 'semanal' | 'mensual' | 'anual'; // Specific to agenda
+  recurrencia?: 'none' | 'semanal' | 'mensual' | 'anual' | 'primer_lunes_mes' | 'ultimo_viernes_mes' | string; // Specific to agenda
 }
 
 export interface ChatMessage {

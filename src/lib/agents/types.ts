@@ -17,7 +17,7 @@ export interface ExtractedItemData {
   peso?: 1 | 2 | 3;
   eventDate?: string;
   eventTime?: string;
-  recurrencia?: 'none' | 'semanal' | 'mensual' | 'anual';
+  recurrencia?: 'none' | 'semanal' | 'mensual' | 'anual' | 'primer_lunes_mes' | 'ultimo_viernes_mes' | string;
   completed?: boolean;
   cercania?: 'nucleo' | 'cercana' | 'orbita';
   frecuenciaContacto?: 'diario' | 'semanal' | 'mensual' | 'anual';
