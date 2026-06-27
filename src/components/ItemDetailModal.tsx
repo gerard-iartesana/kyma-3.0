@@ -34,6 +34,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
   const [cercania, setCercania] = useState<'nucleo' | 'cercana' | 'orbita'>(item.cercania || 'orbita');
   const [frecuencia, setFrecuencia] = useState(() => snapFrequency(item.frecuencia));
   const [eventTime, setEventTime] = useState(item.eventTime || '');
+  const [recurrencia, setRecurrencia] = useState<'none' | 'semanal' | 'mensual' | 'anual'>(item.recurrencia || 'none');
   const [year, setYear] = useState<number>(item.year || (item.eventDate ? parseInt(item.eventDate.split('-')[0]) : 2026));
   const [dateStr, setDateStr] = useState(item.dateStr || '');
   const [lugar, setLugar] = useState(item.lugar || '');
@@ -50,6 +51,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
     setCercania(item.cercania || 'orbita');
     setFrecuencia(snapFrequency(item.frecuencia));
     setEventTime(item.eventTime || '');
+    setRecurrencia(item.recurrencia || 'none');
     setYear(item.year || (item.eventDate ? parseInt(item.eventDate.split('-')[0]) : 2026));
     setDateStr(item.dateStr || '');
     setLugar(item.lugar || '');
@@ -77,6 +79,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
         completed: item.doorId === 'tareas' ? completed : undefined,
         eventDate: item.doorId === 'agenda' ? eventDate : undefined,
         eventTime: item.doorId === 'agenda' ? eventTime : undefined,
+        recurrencia: item.doorId === 'agenda' ? recurrencia : undefined,
         cercania: item.doorId === 'personas' ? cercania : undefined,
         frecuencia: item.doorId === 'personas' ? frecuencia : undefined,
         year: item.doorId === 'estela' ? year : undefined,
@@ -235,6 +238,19 @@ ${content}
                     value={eventTime} 
                     onChange={e => setEventTime(e.target.value)}
                   />
+                </div>
+                <div className="form-group flex-1">
+                  <label className="form-label">Repetición</label>
+                  <select 
+                    className="input-field" 
+                    value={recurrencia} 
+                    onChange={e => setRecurrencia(e.target.value as any)}
+                  >
+                    <option value="none">No se repite</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="mensual">Mensual</option>
+                    <option value="anual">Anual</option>
+                  </select>
                 </div>
               </>
             )}
