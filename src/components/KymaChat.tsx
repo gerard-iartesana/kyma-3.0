@@ -495,19 +495,23 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
         @media (max-width: 1024px) {
           .clear-chat-floating-btn {
-            top: 12px;
-            right: 14px;
-            width: 42px;
-            height: 42px;
-            padding: 0;
-            background: rgba(30, 27, 46, 0.95) !important;
-            border: 1px solid rgba(139, 92, 246, 0.5) !important;
-            color: #c084fc !important;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
-            z-index: 40 !important;
+            top: 24px !important;
+            right: 16px !important;
+            width: 40px !important;
+            height: 40px !important;
+            padding: 0 !important;
+            background: rgba(24, 24, 27, 0.92) !important;
+            border: 1px solid var(--border-subtle) !important;
+            color: var(--text-muted) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+            z-index: 50 !important;
+          }
+          .clear-chat-floating-btn:hover {
+            color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.2) !important;
           }
           .messages-area {
-            padding-top: 58px !important;
+            padding-top: 72px !important;
           }
         }
 

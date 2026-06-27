@@ -2637,37 +2637,48 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Increase font size and reduce vertical spacing between menu buttons on mobile */
+          /* Increase font size and icons of menu buttons, reduce item-count size and place inline right after text */
           .sidebar .sidebar-nav {
             gap: 8px !important;
           }
           .sidebar .nav-list {
             display: flex !important;
             flex-direction: column !important;
-            gap: 2px !important;
+            gap: 4px !important;
           }
           .sidebar .nav-item {
             padding: 12px 16px !important;
-            font-size: 1.25rem !important;
-            border-radius: 12px !important;
-            gap: 14px !important;
+            font-size: 1.35rem !important;
+            border-radius: 14px !important;
+            gap: 12px !important;
             margin-bottom: 2px !important;
-            min-height: 48px !important;
+            min-height: 52px !important;
+            justify-content: flex-start !important;
+          }
+          .sidebar .nav-item svg {
+            width: 22px !important;
+            height: 22px !important;
+            flex-shrink: 0 !important;
           }
           .sidebar .nav-item span {
             display: block !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-            font-size: 1.25rem !important;
+            font-size: 1.35rem !important;
             font-weight: 600 !important;
           }
           .sidebar.collapsed .item-count,
           .sidebar.collapsed .lock-icon,
-          .sidebar .item-count {
+          .sidebar .nav-item .item-count {
             opacity: 1 !important;
             pointer-events: auto !important;
-            font-size: 0.92rem !important;
-            padding: 4px 12px !important;
+            font-size: 0.76rem !important;
+            padding: 2px 7px !important;
+            margin-left: 8px !important;
+            margin-right: auto !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            line-height: 1 !important;
           }
 
           .logo-text, .logo-icon-mobile {
