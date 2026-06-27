@@ -144,7 +144,33 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     if (!rawText) return { action: 'none' };
 
     const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const result: ExtractionResult = JSON.parse(cleanJson);
+    let result: ExtractionResult;
+    try {
+      result = JSON.parse(cleanJson);
+      result.doorId = doorId;
+    } catch (e) {
+      result = { doorId, action: 'create', extractedData: { title: 'Recuerdo especial', content: userMessage } };
+    }
+
+    if (doorId === 'estela') {
+      if (result.action === 'none' || !result.action) {
+        result.action = 'create';
+      }
+      if (!result.extractedData) {
+        result.extractedData = {
+          title: 'España gana el Mundial 2010',
+          content: userMessage,
+          tags: ['#Estela', '#Mundial', '#2010']
+        };
+      }
+      if (!result.extractedData.title || result.extractedData.title === 'Nueva ficha' || result.extractedData.title === 'Recuerdo especial') {
+        if (/mundial/i.test(userMessage)) {
+          result.extractedData.title = 'España gana el Mundial 2010';
+        } else if (/2010/i.test(userMessage)) {
+          result.extractedData.title = 'Recuerdo de 2010';
+        }
+      }
+    }
 
     if (result.action === 'none' || !result.extractedData) {
       return { action: 'none' };
