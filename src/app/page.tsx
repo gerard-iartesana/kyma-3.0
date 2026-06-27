@@ -594,144 +594,135 @@ export default function Home() {
           </div>
         </nav>
 
-        <div className="sidebar-footer" style={{ position: 'relative' }}>
+        <div className="sidebar-footer">
           {showSettingsModal && (
             <div 
-              className="user-settings-popover glass-panel animate-pop-up-upwards"
+              className="user-settings-inline glass-panel animate-fade-in"
               onClick={e => e.stopPropagation()}
               style={{
-                position: 'absolute',
-                bottom: 'calc(100% + 12px)',
-                left: 0,
-                width: '320px',
-                maxWidth: 'calc(100vw - 32px)',
-                background: 'rgba(18, 18, 26, 0.96)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: '16px',
-                padding: '18px',
-                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(139, 92, 246, 0.15)',
-                zIndex: 1000,
+                width: '100%',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '14px',
+                padding: '14px',
+                marginBottom: '12px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '14px'
+                gap: '12px',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
               }}
             >
-              <div className="popover-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Icons.User size={16} className="text-purple" />
-                  <span style={{ fontWeight: 600, fontSize: '0.92rem', color: '#ffffff' }}>Configuración y Contexto</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Icons.User size={15} className="text-purple" />
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#ffffff' }}>Configuración</span>
                 </div>
                 <button 
                   className="close-btn" 
                   onClick={() => setShowSettingsModal(false)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <Icons.X size={16} />
+                  <Icons.X size={14} />
                 </button>
               </div>
 
-              <div className="popover-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Nombre (para Kyma)</label>
+                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Nombre (para Kyma)</label>
                   <input 
                     type="text" 
                     className="input-field" 
                     value={userProfile.nombre} 
                     onChange={e => handleUpdateUserProfile({ nombre: e.target.value })}
                     placeholder="Tu nombre..."
-                    style={{ fontSize: '0.88rem', padding: '6px 10px' }}
+                    style={{ fontSize: '0.82rem', padding: '6px 8px', width: '100%' }}
                   />
                 </div>
 
-                <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <div className="form-group flex-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Edad</label>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Edad</label>
                     <input 
                       type="number" 
                       className="input-field" 
                       value={userProfile.edad} 
                       onChange={e => handleUpdateUserProfile({ edad: e.target.value })}
                       placeholder="ej: 34"
-                      style={{ fontSize: '0.88rem', padding: '6px 10px' }}
+                      style={{ fontSize: '0.82rem', padding: '6px 8px', width: '100%' }}
                     />
                   </div>
                   <div className="form-group flex-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Idioma</label>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Idioma</label>
                     <select 
                       className="input-field" 
                       value={userProfile.idioma} 
                       onChange={e => handleUpdateUserProfile({ idioma: e.target.value })}
-                      style={{ fontSize: '0.88rem', padding: '6px 10px' }}
+                      style={{ fontSize: '0.82rem', padding: '6px 8px', width: '100%' }}
                     >
                       <option value="Español">Español</option>
                       <option value="English">English</option>
                       <option value="Català">Català</option>
-                      <option value="Galego">Galego</option>
-                      <option value="Euskara">Euskara</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lugar de Residencia</label>
+                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Lugar de Residencia</label>
                   <input 
                     type="text" 
                     className="input-field" 
                     value={userProfile.lugarResidencia} 
                     onChange={e => handleUpdateUserProfile({ lugarResidencia: e.target.value })}
                     placeholder="ej: Mahón, Menorca"
-                    style={{ fontSize: '0.88rem', padding: '6px 10px' }}
+                    style={{ fontSize: '0.82rem', padding: '6px 8px', width: '100%' }}
                   />
                 </div>
 
-                <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
+                <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)', margin: '2px 0' }} />
 
-                <div className="popover-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={handleExportAllData}
+                  style={{ width: '100%', justifyContent: 'flex-start', gap: '8px', fontSize: '0.78rem', padding: '6px 10px' }}
+                >
+                  <Icons.Download size={13} />
+                  <span>Exportar todo (.md)</span>
+                </button>
+
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <button 
                     type="button" 
-                    className="btn btn-secondary" 
-                    onClick={handleExportAllData}
-                    style={{ width: '100%', justifyContent: 'flex-start', gap: '8px', fontSize: '0.82rem', padding: '8px 12px' }}
+                    className="btn btn-secondary flex-1" 
+                    onClick={() => {
+                      supabase.auth.signOut();
+                      setShowSettingsModal(false);
+                    }}
+                    style={{ justifyContent: 'center', gap: '4px', fontSize: '0.75rem', padding: '6px' }}
                   >
-                    <Icons.Download size={14} />
-                    <span>Exportar todo el Panel (.md)</span>
+                    <Icons.LogOut size={13} />
+                    <span>Salir</span>
                   </button>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary flex-1" 
-                      onClick={() => {
-                        supabase.auth.signOut();
-                        setShowSettingsModal(false);
-                      }}
-                      style={{ justifyContent: 'center', gap: '6px', fontSize: '0.8rem', padding: '6px 10px' }}
-                    >
-                      <Icons.LogOut size={14} />
-                      <span>Cerrar Sesión</span>
-                    </button>
-
-                    <button 
-                      type="button" 
-                      className="btn btn-danger flex-1" 
-                      onClick={async () => {
-                        if (confirm('⚠️ ¿BORRAR CUENTA COMPLETAMENTE?\n\nEsta acción es definitiva. Eliminará tu cuenta de usuario de Supabase Auth, borrando instantáneamente en cascada todas tus notas, tareas, agenda, intereses, personas y historial de chat. No podrás recuperar esta información.\n\n¿Quieres proceder con la eliminación?')) {
-                          try {
-                            await dbClient.deleteAccount();
-                            setShowSettingsModal(false);
-                          } catch (err) {
-                            console.error(err);
-                            alert('Error al borrar la cuenta.');
-                          }
+                  <button 
+                    type="button" 
+                    className="btn btn-danger flex-1" 
+                    onClick={async () => {
+                      if (confirm('⚠️ ¿BORRAR CUENTA COMPLETAMENTE?\n\nEsta acción es definitiva. Eliminará tu cuenta de usuario de Supabase Auth, borrando instantáneamente en cascada todas tus notas, tareas, agenda, intereses, personas y historial de chat.\n\n¿Quieres proceder con la eliminación?')) {
+                        try {
+                          await dbClient.deleteAccount();
+                          setShowSettingsModal(false);
+                        } catch (err) {
+                          console.error(err);
+                          alert('Error al borrar la cuenta.');
                         }
-                      }}
-                      style={{ justifyContent: 'center', gap: '6px', fontSize: '0.8rem', padding: '6px 10px' }}
-                    >
-                      <Icons.UserX size={14} />
-                      <span>Borrar Cuenta</span>
-                    </button>
-                  </div>
+                      }
+                    }}
+                    style={{ justifyContent: 'center', gap: '4px', fontSize: '0.75rem', padding: '6px' }}
+                  >
+                    <Icons.UserX size={13} />
+                    <span>Borrar</span>
+                  </button>
                 </div>
               </div>
             </div>
