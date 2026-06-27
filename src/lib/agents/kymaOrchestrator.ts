@@ -26,19 +26,23 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
   let val = '';
 
   // 1. Nombre
-  const nameMatch = text.match(/(?:me llamo|mi nombre es|llámame|llamame|cábiame el nombre a|cambiame el nombre a|mi nombre por|puedes llamarme) ([A-ZÁÉÍÓÚÑa-záéíóúñ]+)/i);
+  const nameMatch = text.match(/(?:me llamo|mi nombre es|llámame|llamame|cábiame el nombre a|cambiame el nombre a|mi nombre por|puedes llamarme) ([A-ZÁÉÍÓÚÑa-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?)(?:\.|$|,|\s+y\b|\s+tengo\b)/i);
   if (nameMatch) {
-    const newName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
-    if (newName !== updated.nombre) {
-      updated.nombre = newName;
-      hasChanges = true;
-      key = 'nombre';
-      val = newName;
+    const rawName = nameMatch[1].trim();
+    const stopWords = /^(de|en|un|una|el|la|los|las|muy|tan|bastante|aquí|aqui)$/i;
+    if (!stopWords.test(rawName)) {
+      const formattedName = rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      if (formattedName !== updated.nombre) {
+        updated.nombre = formattedName;
+        hasChanges = true;
+        key = 'nombre';
+        val = formattedName;
+      }
     }
   }
 
   // 2. Edad
-  const ageMatch = text.match(/(?:tengo|mi edad es|cumplí|cumpli|tengo unos) (\d{1,3}) (?:años|anos)/i);
+  const ageMatch = text.match(/(?:tengo|mi edad es|cumplí|cumpli|tengo unos|tengo la edad de) (\d{1,3}) (?:años|anos)/i);
   if (ageMatch) {
     const newAge = ageMatch[1];
     if (newAge !== updated.edad) {
@@ -50,7 +54,7 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
   }
 
   // 3. Lugar de Residencia
-  const residenceMatch = text.match(/(?:vivo en|resido en|soy de|mi lugar de residencia es) ([A-ZÁÉÍÓÚÑa-záéíóúñ\s,]+)(?:\.|$|,)/i);
+  const residenceMatch = text.match(/(?:vivo en|resido en|soy de|mi lugar de residencia es|ahora vivo en) ([A-ZÁÉÍÓÚÑa-záéíóúñ\s,]+)(?:\.|$|,|\s+y\b)/i);
   if (residenceMatch) {
     const newRes = residenceMatch[1].trim();
     if (newRes.length > 2 && newRes.length < 40 && newRes !== updated.lugarResidencia) {

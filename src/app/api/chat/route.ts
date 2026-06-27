@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       text: result.replyText,
       createdItem: result.createdItem,
-      action: result.action
+      action: result.action,
+      updatedProfile: result.updatedProfile
     });
   } catch (err: any) {
     console.error('API Chat Route Handler Error:', err);

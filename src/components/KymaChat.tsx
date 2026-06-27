@@ -8,6 +8,7 @@ interface KymaChatProps {
   contextItem: KymaItem | null;
   onClearContext: () => void;
   onItemAddedOrModified: (item?: KymaItem, action?: string) => void;
+  onUserProfileUpdated?: (updatedProfile: any) => void;
 }
 
 function renderFormattedText(text: string) {
@@ -69,7 +70,7 @@ function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string;
   );
 }
 
-export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }: KymaChatProps) {
+export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, onUserProfileUpdated }: KymaChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -256,6 +257,15 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified }:
             if (response.ok) {
               const data = await response.json();
               kymaText = data.text;
+              if (data.updatedProfile) {
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('kyma_user_profile', JSON.stringify(data.updatedProfile));
+                  window.dispatchEvent(new CustomEvent('kyma_user_profile_updated', { detail: data.updatedProfile }));
+                }
+                if (onUserProfileUpdated) {
+                  onUserProfileUpdated(data.updatedProfile);
+                }
+              }
               if (data.createdItem || data.action === 'create' || data.action === 'enrich') {
                 onItemAddedOrModified(data.createdItem, data.action);
               }
