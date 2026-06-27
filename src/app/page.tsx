@@ -2575,7 +2575,7 @@ export default function Home() {
             position: relative;
           }
 
-          /* Header on Mobile: pinned fixed to top */
+          /* Header on Mobile: pinned fixed to top with Glassmorphism */
           .mobile-header {
             display: flex;
             align-items: center;
@@ -2585,12 +2585,14 @@ export default function Home() {
             left: 0;
             right: 0;
             width: 100%;
-            height: calc(56px + env(safe-area-inset-top, 0px));
+            height: calc(60px + env(safe-area-inset-top, 0px));
             padding-top: env(safe-area-inset-top, 0px);
             padding-left: 16px;
             padding-right: 16px;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(18, 18, 20, 0.82) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 0;
             flex-shrink: 0;
             z-index: 100;
@@ -2612,10 +2614,10 @@ export default function Home() {
             width: 100% !important;
             padding: 24px 16px !important;
             position: fixed;
-            top: calc(56px + env(safe-area-inset-top, 0px));
+            top: calc(60px + env(safe-area-inset-top, 0px));
             right: 0;
             left: auto;
-            height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px));
             background: var(--bg-primary);
             border-left: 1px solid var(--border-subtle);
             border-right: none;
@@ -2662,11 +2664,11 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Active tab handling */
+          /* Active tab handling with generous top margins and padding */
           .content-pane {
-            padding: 16px;
-            margin-top: calc(56px + env(safe-area-inset-top, 0px));
-            height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
+            padding: 24px 16px 32px 16px;
+            margin-top: calc(60px + env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px));
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
@@ -2680,8 +2682,8 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            margin-top: calc(56px + env(safe-area-inset-top, 0px));
-            height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
+            margin-top: calc(60px + env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 60px - env(safe-area-inset-top, 0px));
             flex: 1;
             border-left: none;
             padding: 12px 12px 16px 12px;
