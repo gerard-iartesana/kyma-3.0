@@ -1642,17 +1642,17 @@ export default function Home() {
         }
         .sidebar-action-bar {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: space-around;
           width: 100%;
-          gap: 4px;
+          gap: 8px;
         }
         .sidebar-footer-action-btn {
-          flex: 1;
+          width: 38px;
+          height: 38px;
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 38px;
           border-radius: 10px;
           border: none;
           background: transparent;
