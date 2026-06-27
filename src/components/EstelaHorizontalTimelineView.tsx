@@ -49,15 +49,55 @@ export function EstelaHorizontalTimelineView({
 }: EstelaHorizontalTimelineViewProps) {
   const estelaItems = items.filter(i => i.doorId === 'estela');
 
-  // Sort items by year / date
-  const sortedItems = [...estelaItems].sort((a, b) => {
-    const yearA = a.year || (a.eventDate ? parseInt(a.eventDate.split('-')[0]) : 0);
-    const yearB = b.year || (b.eventDate ? parseInt(b.eventDate.split('-')[0]) : 0);
-    if (yearA !== yearB) {
-      return sortAsc ? yearA - yearB : yearB - yearA;
+  // Sort items chronologically by year / date
+  const sortedItems = React.useMemo(() => {
+    return [...estelaItems].sort((a, b) => {
+      const yearA = a.year || (a.eventDate ? parseInt(a.eventDate.split('-')[0]) : 0);
+      const yearB = b.year || (b.eventDate ? parseInt(b.eventDate.split('-')[0]) : 0);
+      if (yearA !== yearB) {
+        return yearA - yearB;
+      }
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+  }, [estelaItems]);
+
+  // Calculate proportional X positions based on exact calendar year difference
+  const itemPositions = React.useMemo(() => {
+    if (sortedItems.length === 0) return [];
+
+    const itemsWithYear = sortedItems.map(item => {
+      let parsedYear = item.year;
+      if (!parsedYear && item.eventDate) {
+        const y = parseInt(item.eventDate.split('-')[0]);
+        if (!isNaN(y)) parsedYear = y;
+      }
+      if (!parsedYear) parsedYear = new Date().getFullYear();
+      return { item, year: parsedYear };
+    });
+
+    const PX_PER_YEAR = 35; // 35 pixels per calendar year
+    const MIN_GAP = 120;    // minimum pixels between adjacent nodes to prevent visual collisions
+
+    const positions: { item: KymaItem; year: number; x: number }[] = [];
+    let currentX = 0;
+
+    for (let i = 0; i < itemsWithYear.length; i++) {
+      if (i === 0) {
+        positions.push({ item: itemsWithYear[0].item, year: itemsWithYear[0].year, x: 0 });
+      } else {
+        const prev = positions[i - 1];
+        const currYear = itemsWithYear[i].year;
+        const yearDiff = Math.abs(currYear - prev.year);
+        const calculatedDist = Math.max(yearDiff * PX_PER_YEAR, MIN_GAP);
+        currentX += calculatedDist;
+        positions.push({ item: itemsWithYear[i].item, year: currYear, x: currentX });
+      }
     }
-    return sortAsc ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt);
-  });
+
+    return positions;
+  }, [sortedItems]);
+
+  const totalWidth = itemPositions.length > 0 ? itemPositions[itemPositions.length - 1].x : 0;
 
   // Pan & Zoom State
   const [scale, setScale] = useState(1);
@@ -148,14 +188,14 @@ export function EstelaHorizontalTimelineView({
             transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)'
           }}
         >
-          <div className="timeline-graph-wrapper">
+          <div className="timeline-graph-wrapper" style={{ width: `${totalWidth}px`, minWidth: `${totalWidth}px`, height: '260px' }}>
             {/* Center Axis Line */}
             <div className="horizontal-axis-line" />
 
             {/* Nodes Sequence along axis */}
-            <div className="timeline-nodes-sequence">
-              {sortedItems.map((item) => {
-                const displayYear = item.year || (item.eventDate ? item.eventDate.split('-')[0] : '');
+            <div className="timeline-nodes-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
+              {itemPositions.map(({ item, year, x }) => {
+                const displayYear = item.year || (item.eventDate ? item.eventDate.split('-')[0] : String(year));
                 const isMilestone = item.peso === 3;
                 const emotion = item.emocion || 4;
                 const emotionColor = getEmotionColor(emotion);
@@ -164,7 +204,16 @@ export function EstelaHorizontalTimelineView({
                 const absHeight = Math.abs(yOffset);
 
                 return (
-                  <div key={item.id} className="timeline-node-column">
+                  <div 
+                    key={item.id} 
+                    className="timeline-node-column"
+                    style={{
+                      position: 'absolute',
+                      left: `${x}px`,
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  >
                     {/* Stem & Circle Positioned Relative to Center Axis */}
                     <div 
                       className="node-positioner"
@@ -269,9 +318,9 @@ export function EstelaHorizontalTimelineView({
 
         .timeline-graph-wrapper {
           position: relative;
-          min-width: max-content;
           display: flex;
           align-items: center;
+          margin: 0 200px;
         }
 
         .horizontal-axis-line {
@@ -287,12 +336,9 @@ export function EstelaHorizontalTimelineView({
           border-radius: 2px;
         }
 
-        .timeline-nodes-sequence {
-          display: flex;
-          gap: 150px;
+        .timeline-nodes-container {
           position: relative;
           z-index: 2;
-          padding: 0 80px;
         }
 
         .timeline-node-column {
