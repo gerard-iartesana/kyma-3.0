@@ -412,10 +412,10 @@ export function ItemCard({
           <button 
             className="ask-kyma-btn btn"
             onClick={(e) => onAskKyma(item, e)}
-            title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : item.doorId === 'agenda' ? "Consultar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
+            title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? "Consultar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
           >
             <LogoIcon size={13} className="kyma-btn-icon" />
-            <span>{item.doorId === 'estela' ? 'Recordar' : item.doorId === 'agenda' ? 'Consultar' : 'Explorar'}</span>
+            <span>{item.doorId === 'estela' ? 'Recordar' : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? 'Consultar' : 'Explorar'}</span>
           </button>
         </div>
       )}
