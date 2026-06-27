@@ -834,44 +834,22 @@ export default function Home() {
                 )}
 
                 {selectedDoorId === 'agenda' && !isVelado && (
-                  <>
-                    <div className="view-mode-selector radio-group">
-                      <button 
-                        className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
-                        onClick={() => setAgendaViewMode('grid')}
-                      >
-                        <Icons.Grid size={14} />
-                        <span>Lista</span>
-                      </button>
-                      <button 
-                        className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
-                        onClick={() => setAgendaViewMode('calendar')}
-                      >
-                        <Icons.Calendar size={14} />
-                        <span>Calendario</span>
-                      </button>
-                    </div>
-
+                  <div className="view-mode-selector radio-group">
                     <button 
-                      className={`btn btn-secondary ${showPastAgendaEvents ? 'active' : ''}`}
-                      onClick={() => setShowPastAgendaEvents(!showPastAgendaEvents)}
-                      title={showPastAgendaEvents ? "Ocultar eventos pasados" : "Mostrar eventos pasados"}
-                      style={{ 
-                        height: '38px', 
-                        padding: '0 12px', 
-                        fontSize: '0.82rem',
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        gap: '6px',
-                        background: showPastAgendaEvents ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
-                        borderColor: showPastAgendaEvents ? 'var(--accent-purple)' : 'var(--border-subtle)',
-                        color: showPastAgendaEvents ? '#ffffff' : 'var(--text-secondary)'
-                      }}
+                      className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
+                      onClick={() => setAgendaViewMode('grid')}
                     >
-                      <Icons.History size={15} />
-                      <span>{showPastAgendaEvents ? 'Ocultar pasados' : 'Ver pasados'}</span>
+                      <Icons.Grid size={14} />
+                      <span>Lista</span>
                     </button>
-                  </>
+                    <button 
+                      className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
+                      onClick={() => setAgendaViewMode('calendar')}
+                    >
+                      <Icons.Calendar size={14} />
+                      <span>Calendario</span>
+                    </button>
+                  </div>
                 )}
 
                 {selectedDoorId === 'estela' && !isVelado && (
