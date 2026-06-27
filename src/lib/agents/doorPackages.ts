@@ -53,10 +53,11 @@ Analiza pasiones, hobbies, temas de estudio o gustos culturales expresados.`
     category: 'mapa',
     guardrails: [
       'Crear fichas de persona requiere tacto. Extrae solo cuando la persona mencionada tenga peso afectivo o recurrencia.',
-      'TÍTULO: Nombre de la persona exclusivamente (ej: "Alejandro", "Marta").'
+      'TÍTULO: Nombre de la persona exclusivamente (ej: "Alejandro", "Marta", "David").',
+      'FRECUENCIA DE CONTACTO: Si el usuario indica con qué asiduidad ve, habla o interactúa con esa persona (ej: "cada día", "diariamente" -> "diario"; "cada semana" -> "semanal"; "una vez al mes" -> "mensual"), debes extraer o actualizar OBLIGATORIAMENTE su frecuenciaContacto.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Vínculos (Personas).
-Extrae menciones de personas significativas.`
+Extrae menciones de personas significativas. Si el usuario indica la frecuencia con la que interactúa con ella (ej: cada día -> diario), actualiza o asigna su frecuenciaContacto.`
   },
   reflexiones: {
     doorId: 'reflexiones',

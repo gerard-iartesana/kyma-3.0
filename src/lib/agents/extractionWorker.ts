@@ -24,6 +24,16 @@ function formatTagList(tags: string[]): string[] {
   return Array.from(map.values());
 }
 
+function getFrequencyScore(freqLabel?: string): number | undefined {
+  if (!freqLabel) return undefined;
+  const l = freqLabel.toLowerCase();
+  if (l.includes('diario') || l.includes('día') || l.includes('dia')) return 100;
+  if (l.includes('semanal') || l.includes('semana')) return 75;
+  if (l.includes('mensual') || l.includes('mes')) return 50;
+  if (l.includes('anual') || l.includes('año') || l.includes('ano')) return 25;
+  return undefined;
+}
+
 export async function executeExtractionWorker(
   doorId: DoorId,
   userMessage: string,
@@ -50,6 +60,7 @@ export async function executeExtractionWorker(
     content: i.content,
     eventDate: i.eventDate,
     eventTime: i.eventTime,
+    frecuencia: i.frecuencia,
     tags: i.tags
   }));
 
@@ -69,7 +80,7 @@ Tu tarea es actuar como el trabajador de extracción invisible para la puerta "$
 NO HABLAS CON EL USUARIO. Tu única salida debe ser un objeto JSON válido con la estructura especificada.
 
 FECHA ACTUAL DEL SISTEMA: ${currentDateStr} (Día de la semana: ${dayOfWeekStr}).
-IMPORTANTE PARA AGENDA: Si el usuario usa palabras como "hoy", "esta tarde", "mañana", "este viernes", calcula la fecha exacta en formato YYYY-MM-DD basándote estrictamente en la FECHA ACTUAL DEL SISTEMA (${currentDateStr}). Para "hoy" o "esta tarde", la fecha ES ${currentDateStr}.
+IMPORTANTE PARA AGENDA: Si el usuario usa palabras como "hoy", "esta tarde", "mañana", "este viernes", calcula la fecha exacta en formato YYYY-MM-DD basándote strictly en la FECHA ACTUAL DEL SISTEMA (${currentDateStr}). Para "hoy" o "esta tarde", la fecha ES ${currentDateStr}.
 
 GUARDARRAÍLES DE ESTA PUERTA:
 ${pkg.guardrails.map(g => `- ${g}`).join('\n')}
@@ -82,7 +93,7 @@ MENSAJE O CONTEXTO DEL USUARIO:
 ${contextSnippet ? `Contexto adicional: "${contextSnippet}"` : ''}
 
 REGLAS DE FORMATO Y ENRIQUECIMIENTO (tanto para create como para enrich):
-1. "title": DEBE SER DIRECTO Y CORTO (máximo 3-4 palabras, ej: "Torneo de Pádel", "Día de Playa", "Cita Médica"). NUNCA incluyas personas, lugares ni horas en el título.
+1. "title": DEBE SER DIRECTO Y CORTO (máximo 3-4 palabras, ej: "Torneo de Pádel", "Día de Playa", "Cita Médica", "David"). NUNCA incluyas personas, lugares ni horas en el título salvo si la puerta es personas donde el título es exclusivamente el nombre de la persona.
 2. "content": Redacta los detalles prácticos (con quién es, lugar o notas). PARA AGENDA: OMITE totalmente la fecha y la hora en la redacción del texto del contenido, ya que la fecha y la hora se guardan en sus campos dedicados (eventDate, eventTime). NUNCA repitas ni concatenes frases absurdas.
 3. "tags": Extrae OBLIGATORIAMENTE todas las etiquetas temáticas relevantes con '#', la primera letra en mayúscula y respetando espacios para nombres propios (ej: "#Playa", "#Rafa", "#Son Bou", "#Pádel", "#PadelOne", "#Deporte").
 
@@ -92,13 +103,14 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
   "action": "create" | "enrich" | "none",
   "targetItemId": "ID del elemento existente a enriquecer si action es 'enrich'",
   "extractedData": {
-    "title": "Título corto y directo (ej: 'Día de Playa')",
-    "content": "Detalles del con quién y dónde sin incluir fechas ni horas (ej: 'Con Rafa en la playa de Son Bou')",
+    "title": "Título corto y directo (ej: 'Día de Playa' o 'David')",
+    "content": "Detalles del con quién y dónde sin incluir fechas ni horas",
     "peso": 1 | 2 | 3,
     "eventDate": "YYYY-MM-DD" (OBLIGATORIO si es agenda),
     "eventTime": "HH:MM" (solo si es agenda),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
+    "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" (solo si es personas. Ej. si dice "cada día", "lo veo cada día" o "hablo a diario" usa "diario"),
     "tags": ["#Agenda", "#Playa", "#Rafa", "#Son Bou", "#Ocio"]
   },
   "reasoning": "Breve justificación interna"
@@ -135,6 +147,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     // Determine origen based on category
     const origen = pkg.category === 'utilidad' ? 'kyma_confirmado' : 'kyma_sugerido';
+    const calculatedFreq = getFrequencyScore(result.extractedData.frecuenciaContacto) ?? result.extractedData.frecuencia;
 
     if (result.action === 'enrich' && result.targetItemId) {
       const existing = existingItems.find(i => i.id === result.targetItemId);
@@ -151,6 +164,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           peso: result.extractedData.peso || existing.peso,
           completed: result.extractedData.completed !== undefined ? result.extractedData.completed : existing.completed,
           cercania: result.extractedData.cercania || existing.cercania,
+          frecuencia: calculatedFreq !== undefined ? calculatedFreq : existing.frecuencia,
           tags: mergedTags,
           origen
         }, userId, sbClient);
@@ -173,6 +187,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       eventTime: result.extractedData.eventTime,
       completed: result.extractedData.completed,
       cercania: result.extractedData.cercania || (doorId === 'personas' ? 'orbita' : undefined),
+      frecuencia: calculatedFreq !== undefined ? calculatedFreq : (doorId === 'personas' ? 50 : undefined),
       origen
     }, userId, sbClient);
 

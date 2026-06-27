@@ -19,6 +19,8 @@ export interface ExtractedItemData {
   eventTime?: string;
   completed?: boolean;
   cercania?: 'nucleo' | 'cercana' | 'orbita';
+  frecuenciaContacto?: 'diario' | 'semanal' | 'mensual' | 'anual';
+  frecuencia?: number;
   tags?: string[];
 }
 
