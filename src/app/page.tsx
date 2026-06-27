@@ -671,10 +671,9 @@ export default function Home() {
           className="mobile-header-brand" 
           onClick={() => handleSelectDoor(null)}
           title="Ir al chat con Kyma"
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
-          <LogoIcon size={30} />
-          <span className="font-serif text-white" style={{ fontSize: '1.25rem', fontWeight: 600, letterSpacing: '0.02em' }}>Kyma</span>
+          <LogoFull height={28} className="text-white" />
         </div>
         
         <button 
@@ -2586,12 +2585,16 @@ export default function Home() {
             align-items: center;
             justify-content: space-between;
             height: 56px;
-            border-bottom: 1px solid var(--border-subtle);
+            width: 100%;
+            margin: 0;
             padding: 0 16px;
             background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            border-radius: 0;
             flex-shrink: 0;
             z-index: 60;
             position: relative;
+            box-sizing: border-box;
           }
           .menu-toggle-btn {
             background: none;

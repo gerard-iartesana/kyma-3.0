@@ -423,7 +423,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           <input
             type="text"
             className="input-field chat-input"
-            style={{ paddingRight: '48px', width: '100%', height: '48px', fontSize: '1.02rem' }}
+            style={{ paddingRight: '48px', width: '100%', height: '52px', fontSize: '1.12rem' }}
             placeholder={contextItem ? "Responde a Kyma..." : "Háblale a Kyma, o captura una nota/tarea..."}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -549,8 +549,8 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
 
         .message-text {
-          font-size: 1.04rem;
-          line-height: 1.55;
+          font-size: 1.18rem;
+          line-height: 1.6;
           margin: 0;
           white-space: pre-wrap;
           word-break: break-word;
