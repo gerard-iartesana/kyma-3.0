@@ -707,7 +707,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              <div className="door-controls" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div className="door-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {selectedDoorId === 'intereses' && !isVelado && (
                   <div className="view-mode-selector radio-group">
                     <button 
@@ -823,7 +823,6 @@ export default function Home() {
                       display: 'inline-flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
-                      marginRight: '-8px',
                       background: isCompactView ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
                       borderColor: isCompactView ? 'var(--accent-purple)' : 'var(--border-subtle)',
                       color: isCompactView ? '#ffffff' : 'var(--text-secondary)'
