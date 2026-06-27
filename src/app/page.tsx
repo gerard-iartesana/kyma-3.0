@@ -228,6 +228,8 @@ export default function Home() {
     setMobileMenuOpen(false);
     if (doorId) {
       setMobileTab('panel');
+    } else {
+      setMobileTab('chat');
     }
   };
 

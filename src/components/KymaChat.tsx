@@ -495,7 +495,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
         @media (max-width: 1024px) {
           .clear-chat-floating-btn {
-            top: 24px !important;
+            top: 48px !important;
             right: 16px !important;
             width: 40px !important;
             height: 40px !important;
@@ -511,7 +511,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             background: rgba(239, 68, 68, 0.2) !important;
           }
           .messages-area {
-            padding-top: 72px !important;
+            padding-top: 96px !important;
           }
         }
 
