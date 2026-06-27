@@ -198,10 +198,11 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       const existing = existingItems.find(i => i.id === result.targetItemId);
       if (existing) {
         const updatedContent = result.extractedData.content || existing.content;
-        const rawTags = [...(existing.tags || []), ...(result.extractedData.tags || [])];
+        const rawTags = [...(existing.tags || []), ...(result.extractedData.tags || []), `#${doorId}`];
         const mergedTags = formatTagList(rawTags);
         
         const updatedItem = await dbClient.updateItem(existing.id, {
+          doorId,
           title: (result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title,
           content: updatedContent,
           eventDate: result.extractedData.eventDate || existing.eventDate,
@@ -222,7 +223,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     // Default to create
     const eventDate = doorId === 'agenda' ? (result.extractedData.eventDate || currentDateStr) : result.extractedData.eventDate;
-    const rawTags = result.extractedData.tags || [`#${doorId}`];
+    const rawTags = [...(result.extractedData.tags || []), `#${doorId}`];
     const initialTags = formatTagList(rawTags);
 
     const newItem = await dbClient.createItem({

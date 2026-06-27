@@ -270,7 +270,7 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
 
   const datos = dbItem.datos || {};
   let doorId = doorIdMap[dbItem.tipo] || 'notas';
-  if (datos.is_estela || (tagNames || []).some(t => t.toLowerCase() === '#estela')) {
+  if (datos.is_estela || typeof datos.year === 'number' || (tagNames || []).some(t => t.toLowerCase() === '#estela')) {
     doorId = 'estela';
   }
 
@@ -326,7 +326,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   }
 
   const datos: any = {};
-  if (item.doorId === 'estela') {
+  if (item.doorId === 'estela' || item.year !== undefined || item.dateStr !== undefined || item.lugar !== undefined) {
     datos.is_estela = true;
   }
   if (item.completed !== undefined) datos.hecha = item.completed;
