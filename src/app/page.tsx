@@ -2687,17 +2687,18 @@ export default function Home() {
             display: none !important;
           }
 
-          /* Active tab handling with generous top margins and padding */
+          /* Active tab handling: full height underlay so content scrolls behind glass header */
           .content-pane {
-            padding: 44px 16px 36px 16px !important;
-            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
+            padding: calc(78px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
+            margin-top: 0 !important;
+            height: 100dvh !important;
+            height: 100vh !important;
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
           }
           .door-view {
-            padding-top: 16px !important;
+            padding-top: 0 !important;
           }
           .content-pane.mobile-hidden {
             display: none;
@@ -2708,11 +2709,12 @@ export default function Home() {
 
           .chat-pane {
             width: 100%;
-            margin-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-            height: calc(100dvh - 64px - env(safe-area-inset-top, 0px)) !important;
+            margin-top: 0 !important;
+            height: 100dvh !important;
+            height: 100vh !important;
             flex: 1;
             border-left: none;
-            padding: 16px 12px 16px 12px !important;
+            padding: 0 !important;
             overflow: hidden;
             box-sizing: border-box;
           }
