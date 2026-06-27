@@ -457,10 +457,6 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         </button>
       </form>
 
-      <div className="input-tips">
-        Consejo: escribe "crear nota [texto]" para capturar al vuelo.
-      </div>
-
       {/* STYLES */}
       <style jsx>{`
         .chat-container {
@@ -659,9 +655,11 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         .chat-input-form {
           display: flex;
           gap: 10px;
-          padding: 14px 20px;
+          padding: 16px 20px;
           background: var(--bg-secondary);
           border-top: 1px solid var(--border-subtle);
+          border-bottom-left-radius: var(--border-radius-lg);
+          border-bottom-right-radius: var(--border-radius-lg);
         }
         .chat-input {
           flex: 1;
@@ -684,14 +682,6 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         @keyframes micPulse {
           0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
           50% { transform: scale(1.15); box-shadow: 0 0 10px 4px rgba(239, 68, 68, 0.2); }
-        }
-
-        .input-tips {
-          font-size: 0.72rem;
-          color: var(--text-muted);
-          text-align: center;
-          padding-bottom: 12px;
-          background: var(--bg-secondary);
         }
 
         .text-purple { color: var(--accent-purple); }
