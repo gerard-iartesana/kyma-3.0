@@ -1,4 +1,5 @@
-import { ChatMessage, KymaItem } from '../db/client';
+import { ChatMessage, dbClient, KymaItem } from '../db/client';
+import { createSupabaseClient } from '../supabase';
 import { executeExtractionWorker } from './extractionWorker';
 import { DoorId, TriageResult } from './types';
 
@@ -12,6 +13,7 @@ PRINCIPIOS FUNDAMENTALES:
 - Acuses en línea (Utilidad): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado o actualizado una ficha de utilidad, debes acusar recibo de manera breve y natural en tu respuesta (ej: "Apuntado en tu agenda: [Título del evento]."), continuando la charla fluida sin cortar el hilo.
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
+- Compleitud: Concluye siempre tus oraciones y pensamientos de forma completa.
 `;
 
 export async function processKymaTurn(
@@ -33,6 +35,8 @@ export async function processKymaTurn(
 
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';
+
+  const sbClient = createSupabaseClient(accessToken);
 
   // Step 1: Triage with recent conversation context
   let triage: TriageResult = { isFicheable: false, confidence: 0 };
@@ -97,7 +101,28 @@ Devuelve UNICAMENTE un JSON con este formato:
     );
   }
 
-  // Step 3: Format conversation history & system prompt for Kyma's response
+  // Step 3: Fetch user items context to allow Kyma to read agenda, tasks, notes, etc.
+  let allUserItems: KymaItem[] = [];
+  try {
+    allUserItems = await dbClient.getItems(undefined, userId, sbClient);
+  } catch (err) {
+    console.error('Error fetching user items for Kyma context:', err);
+  }
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  const userItemsContext = allUserItems.map(item => {
+    let details = `[${item.doorId.toUpperCase()}] "${item.title}"`;
+    if (item.eventDate) details += ` (Fecha: ${item.eventDate}${item.eventTime ? ' a las ' + item.eventTime : ''})`;
+    if (item.content) details += `: ${item.content}`;
+    return details;
+  }).join('\n');
+
+  // Step 4: Format conversation history & system prompt for Kyma's response
   const contents: any[] = [];
   const historyMessages = messages.slice(-12);
   for (const msg of historyMessages) {
@@ -125,8 +150,19 @@ Devuelve UNICAMENTE un JSON con este formato:
     }
   }
 
+  const userContextInstruction = `
+\n\n[INFORMACIÓN DEL ESPACIO Y AGENDA DEL USUARIO]:
+FECHA DE HOY: ${todayStr} (${now.toLocaleDateString('es-ES', { weekday: 'long' })})
+FECHA DE MAÑANA: ${tomorrowStr} (${tomorrow.toLocaleDateString('es-ES', { weekday: 'long' })})
+
+FICHAS GUARDADAS EN EL ESPACIO DEL USUARIO:
+${userItemsContext || 'No hay fichas guardadas actualmente.'}
+
+REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene para hoy, para mañana o sobre sus tareas/notas/agenda, REVISA estrictamente la lista anterior de fichas guardadas y dale una respuesta precisa y directa citando los eventos, horas y detalles.
+`;
+
   const systemInstruction = {
-    parts: [{ text: KYMA_CONSTITUTION + extraInstruction }]
+    parts: [{ text: KYMA_CONSTITUTION + userContextInstruction + extraInstruction }]
   };
 
   const kymaRes = await fetch(baseUrl, {
