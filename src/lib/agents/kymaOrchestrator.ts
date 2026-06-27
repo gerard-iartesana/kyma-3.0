@@ -183,7 +183,9 @@ Devuelve UNICAMENTE un JSON con este formato:
 
     // Question / query check to prevent duplications on read turns
     const isQuestion = /^\s*¿|\?|qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir/i.test(userText.trim());
-    if (isQuestion) {
+    const isDeleteIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar)\b/i.test(userText);
+    
+    if (isQuestion || isDeleteIntent) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
       // Deterministic override for memories, past years, and life milestones
@@ -233,6 +235,53 @@ Devuelve UNICAMENTE un JSON con este formato:
     console.error('Error fetching user items for Kyma context:', err);
   }
 
+  // Step 3.5: AI Deletion execution if user requested item removal
+  let deletedItemTitle = '';
+  let finalAction: string = extractedResult.action;
+  const isDeleteRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar)\b/i.test(userText);
+
+  if (isDeleteRequested && allUserItems.length > 0) {
+    const deletePrompt = `
+Analiza la siguiente frase del usuario e identifica cuál de sus fichas existentes quiere ELIMINAR / BORRAR / CANCELAR.
+FICHAS ACTUALES DEL USUARIO:
+${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.title, content: i.content, eventDate: i.eventDate })), null, 2)}
+
+FRASE DEL USUARIO: "${userText}"
+
+Devuelve ÚNICAMENTE un JSON con este formato:
+{
+  "shouldDelete": boolean,
+  "itemId": "ID exacto de la ficha a eliminar o null",
+  "itemTitle": "Título de la ficha a eliminar"
+}
+`;
+    try {
+      const delRes = await fetch(baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: deletePrompt }] }],
+          generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
+        })
+      });
+      if (delRes.ok) {
+        const delData = await delRes.json();
+        const rawDel = delData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawDel) {
+          const cleanJson = rawDel.replace(/```json/gi, '').replace(/```/g, '').trim();
+          const parsedDel = JSON.parse(cleanJson);
+          if (parsedDel.shouldDelete && parsedDel.itemId) {
+            await dbClient.deleteItem(parsedDel.itemId, userId, sbClient);
+            deletedItemTitle = parsedDel.itemTitle || 'la ficha seleccionada';
+            finalAction = 'delete';
+          }
+        }
+      }
+    } catch (delErr) {
+      console.error('Error al procesar borrado en Kyma:', delErr);
+    }
+  }
+
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
   const tomorrow = new Date(now);
@@ -270,7 +319,9 @@ Devuelve UNICAMENTE un JSON con este formato:
     extraInstruction += `\n\n[SISTEMA]: El usuario te ha compartido o actualizado su ${profileExtract.extractedKey} ("${profileExtract.extractedVal}"). He guardado automáticamente este dato en su configuración. DEBES acusar recibo de forma muy cálida y natural (ej: "Encantado de conocerte, ${profileExtract.extractedVal}" o "Anotado en tu configuración").`;
   }
 
-  if (extractedResult.item) {
+  if (deletedItemTitle) {
+    extraInstruction += `\n\n[SISTEMA]: Se ha ELIMINADO permanentemente de la base de datos la ficha titulada "${deletedItemTitle}". DEBES confirmar al usuario de forma clara y natural que la ficha ha sido borrada (ej: "Borrado de tu espacio: ${deletedItemTitle}.").`;
+  } else if (extractedResult.item) {
     if (extractedResult.item.doorId === 'estela') {
       const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
       extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un hito/recuerdo en la puerta "Estela de vida" titulado "${extractedResult.item.title}". DEBES incluir un acuse de recibo cálido e integrado en tu respuesta (ej: "Guardado en tu Estela de vida: ${extractedResult.item.title}.").`;
@@ -338,7 +389,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   return {
     replyText,
     createdItem: extractedResult.item,
-    action: extractedResult.action,
+    action: finalAction,
     updatedProfile: profileExtract.updatedProfile
   };
 }

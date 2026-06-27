@@ -123,7 +123,6 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
   return (
     <div className="calendar-view-container animate-fade-in">
       <div className="calendar-header">
-        <h2 className="calendar-month-title">{getMonthYearString()}</h2>
         <div className="calendar-nav-buttons">
           <button 
             className="calendar-nav-btn" 
@@ -140,6 +139,7 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
             <ChevronRight size={16} />
           </button>
         </div>
+        <h2 className="calendar-month-title">{getMonthYearString()}</h2>
       </div>
 
       <div className="calendar-grid">

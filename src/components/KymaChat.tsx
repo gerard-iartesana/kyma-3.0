@@ -266,7 +266,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
                   onUserProfileUpdated(data.updatedProfile);
                 }
               }
-              if (data.createdItem || data.action === 'create' || data.action === 'enrich') {
+              if (data.createdItem || data.action === 'create' || data.action === 'enrich' || data.action === 'delete') {
                 onItemAddedOrModified(data.createdItem, data.action);
               }
             } else {
