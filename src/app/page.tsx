@@ -861,7 +861,7 @@ export default function Home() {
                 )}
 
                 {/* Simplified/Compact View Toggle Button */}
-                {!isVelado && 
+                {!isVelado && selectedDoorId !== 'configuracion' &&
                  (selectedDoorId !== 'estela' || estelaViewMode === 'grid') &&
                  (!selectedDoorId || 
                   (selectedDoorId !== 'personas' || personasViewMode === 'grid') && 
@@ -887,7 +887,7 @@ export default function Home() {
                   </button>
                 )}
 
-                {currentDoor?.category === 'utility' && !showAddForm && (
+                {currentDoor?.category === 'utility' && selectedDoorId !== 'configuracion' && !showAddForm && (
                   <button 
                     className="btn btn-primary" 
                     onClick={() => setShowAddForm(true)}
