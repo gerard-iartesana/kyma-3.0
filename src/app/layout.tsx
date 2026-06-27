@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Serif, Inter, Noto_Sans } from "next/font/google";
 import "./globals.css";
+import { PWAProvider } from "@/components/PWAProvider";
 
 const notoSerif = Noto_Serif({
   subsets: ["latin"],
@@ -24,11 +25,25 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Kyma - Conecta contigo y evoluciona",
-  description: "Un asistente personal que te ayuda en el día a día y, mientras lo hace, dibuja contigo tu mapa interior de autoconocimiento.",
+  title: "Kyma — Conecta contigo y evoluciona",
+  description: "Espacio de autoconocimiento y diario personal lento.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Kyma",
+  },
   icons: {
     icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#18181b",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -38,7 +53,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${notoSerif.variable} ${inter.variable} ${notoSans.variable}`} suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <PWAProvider>
+          {children}
+        </PWAProvider>
+      </body>
     </html>
   );
 }

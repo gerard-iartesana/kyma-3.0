@@ -12,11 +12,13 @@ import { CalendarView } from '../components/CalendarView';
 import { EstelaTimelineView } from '../components/EstelaTimelineView';
 import { EstelaHorizontalTimelineView } from '../components/EstelaHorizontalTimelineView';
 import { KymaChat } from '../components/KymaChat';
+import { usePWA } from '../components/PWAProvider';
 import * as Icons from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 
 export default function Home() {
+  const { isOnline, isInstallable, promptInstall, updateAvailable, applyUpdate, showIOSHint, dismissIOSHint } = usePWA();
   const [user, setUser] = useState<User | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -109,14 +111,18 @@ export default function Home() {
     item?: KymaItem;
   } | null>(null);
 
-  // Load database state and session on mount
+  // Load database state and session on mount, and sync offline queue
+  useEffect(() => {
+    if (isOnline) {
+      dbClient.syncOfflineQueue().then(() => refreshItems());
+    }
+  }, [isOnline]);
+
   useEffect(() => {
     // 1. Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        refreshItems();
-      }
+      refreshItems();
       setLoadingSession(false);
     });
 
@@ -699,6 +705,18 @@ export default function Home() {
 
         <div className="sidebar-footer">
           <div className="sidebar-action-bar">
+            {isInstallable && (
+              <button 
+                type="button"
+                className="sidebar-footer-action-btn"
+                onClick={promptInstall}
+                title="Instalar Kyma como aplicación"
+                style={{ color: '#c084fc' }}
+              >
+                <Icons.Download size={18} />
+              </button>
+            )}
+
             <button 
               type="button"
               className={`sidebar-footer-action-btn ${selectedDoorId === 'configuracion' ? 'active' : ''}`}
@@ -731,6 +749,77 @@ export default function Home() {
 
       {/* 2. PANEL CENTRAL */}
       <main className={`content-pane ${chatState === 'expanded' ? 'pane-hidden' : ''} ${mobileTab === 'panel' ? 'mobile-visible' : 'mobile-hidden'} ${((selectedDoorId === 'personas' && personasViewMode === 'orbits') || (selectedDoorId === 'intereses' && interesesViewMode === 'orbits')) ? 'no-scroll' : ''}`}>
+        {!isOnline && (
+          <div style={{
+            background: 'rgba(234, 179, 8, 0.15)',
+            borderBottom: '1px solid rgba(234, 179, 8, 0.3)',
+            padding: '10px 16px',
+            fontSize: '0.84rem',
+            color: '#fef08a',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            justifyContent: 'center',
+            textAlign: 'center'
+          }}>
+            <Icons.WifiOff size={16} style={{ flexShrink: 0 }} />
+            <span><strong>Modo sin conexión:</strong> Tus capturas se guardan localmente y se sincronizarán al reconectar. El chat con Kyma requiere red.</span>
+          </div>
+        )}
+
+        {updateAvailable && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(109, 40, 217, 0.3))',
+            borderBottom: '1px solid rgba(139, 92, 246, 0.4)',
+            padding: '10px 16px',
+            fontSize: '0.86rem',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <LogoIcon size={18} />
+              <span>Hay una nueva versión de Kyma disponible.</span>
+            </div>
+            <button 
+              className="btn btn-primary" 
+              onClick={applyUpdate}
+              style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+            >
+              Actualizar
+            </button>
+          </div>
+        )}
+
+        {showIOSHint && (
+          <div style={{
+            background: 'rgba(24, 24, 27, 0.95)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            margin: '12px',
+            padding: '14px 16px',
+            fontSize: '0.84rem',
+            color: 'var(--text-secondary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Icons.Share size={18} color="var(--accent-purple)" />
+              <span>Instala Kyma en tu iPhone: pulsa el botón <strong>Compartir</strong> <Icons.Share size={14} style={{ display: 'inline' }} /> y elige <strong>Añadir a la pantalla de inicio</strong>.</span>
+            </div>
+            <button 
+              onClick={dismissIOSHint}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              <Icons.X size={16} />
+            </button>
+          </div>
+        )}
+
         <header className="mobile-header">
           <button className="menu-toggle-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <Icons.X size={20} /> : <Icons.Menu size={20} />}
@@ -1231,6 +1320,36 @@ export default function Home() {
                       <button className="btn btn-secondary" onClick={handleResetDb} style={{ gap: '10px', padding: '10px 18px' }}>
                         <Icons.RefreshCw size={16} />
                         <span>Restablecer y Sembrar Datos</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px' }}>
+                      <Icons.Smartphone size={20} className="text-purple" />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Aplicación PWA y Almacenamiento Local</h3>
+                    </div>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                      Kyma está optimizado como PWA instalable directamente desde tu navegador. Puedes guardar tus notas y fichas en modo sin conexión y gestionar la memoria caché de tu dispositivo.
+                    </p>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '8px' }}>
+                      {isInstallable && (
+                        <button className="btn btn-primary" onClick={promptInstall} style={{ gap: '10px', padding: '10px 18px' }}>
+                          <Icons.Download size={16} />
+                          <span>Instalar Kyma como aplicación</span>
+                        </button>
+                      )}
+                      <button 
+                        className="btn btn-secondary" 
+                        onClick={() => {
+                          dbClient.clearLocalCache();
+                          alert('Caché y cola local limpiadas correctamente. Tus datos en Supabase permanecen a salvo.');
+                        }} 
+                        style={{ gap: '10px', padding: '10px 18px' }}
+                      >
+                        <Icons.Trash2 size={16} />
+                        <span>Limpiar caché y datos locales</span>
                       </button>
                     </div>
                   </div>

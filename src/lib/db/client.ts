@@ -476,8 +476,8 @@ export const dbClient = {
       
       const { data, error } = await query;
       if (error) {
-        console.error('Error fetching items:', error);
-        return [];
+        console.error('Error fetching items from network, checking offline cache:', error);
+        return this.getCachedItems(doorId);
       }
       
       const mapped = (data || []).map((dbItem: any) => {
@@ -486,6 +486,13 @@ export const dbClient = {
           .filter(Boolean);
         return mapDbToKymaItem(dbItem, tagNames);
       });
+
+      // Cache fresh network items locally
+      if (typeof window !== 'undefined' && !doorId) {
+        try {
+          localStorage.setItem('kyma_cached_items', JSON.stringify(mapped));
+        } catch (e) {}
+      }
 
       if (doorId === 'agenda') {
         return mapped.filter((i: KymaItem) => i.doorId === 'agenda');
@@ -496,9 +503,48 @@ export const dbClient = {
 
       return mapped;
     } catch (e) {
-      console.warn('getCurrentUserId failed or error fetching items:', e);
+      console.warn('getCurrentUserId failed or offline mode active, fallback to cached items:', e);
+      return this.getCachedItems(doorId);
+    }
+  },
+
+  getCachedItems(doorId?: string): KymaItem[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const cached = localStorage.getItem('kyma_cached_items');
+      if (!cached) return [];
+      const items: KymaItem[] = JSON.parse(cached);
+      if (doorId) {
+        return items.filter(i => i.doorId === doorId);
+      }
+      return items;
+    } catch (e) {
       return [];
     }
+  },
+
+  async syncOfflineQueue(overrideUserId?: string, customClient?: any): Promise<void> {
+    if (typeof window === 'undefined' || !navigator.onLine) return;
+    try {
+      const rawQueue = localStorage.getItem('kyma_offline_queue');
+      if (!rawQueue) return;
+      const queue: Array<Omit<KymaItem, 'id' | 'createdAt' | 'userId'>> = JSON.parse(rawQueue);
+      if (queue.length === 0) return;
+
+      localStorage.removeItem('kyma_offline_queue');
+      for (const item of queue) {
+        await this.createItem(item, overrideUserId, customClient);
+      }
+      await this.getItems(undefined, overrideUserId, customClient);
+    } catch (e) {
+      console.error('Error syncing offline queue:', e);
+    }
+  },
+
+  clearLocalCache(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('kyma_cached_items');
+    localStorage.removeItem('kyma_offline_queue');
   },
 
   async getItemById(id: string, overrideUserId?: string, customClient?: any): Promise<KymaItem | undefined> {
@@ -532,6 +578,30 @@ export const dbClient = {
   async createItem(item: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
     const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
+
+    // Offline capture fallback
+    if (typeof window !== 'undefined' && !navigator.onLine) {
+      const tempId = `offline-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+      const localItem: KymaItem = {
+        ...item,
+        id: tempId,
+        userId,
+        createdAt: new Date().toISOString(),
+        origen: 'manual'
+      };
+      // Add to cached items
+      const cached = this.getCachedItems();
+      const updatedCache = [localItem, ...cached];
+      localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
+
+      // Add to offline queue
+      const rawQueue = localStorage.getItem('kyma_offline_queue');
+      const queue = rawQueue ? JSON.parse(rawQueue) : [];
+      queue.push(item);
+      localStorage.setItem('kyma_offline_queue', JSON.stringify(queue));
+
+      return localItem;
+    }
     
     // 1. Map to DB fields
     const dbItemFields = mapKymaToDbFields(item);
