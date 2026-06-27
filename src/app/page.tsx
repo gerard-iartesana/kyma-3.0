@@ -1584,7 +1584,7 @@ export default function Home() {
         <div className="toast-notification">
           <div className="toast-content">
             <div className="toast-icon-wrapper">
-              <Icons.Sparkles size={18} />
+              <LogoIcon size={16} />
             </div>
             <span className="toast-message">{toastNotification.message}</span>
             <button 
@@ -1620,11 +1620,11 @@ export default function Home() {
           left: 50%;
           transform: translateX(-50%);
           z-index: 9999;
-          background: rgba(22, 24, 35, 0.94);
+          background: linear-gradient(135deg, rgba(26, 20, 42, 0.96) 0%, rgba(38, 22, 64, 0.96) 100%);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(139, 92, 246, 0.4);
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(139, 92, 246, 0.2);
+          border: 1px solid rgba(139, 92, 246, 0.5);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(139, 92, 246, 0.3);
           border-radius: 14px;
           padding: 10px 16px;
           animation: toastSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1651,11 +1651,12 @@ export default function Home() {
           width: 32px;
           height: 32px;
           border-radius: 10px;
-          background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(236, 72, 153, 0.25));
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(109, 40, 217, 0.45));
+          border: 1px solid rgba(139, 92, 246, 0.4);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #a855f7;
+          color: #ffffff;
           flex-shrink: 0;
         }
 
@@ -1667,7 +1668,8 @@ export default function Home() {
         }
 
         .toast-action-btn {
-          background: linear-gradient(135deg, #8b5cf6, #ec4899);
+          background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+          box-shadow: 0 2px 10px rgba(139, 92, 246, 0.4);
           color: #ffffff;
           border: none;
           border-radius: 8px;
