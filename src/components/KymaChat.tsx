@@ -473,7 +473,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           position: absolute;
           top: 6px;
           right: 6px;
-          z-index: 25;
+          z-index: 30;
           background: rgba(24, 24, 27, 0.85);
           border: 1px solid var(--border-subtle);
           color: var(--text-muted);
@@ -491,6 +491,17 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           color: #ef4444;
           background: rgba(239, 68, 68, 0.2);
           border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        @media (max-width: 1024px) {
+          .clear-chat-floating-btn {
+            top: 10px;
+            right: 12px;
+            padding: 10px;
+            background: rgba(39, 39, 42, 0.9);
+            border-color: var(--border-focus);
+            color: var(--text-primary);
+          }
         }
 
         .messages-area {

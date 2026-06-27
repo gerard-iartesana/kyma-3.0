@@ -2607,19 +2607,21 @@ export default function Home() {
             justify-content: center;
           }
 
-          /* Reset sidebar width overrides on mobile */
+          /* Reset sidebar width overrides on mobile: Slide from RIGHT */
           .sidebar, .sidebar.collapsed {
             width: 100% !important;
             padding: 24px 16px !important;
             position: fixed;
             top: calc(56px + env(safe-area-inset-top, 0px));
-            left: 0;
+            right: 0;
+            left: auto;
             height: calc(100dvh - 56px - env(safe-area-inset-top, 0px));
             background: var(--bg-primary);
+            border-left: 1px solid var(--border-subtle);
             border-right: none;
             border-bottom: 1px solid var(--border-subtle);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 90;
           }
           
@@ -2627,31 +2629,37 @@ export default function Home() {
             transform: translateX(0);
           }
           
-          /* Show text and counts on mobile menu even if collapsed on desktop */
-          .sidebar.collapsed .nav-item span {
+          /* Hide brand logo inside mobile menu drawer as requested */
+          .sidebar .sidebar-brand {
+            display: none !important;
+          }
+
+          /* Increase font size and padding of menu buttons on mobile */
+          .sidebar .nav-item {
+            padding: 16px 20px !important;
+            font-size: 1.15rem !important;
+            border-radius: 14px !important;
+            gap: 16px !important;
+            margin-bottom: 6px !important;
+          }
+          .sidebar .nav-item span {
             display: block !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-          }
-          .sidebar.collapsed .logo-letters {
-            opacity: 1 !important;
-            pointer-events: auto !important;
-          }
-          .sidebar.collapsed .sidebar-brand {
-            padding: 8px 12px !important;
+            font-size: 1.15rem !important;
+            font-weight: 500 !important;
           }
           .sidebar.collapsed .item-count,
-          .sidebar.collapsed .lock-icon {
+          .sidebar.collapsed .lock-icon,
+          .sidebar .item-count {
             opacity: 1 !important;
             pointer-events: auto !important;
+            font-size: 0.9rem !important;
+            padding: 4px 12px !important;
           }
 
-          .logo-text {
-            display: none;
-          }
-          .logo-icon-mobile {
-            display: block;
-            color: var(--text-primary);
+          .logo-text, .logo-icon-mobile {
+            display: none !important;
           }
 
           /* Active tab handling */
