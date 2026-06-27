@@ -360,23 +360,34 @@ export function EstelaTimelineView({ items, isCompact, onItemClick, onAskKyma }:
           border: 1px solid var(--border-subtle);
         }
 
-        .ask-kyma-timeline-btn {
-          margin-top: 12px;
+        .ask-kyma-btn {
+          font-size: 0.72rem;
+          padding: 4px 8px;
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--text-muted);
+          border-radius: 6px;
+          transition: all 0.25s ease;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          background: none;
-          border: none;
-          color: var(--accent-purple);
-          font-size: 0.78rem;
-          font-weight: 500;
+          gap: 4px;
           cursor: pointer;
-          padding: 4px 8px;
-          border-radius: 6px;
-          transition: background 0.2s;
         }
-        .ask-kyma-timeline-btn:hover {
-          background: rgba(139, 92, 246, 0.1);
+        .ask-kyma-btn :global(.kyma-btn-icon) {
+          color: var(--text-muted) !important;
+          filter: none !important;
+          opacity: 0.55;
+          transition: all 0.25s ease;
+        }
+        .ask-kyma-btn:hover {
+          background: rgba(252, 252, 253, 0.04);
+          border-color: rgba(252, 252, 253, 0.08);
+          color: var(--text-primary);
+        }
+        .ask-kyma-btn:hover :global(.kyma-btn-icon) {
+          color: var(--accent-purple) !important;
+          filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.45)) !important;
+          opacity: 1;
         }
       `}</style>
     </div>
