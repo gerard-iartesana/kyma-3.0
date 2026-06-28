@@ -893,17 +893,30 @@ export default function Home() {
           </div>
         ) : (
           <div className="door-view animate-fade-in">
-            <div className="door-header">
-              <button className="back-to-home-btn" onClick={() => handleSelectDoor(null)}>
-                <Icons.ArrowLeft size={16} />
-                <span>Volver</span>
-              </button>
-
-              <div className="door-header-main-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px', flexWrap: 'nowrap' }}>
-                <h1 className="door-title font-serif" style={{ margin: 0, flexShrink: 1, minWidth: 0 }}>
-                  {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
-                  {currentDoor?.title}
-                </h1>
+            <div className="door-header" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Top row: Circular back button & view controls */}
+              <div className="door-top-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <button 
+                  className="back-to-home-btn circular-back-btn" 
+                  onClick={() => handleSelectDoor(null)}
+                  title="Volver"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-subtle)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    flexShrink: 0
+                  }}
+                >
+                  <Icons.ArrowLeft size={18} />
+                </button>
 
                 <div className="door-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   {selectedDoorId === 'intereses' && !isVelado && (
@@ -1041,6 +1054,14 @@ export default function Home() {
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Title row */}
+              <div className="door-title-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                <h1 className="door-title font-serif" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+                  {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
+                  {currentDoor?.title}
+                </h1>
               </div>
 
               {/* Active tag filter badge */}
