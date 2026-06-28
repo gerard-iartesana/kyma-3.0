@@ -5,27 +5,28 @@ export const DOOR_PACKAGES: Record<DoorId, DoorPackage> = {
     doorId: 'agenda',
     category: 'utilidad',
     guardrails: [
+      'PRESENCIA DE HORAS Y CITAS: Cualquier evento, cita o compromiso que especifique una hora determinada (ej: "a las 10:00", "a las 17:30", "a las 5") o cita en el calendario pertenece OBLIGATORIAMENTE a la puerta Agenda.',
       'Captura fecha y hora exactas o aproximadas mencionadas.',
-      'TÍTULOS CORTOS Y DIRECTOS: El título debe ser conciso y directo (máximo 3-4 palabras, ej: "Torneo de Pádel", "Cita Médica", "Cena"). NUNCA incluyas personas, lugares ni horas en el título.',
-      'DESCRIPCIÓN EN PRIMERA PERSONA SIN FECHA NI HORA: Redacta el contenido en primera persona (ej: "He quedado con Alejandro en PadelOne"). OMITE la fecha y la hora en el texto del contenido, ya que se muestran en el apartado independiente.',
+      'TÍTULOS CORTOS Y DIRECTOS: El título debe ser conciso y directo (máximo 3-4 palabras, ej: "Torneo de Pádel", "Cita Médica", "Carga de Pelo"). NUNCA incluyas personas, lugares ni horas en el título.',
+      'DESCRIPCIÓN EN PRIMERA PERSONA SIN FECHA NI HORA: Redacta el contenido en primera persona (ej: "Tengo cita para cortarme el pelo en la peluquería"). OMITE la fecha y la hora en el texto del contenido, ya que se muestran en el apartado independiente.',
       'Si el usuario aporta nuevos detalles sobre un evento ya creado, usa action = "enrich" indicando su targetItemId.',
-      'EXTRAE SIEMPRE TAGS ESPECÍFICOS: Añade etiquetas temáticas como deportes (#padel), personas (#alejandro), lugares (#padelone) y categorías (#deporte, #agenda).'
+      'EXTRAE SIEMPRE TAGS ESPECÍFICOS: Añade etiquetas temáticas como deportes (#padel), personas (#alejandro), lugares (#peluqueria) y categorías (#agenda).'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Agenda. 
 Extrae o actualiza eventos concretos con fecha y hora indicadas por el usuario.
-Redacta el contenido en primera persona del singular ("He quedado con..."). Mantén títulos muy cortos.`
+Redacta el contenido en primera persona del singular. Mantén títulos muy cortos.`
   },
   tareas: {
     doorId: 'tareas',
     category: 'utilidad',
     guardrails: [
-      'Detecta acciones pendientes, tareas cotidianas, compras pendientes o recados explicitados por el usuario (ej: "tengo que comprar entradas", "hacer la compra", "enviar correo").',
+      'SIN HORA FIJA: La puerta Tareas se reserva exclusivamente para acciones pendientes cotidianas sin hora determinada (ej: "comprar correa", "enviar correo"). Si el usuario indica una hora concreta (ej: "a las 10:00"), NUNCA crees una ficha en Tareas (establece action = "none").',
       'TÍTULOS DIRECTOS: Título corto y conciso sobre la acción pendiente (ej: "Comprar entradas", "Llamar al médico").',
       'REDACCIÓN EN PRIMERA PERSONA: "Tengo que...", "Debo...".',
       'Si el usuario modifica o añade detalles a una tarea pendiente existente, usa action = "enrich" indicando su targetItemId.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Tareas.
-Extrae acciones pendientes, recados o compromisos personales redactados en primera persona.`
+Extrae acciones pendientes sin hora fija redactadas en primera persona.`
   },
   notas: {
     doorId: 'notas',

@@ -167,9 +167,10 @@ ${recentMsgs}
 FRASE ACTUAL DEL USUARIO: "${userText}"
 
 REGLAS ESPECÍFICAS DE TRIAGE:
-1. ACCIONES PENDIENTES Y RECADOS ("tengo que...", "tengo que comprar...", "debo...", "pendiente de..."): Clasifícalas OBLIGATORIAMENTE en la puerta "tareas" (Categoría: utilidad). NUNCA en "estela".
-2. ESTELA DE VIDA / HITOS HISTÓRICOS: Reserva la puerta "estela" ÚNICAMENTE para acontecimientos vitales trascendentales del pasado o momentos cruciales de la historia personal del usuario (nacimientos, fallecimientos, graduaciones, bodas, grandes viajes, hitos profesionales o vivencias históricas). NUNCA clasifiques tareas cotidianas, recados o compras ("comprar entradas", "hacer la compra") en "estela". En caso de la mínima duda entre tarea cotidiana e hito histórico, elige OBLIGATORIAMENTE "tareas" o "notas".
-3. REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato, clasifícalo en la misma puerta siempre que sea coherente con su naturaleza.
+1. CITAS Y EVENTOS CON HORA O FECHA EXPLÍCITA ("a las 10:00", "a las 17:30", "a las 5", peluquería, médico, cena): Clasifícalas OBLIGATORIAMENTE en la puerta "agenda" (Categoría: utilidad). Cualquier mención con hora fija o fecha determinada pertenece a "agenda".
+2. ACCIONES PENDIENTES COTIDIANAS SIN HORA ("tengo que comprar...", "debo...", "hacer la compra", "enviar correo"): Clasifícalas en la puerta "tareas" (Categoría: utilidad). NUNCA en "estela".
+3. ESTELA DE VIDA / HITOS HISTÓRICOS: Reserva la puerta "estela" ÚNICAMENTE para acontecimientos vitales trascendentales del pasado o momentos cruciales de la historia personal del usuario (nacimientos, fallecimientos, graduaciones, bodas, grandes viajes, hitos profesionales o vivencias históricas). NUNCA clasifiques tareas cotidianas, recados o citas en "estela". En caso de la mínima duda entre tarea cotidiana e hito histórico, elige OBLIGATORIAMENTE "tareas" o "notas".
+4. REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato, clasifícalo en la misma puerta siempre que sea coherente con su naturaleza.
 
 Devuelve UNICAMENTE un JSON con este formato:
 {
@@ -204,12 +205,15 @@ Devuelve UNICAMENTE un JSON con este formato:
     if (isQuestion || isManagementIntent) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
-      // Deterministic override for tasks vs memories
+      // Deterministic override for time, tasks vs memories
+      const timePattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})\b/i;
       const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
       const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
       const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a/i;
       
-      if (pendingTaskPattern.test(userText)) {
+      if (timePattern.test(userText)) {
+        triage = { isFicheable: true, category: 'utilidad', doorId: 'agenda', confidence: 0.98 };
+      } else if (pendingTaskPattern.test(userText)) {
         triage = { isFicheable: true, category: 'utilidad', doorId: 'tareas', confidence: 0.95 };
       } else if (pastYearMatch || memoryKeywords.test(userText)) {
         triage = { isFicheable: true, category: 'mapa', doorId: 'estela', confidence: 0.95 };
