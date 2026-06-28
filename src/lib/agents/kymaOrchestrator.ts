@@ -10,7 +10,7 @@ PRINCIPIOS FUNDAMENTALES:
 - Espejo, no juez: Ante cosas personales o afectivas, pregunta antes de aconsejar. Usa lenguaje de hipótesis, nada clínico, sin etiquetas.
 - Una sola voz: Hablas siempre en primera persona del singular ("yo", "mi"). Eres la única voz que el usuario escucha.
 - El sistema sugiere, el usuario decide: En temas de Mapa (intereses, vínculos, reflexiones, estela), tú propones o indagas con preguntas abiertas.
-- Acuses en línea (Fichas registradas): Cuando en las instrucciones del [SISTEMA] se te indique que se ha registrado o actualizado una ficha en cualquier puerta (ej. agenda o estela de vida), debes acusar recibo de manera breve y natural en tu respuesta (ej: "Guardado en tu Estela de vida: [Título]."), continuando la charla fluida sin cortar el hilo.
+- Acuses en línea (Solo con confirmación real de [SISTEMA]): ÚNICAMENTE cuando en el mensaje de [SISTEMA] de este turno se te confirme explícitamente que se ha registrado, actualizado o eliminado una ficha (ej: "Se ha registrado una ficha..."), debes incluir el acuse de recibo breve en tu respuesta. NUNCA inventes ni afirmes que se ha guardado o creado una ficha si el mensaje de [SISTEMA] no te lo indica explícitamente.
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
 - Compleitud: Concluye siempre tus oraciones y pensamientos de forma completa.
@@ -205,14 +205,17 @@ Devuelve UNICAMENTE un JSON con este formato:
     if (isQuestion || isManagementIntent) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
-      // Deterministic override for time, tasks vs memories
+      // Deterministic override for time, tasks, reflexiones vs memories
       const timePattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})\b/i;
       const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
+      const reflectionKeywords = /\b(?:reflexión|reflexion|pensamiento|filosofía|filosofia|principio vital)\b/i;
       const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
       const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a/i;
       
       if (timePattern.test(userText)) {
         triage = { isFicheable: true, category: 'utilidad', doorId: 'agenda', confidence: 0.98 };
+      } else if (reflectionKeywords.test(userText)) {
+        triage = { isFicheable: true, category: 'mapa', doorId: 'reflexiones', confidence: 0.98 };
       } else if (pendingTaskPattern.test(userText)) {
         triage = { isFicheable: true, category: 'utilidad', doorId: 'tareas', confidence: 0.95 };
       } else if (pastYearMatch || memoryKeywords.test(userText)) {
@@ -235,6 +238,11 @@ Devuelve UNICAMENTE un JSON con este formato:
   const interestKeywords = /\b(?:vea|ver|temporada|serie|película|pelicula|cine|me gusta|me apasiona|me encanta|afición|aficion|hobby|hobbies|escuchar|música|musica|juego|jugar|deporte|pádel|padel)\b/i;
   if (interestKeywords.test(userText) && !doorsToExtract.includes('intereses')) {
     doorsToExtract.push('intereses');
+  }
+
+  const reflectionKeywords = /\b(?:reflexión|reflexion|pensamiento|filosofía|filosofia|principio vital)\b/i;
+  if (reflectionKeywords.test(userText) && !doorsToExtract.includes('reflexiones')) {
+    doorsToExtract.push('reflexiones');
   }
 
   const personMatch = userText.match(/(?:amigo|amiga|hermano|hermana|padre|madre|pareja|novio|novia|tío|tía|primo|prima|compañero|compañera|con) ([A-ZÁÉÍÓÚ][a-záéíóú]+)/i);

@@ -68,11 +68,12 @@ Extrae menciones de personas significativas. REDACTA EL CONTENIDO EN PRIMERA PER
     doorId: 'reflexiones',
     category: 'mapa',
     guardrails: [
-      'Solo propone una reflexión cuando el usuario esté en un modo introspectivo explícito.',
-      'REDACCIÓN EN PRIMERA PERSONA: "Siento que...", "Me doy cuenta de..."'
+      'Captura pensamientos profundos, aprendizajes de vida, filosofías personales o principios explicados o titulados por el usuario (ej: "El arte de conversar", "Fluir sin forzar").',
+      'TÍTULOS CONCISOS Y CONCRETOS: Si el usuario propone un título expreso entre comillas o de forma clara (ej: "El arte de conversar"), usa ese título exacto. NUNCA uses títulos genéricos.',
+      'REDACCIÓN EN PRIMERA PERSONA: Escribe la reflexión desde mi perspectiva personal ("Valoro los encuentros donde se argumenta para enriquecer...", "Siento que...").'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Reflexiones.
-Identifica pensamientos profundos redactados en primera persona del singular.`
+Extrae pensamientos profundos, aprendizajes o títulos de reflexión indicados por el usuario. Redacta en primera persona.`
   },
   estela: {
     doorId: 'estela',
