@@ -139,7 +139,7 @@ export async function processKymaTurn(
     const triagePrompt = `
 Analiza la siguiente frase del usuario dentro del contexto reciente y determina si contiene información que deba guardarse o actualizarse en una de las 7 puertas del sistema.
 Puertas de UTILIDAD: agenda (fechas/citas/cambios de hora), tareas (acciones pendientes), notas (ideas/apuntes/números de teléfono).
-Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos), estela (hitos históricos del pasado / recuerdos de la infancia o juventud / viajes pasados / eventos vividos en un año específico como 2010, 2018, etc.).
+Puertas de MAPA: intereses (gustos/pasiones/hobbies), personas (vínculos/relaciones), reflexiones (pensamientos introspectivos), estela (hitos históricos trascendentales del pasado / recuerdos de la infancia o juventud / viajes pasados / eventos vividos en un año específico como 2010, 2018, etc.).
 
 HISTORIAL RECIENTE CONVERSACIONAL:
 ${recentMsgs}
@@ -147,8 +147,9 @@ ${recentMsgs}
 FRASE ACTUAL DEL USUARIO: "${userText}"
 
 REGLAS ESPECÍFICAS DE TRIAGE:
-1. SI EL USUARIO MENCIONA UN RECUERDO, ANÉCDOTA PASADA, O UN AÑO PASADO (ej. "en 2010", "recuerdo cuando", "un momento importante de mi vida", "un viaje que hice"), CLASIFÍCALO OBLIGATORIAMENTE EN LA PUERTA "estela" (Categoría: mapa) CON CONFIDENCIA ALTA (>= 0.85).
-2. REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato, clasifícalo en la misma puerta previa.
+1. ACCIONES PENDIENTES Y RECADOS ("tengo que...", "tengo que comprar...", "debo...", "pendiente de..."): Clasifícalas OBLIGATORIAMENTE en la puerta "tareas" (Categoría: utilidad). NUNCA en "estela".
+2. ESTELA DE VIDA / HITOS HISTÓRICOS: Reserva la puerta "estela" ÚNICAMENTE para acontecimientos vitales trascendentales del pasado o momentos cruciales de la historia personal del usuario (nacimientos, fallecimientos, graduaciones, bodas, grandes viajes, hitos profesionales o vivencias históricas). NUNCA clasifiques tareas cotidianas, recados o compras ("comprar entradas", "hacer la compra") en "estela". En caso de la mínima duda entre tarea cotidiana e hito histórico, elige OBLIGATORIAMENTE "tareas" o "notas".
+3. REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato, clasifícalo en la misma puerta siempre que sea coherente con su naturaleza.
 
 Devuelve UNICAMENTE un JSON con este formato:
 {
@@ -181,17 +182,21 @@ Devuelve UNICAMENTE un JSON con este formato:
       console.error('Error en triage:', e);
     }
 
-    // Question / query check to prevent duplications on read turns
+    // Question / query check & management intent check
     const isQuestion = /^\s*¿|\?|qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir/i.test(userText.trim());
-    const isDeleteIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar)\b/i.test(userText);
+    const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|no lo pongas|no es|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
     
-    if (isQuestion || isDeleteIntent) {
+    if (isQuestion || isManagementIntent) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
-      // Deterministic override for memories, past years, and life milestones
+      // Deterministic override for tasks vs memories
+      const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
       const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
-      const memoryKeywords = /acordaba|acuerdo|recuerdo|infancia|juventud|momento de mi vida|hito|viaje a|en mi vida|mundial/i;
-      if (pastYearMatch || memoryKeywords.test(userText)) {
+      const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a/i;
+      
+      if (pendingTaskPattern.test(userText)) {
+        triage = { isFicheable: true, category: 'utilidad', doorId: 'tareas', confidence: 0.95 };
+      } else if (pastYearMatch || memoryKeywords.test(userText)) {
         triage = { isFicheable: true, category: 'mapa', doorId: 'estela', confidence: 0.95 };
       }
     }
@@ -235,50 +240,80 @@ Devuelve UNICAMENTE un JSON con este formato:
     console.error('Error fetching user items for Kyma context:', err);
   }
 
-  // Step 3.5: AI Deletion execution if user requested item removal
+  // Step 3.5: AI Item Management & Relocation Engine (Deletion, Relocation, Correction)
   let deletedItemTitle = '';
+  let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
   let finalAction: string = extractedResult.action;
-  const isDeleteRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar)\b/i.test(userText);
 
-  if (isDeleteRequested && allUserItems.length > 0) {
-    const deletePrompt = `
-Analiza la siguiente frase del usuario e identifica cuál de sus fichas existentes quiere ELIMINAR / BORRAR / CANCELAR.
+  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|no lo pongas|no es|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
+
+  if (isManagementRequested && allUserItems.length > 0) {
+    const mgmtPrompt = `
+Analiza la siguiente frase del usuario dentro del historial reciente. Determina si el usuario solicita ELIMINAR / BORRAR una ficha existente o MOVER / CORREGIR la clasificación de una ficha existente de una puerta a otra (por ejemplo, de "estela" a "tareas" o de "notas" a "agenda").
+
 FICHAS ACTUALES DEL USUARIO:
 ${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.title, content: i.content, eventDate: i.eventDate })), null, 2)}
 
 FRASE DEL USUARIO: "${userText}"
 
+REGLAS DE SALIDA:
+- Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false.
+- Si el usuario quiere corregir o mover una ficha (ej: "no lo pongas en estela, ponlo como tarea" o "cámbialo a tareas"): "shouldDelete": true, "itemIdToDelete": "<id de la ficha incorrecta>", "shouldCreateNew": true, "targetDoorId": "tareas" (o la puerta indicada), "newTitle": "Título conciso para la nueva ficha", "newContent": "Contenido en primera persona".
+
 Devuelve ÚNICAMENTE un JSON con este formato:
 {
   "shouldDelete": boolean,
-  "itemId": "ID exacto de la ficha a eliminar o null",
-  "itemTitle": "Título de la ficha a eliminar"
+  "itemIdToDelete": "ID exacto de la ficha a eliminar/mover o null",
+  "itemTitleToDelete": "Título de la ficha eliminada o null",
+  "shouldCreateNew": boolean,
+  "targetDoorId": "agenda" | "tareas" | "notas" | "intereses" | "personas" | "reflexiones" | "estela" | null,
+  "newTitle": "Título corto para la nueva ficha",
+  "newContent": "Contenido en primera persona"
 }
 `;
     try {
-      const delRes = await fetch(baseUrl, {
+      const mgmtRes = await fetch(baseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: deletePrompt }] }],
+          contents: [{ role: 'user', parts: [{ text: mgmtPrompt }] }],
           generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
         })
       });
-      if (delRes.ok) {
-        const delData = await delRes.json();
-        const rawDel = delData.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawDel) {
-          const cleanJson = rawDel.replace(/```json/gi, '').replace(/```/g, '').trim();
-          const parsedDel = JSON.parse(cleanJson);
-          if (parsedDel.shouldDelete && parsedDel.itemId) {
-            await dbClient.deleteItem(parsedDel.itemId, userId, sbClient);
-            deletedItemTitle = parsedDel.itemTitle || 'la ficha seleccionada';
+      if (mgmtRes.ok) {
+        const mgmtData = await mgmtRes.json();
+        const rawMgmt = mgmtData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawMgmt) {
+          const cleanJson = rawMgmt.replace(/```json/gi, '').replace(/```/g, '').trim();
+          const parsedMgmt = JSON.parse(cleanJson);
+
+          if (parsedMgmt.shouldDelete && parsedMgmt.itemIdToDelete) {
+            const itemObj = allUserItems.find(i => i.id === parsedMgmt.itemIdToDelete);
+            await dbClient.deleteItem(parsedMgmt.itemIdToDelete, userId, sbClient);
+            deletedItemTitle = parsedMgmt.itemTitleToDelete || itemObj?.title || 'la ficha seleccionada';
             finalAction = 'delete';
+          }
+
+          if (parsedMgmt.shouldCreateNew && parsedMgmt.targetDoorId && parsedMgmt.newTitle) {
+            const newItem = await dbClient.createItem({
+              doorId: parsedMgmt.targetDoorId,
+              title: parsedMgmt.newTitle,
+              content: parsedMgmt.newContent || userText,
+              tags: [`#${parsedMgmt.targetDoorId}`, '#general'],
+              peso: 2
+            }, userId, sbClient);
+
+            extractedResult = { item: newItem, action: 'create' };
+            finalAction = 'create';
+            relocatedItemInfo = {
+              targetDoorId: parsedMgmt.targetDoorId,
+              title: parsedMgmt.newTitle
+            };
           }
         }
       }
-    } catch (delErr) {
-      console.error('Error al procesar borrado en Kyma:', delErr);
+    } catch (mgmtErr) {
+      console.error('Error al procesar gestión de fichas en Kyma:', mgmtErr);
     }
   }
 
@@ -319,7 +354,9 @@ Devuelve ÚNICAMENTE un JSON con este formato:
     extraInstruction += `\n\n[SISTEMA]: El usuario te ha compartido o actualizado su ${profileExtract.extractedKey} ("${profileExtract.extractedVal}"). He guardado automáticamente este dato en su configuración. DEBES acusar recibo de forma muy cálida y natural (ej: "Encantado de conocerte, ${profileExtract.extractedVal}" o "Anotado en tu configuración").`;
   }
 
-  if (deletedItemTitle) {
+  if (deletedItemTitle && relocatedItemInfo.targetDoorId) {
+    extraInstruction += `\n\n[SISTEMA]: Se ha ELIMINADO de la base de datos la ficha "${deletedItemTitle}" y se ha CREADO exitosamente la nueva ficha en la puerta "${relocatedItemInfo.targetDoorId}" titulada "${relocatedItemInfo.title}". DEBES confirmar al usuario de forma clara y cálida este cambio (ej: "Quitada de tu Estela y guardada en tus Tareas: ${relocatedItemInfo.title}.").`;
+  } else if (deletedItemTitle) {
     extraInstruction += `\n\n[SISTEMA]: Se ha ELIMINADO permanentemente de la base de datos la ficha titulada "${deletedItemTitle}". DEBES confirmar al usuario de forma clara y natural que la ficha ha sido borrada (ej: "Borrado de tu espacio: ${deletedItemTitle}.").`;
   } else if (extractedResult.item) {
     if (extractedResult.item.doorId === 'estela') {

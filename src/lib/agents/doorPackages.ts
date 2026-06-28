@@ -19,13 +19,13 @@ Redacta el contenido en primera persona del singular ("He quedado con..."). Mant
     doorId: 'tareas',
     category: 'utilidad',
     guardrails: [
-      'Detecta acciones pendientes explicitadas por el usuario.',
-      'TÍTULOS DIRECTOS: Título corto y conciso sobre la acción pendiente.',
+      'Detecta acciones pendientes, tareas cotidianas, compras pendientes o recados explicitados por el usuario (ej: "tengo que comprar entradas", "hacer la compra", "enviar correo").',
+      'TÍTULOS DIRECTOS: Título corto y conciso sobre la acción pendiente (ej: "Comprar entradas", "Llamar al médico").',
       'REDACCIÓN EN PRIMERA PERSONA: "Tengo que...", "Debo...".',
       'Si el usuario modifica o añade detalles a una tarea pendiente existente, usa action = "enrich" indicando su targetItemId.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Tareas.
-Extrae acciones pendientes o compromisos personales redactados en primera persona.`
+Extrae acciones pendientes, recados o compromisos personales redactados en primera persona.`
   },
   notas: {
     doorId: 'notas',
@@ -77,8 +77,9 @@ Identifica pensamientos profundos redactados en primera persona del singular.`
     doorId: 'estela',
     category: 'mapa',
     guardrails: [
-      'Captura hitos históricos, recuerdos significativos, viajes o eventos del pasado que hayan marcado la vida del usuario para construir su línea de tiempo (timeline).',
-      'TÍTULOS PRECISOS Y SIGNIFICATIVOS: El título debe describir exactamente el acontecimiento específico (ej: "Fallecimiento de mi padre", "Graduación en Diseño", "Viaje a Roma", "Nacimiento de mi hija", "Final del Mundial"). NUNCA uses títulos genéricos ni vacíos como "Recuerdo especial", "Hito" o "Evento".',
+      'RESERVADO EXCLUSIVAMENTE A HITOS HISTÓRICOS Y MOMENTOS CRUCIALES DE LA VIDA: Captura únicamente acontecimientos históricos, recuerdos trascendentales del pasado, graduaciones, nacimientos, fallecimientos, bodas o grandes viajes que hayan marcado la trayectoria vital del usuario.',
+      'PROHIBIDO PARA TAREAS O RECADOS COTIDIANOS: NUNCA crees fichas en Estela de vida para tareas pendientes, compras o recados cotidianos (ej: "comprar entradas", "hacer la compra", "llamar por teléfono"). En caso de la mínima duda, asigna action = "none".',
+      'TÍTULOS PRECISOS Y SIGNIFICATIVOS: El título debe describir exactamente el acontecimiento específico (ej: "Fallecimiento de mi padre", "Graduación en Diseño", "Viaje a Roma", "Nacimiento de mi hija"). NUNCA uses títulos genéricos ni vacíos como "Recuerdo especial", "Hito" o "Evento".',
       'AÑO Y FECHA: Extrae siempre el año mencionado (ej. 2018) en "year" y la época o día específico ("Verano", "14 de Mayo", "Junio") en "dateStr".',
       'LUGAR EXPLICITO: Si se menciona un lugar o ciudad (ej. "Japón", "Madrid", "París"), extraelo en "lugar".',
       'TONO EMOCIONAL (emocion): Determina el sentimiento del recuerdo en una escala de 1 a 5 (1: Muy triste / doloroso, 2: Triste, 3: Calma / neutro, 4: Alegre, 5: Muy alegre / euforia / victoria).',
@@ -86,6 +87,6 @@ Identifica pensamientos profundos redactados en primera persona del singular.`
       'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: "Viajé a...", "Me gradué...", "Nació mi..."'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Estela de vida.
-Extrae recuerdos e hitos históricos del pasado para construir un timeline vital. Asigna títulos precisos y concretos sobre el suceso (ej: "Fallecimiento de mi padre", "Graduación Universitaria"), NUNCA títulos genéricos como "Recuerdo especial". Extrae año, fecha/estación, lugar, el tono emocional (emocion: 1=muy triste, 2=triste, 3=calma, 4=alegre, 5=muy alegre) y peso=3 si fue un momento crucial que marcó su vida.`
+Extrae exclusivamente recuerdos e hitos históricos trascendentales del pasado. NUNCA extraigas tareas cotidianas ni recados futuros como hitos. Si no es un acontecimiento histórico vital, establece action = "none".`
   }
 };
