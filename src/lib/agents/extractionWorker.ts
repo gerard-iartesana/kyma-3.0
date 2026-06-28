@@ -257,7 +257,15 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     if (result.action === 'enrich' && result.targetItemId) {
       const existing = existingItems.find(i => i.id === result.targetItemId);
       if (existing) {
-        const updatedContent = result.extractedData.content || existing.content;
+        let updatedContent = existing.content || '';
+        if (result.extractedData.content) {
+          const newChunk = result.extractedData.content.trim();
+          if (!updatedContent) {
+            updatedContent = newChunk;
+          } else if (!updatedContent.toLowerCase().includes(newChunk.toLowerCase())) {
+            updatedContent = `${updatedContent}\n\n${newChunk}`;
+          }
+        }
         const rawTags = [...(existing.tags || []), ...(result.extractedData.tags || []), `#${doorId}`];
         const mergedTags = formatTagList(rawTags);
         

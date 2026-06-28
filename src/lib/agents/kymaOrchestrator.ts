@@ -221,33 +221,41 @@ Devuelve UNICAMENTE un JSON con este formato:
     }
   }
 
-  // Step 2: Extraction execution if confidence is sufficient
+  // Step 2: Extraction execution across all detected doors (Multi-intent orchestration)
   let extractedResult: { item?: KymaItem; action: 'create' | 'enrich' | 'none' } = { action: 'none' };
 
-  if (triage.isFicheable && triage.confidence >= 0.55 && triage.doorId) {
-    const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
-    extractedResult = await executeExtractionWorker(
-      triage.doorId,
-      userText,
-      userId,
-      accessToken,
-      `Historial inmediato: ${recentMsgsSnippet}`
-    );
+  const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
+  const doorsToExtract: DoorId[] = [];
 
-    // Secondary multi-door extraction for personas/vínculos if a person is mentioned
-    const personMatch = userText.match(/(?:amigo|amiga|hermano|hermana|padre|madre|pareja|novio|novia|tío|tía|primo|prima|compañero|compañera|con) ([A-ZÁÉÍÓÚ][a-záéíóú]+)/i);
-    if (personMatch && triage.doorId !== 'personas') {
-      try {
-        await executeExtractionWorker(
-          'personas',
-          userText,
-          userId,
-          accessToken,
-          `Mención de persona en ${triage.doorId}: ${userText}`
-        );
-      } catch (personErr) {
-        console.error('Error en extracción secundaria de personas:', personErr);
+  if (triage.isFicheable && triage.confidence >= 0.55 && triage.doorId) {
+    doorsToExtract.push(triage.doorId);
+  }
+
+  // Secondary deterministic detectors for parallel intents in a single turn
+  const interestKeywords = /\b(?:vea|ver|temporada|serie|película|pelicula|cine|me gusta|me apasiona|me encanta|afición|aficion|hobby|hobbies|escuchar|música|musica|juego|jugar|deporte|pádel|padel)\b/i;
+  if (interestKeywords.test(userText) && !doorsToExtract.includes('intereses')) {
+    doorsToExtract.push('intereses');
+  }
+
+  const personMatch = userText.match(/(?:amigo|amiga|hermano|hermana|padre|madre|pareja|novio|novia|tío|tía|primo|prima|compañero|compañera|con) ([A-ZÁÉÍÓÚ][a-záéíóú]+)/i);
+  if (personMatch && !doorsToExtract.includes('personas')) {
+    doorsToExtract.push('personas');
+  }
+
+  for (const dId of doorsToExtract) {
+    try {
+      const res = await executeExtractionWorker(
+        dId,
+        userText,
+        userId,
+        accessToken,
+        `Historial inmediato: ${recentMsgsSnippet}`
+      );
+      if (res.item && res.action !== 'none') {
+        extractedResult = res;
       }
+    } catch (err) {
+      console.error(`Error en extracción multi-puerta (${dId}):`, err);
     }
   }
 
