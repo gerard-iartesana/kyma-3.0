@@ -108,6 +108,94 @@ export function EstelaHorizontalTimelineView({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Touch event refs
+  const isTouchDraggingRef = useRef(false);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const initialPinchDistRef = useRef(0);
+  const initialScaleRef = useRef(1);
+  const isPinchingRef = useRef(false);
+  const scaleRef = useRef(1);
+  const panRef = useRef({ x: 0, y: 0 });
+
+  React.useEffect(() => {
+    scaleRef.current = scale;
+    panRef.current = pan;
+  }, [scale, pan]);
+
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const getTouchDist = (touches: TouchList) => {
+      return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+      );
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        isPinchingRef.current = true;
+        isTouchDraggingRef.current = false;
+        initialPinchDistRef.current = getTouchDist(e.touches);
+        initialScaleRef.current = scaleRef.current;
+      } else if (e.touches.length === 1) {
+        const target = e.target as HTMLElement;
+        const isInteractive = target && target.closest('.timeline-circle-node');
+        if (!isInteractive) {
+          isTouchDraggingRef.current = true;
+          setIsDragging(true);
+          touchStartXRef.current = e.touches[0].clientX - panRef.current.x;
+          touchStartYRef.current = e.touches[0].clientY - panRef.current.y;
+        }
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && isPinchingRef.current) {
+        e.preventDefault();
+        const currentDist = getTouchDist(e.touches);
+        if (initialPinchDistRef.current > 0) {
+          const scaleFactor = currentDist / initialPinchDistRef.current;
+          const minScale = 0.35;
+          const maxScale = 3.0;
+          const next = initialScaleRef.current * scaleFactor;
+          const clamped = Math.min(maxScale, Math.max(minScale, next));
+          setScale(clamped);
+        }
+      } else if (e.touches.length === 1 && isTouchDraggingRef.current) {
+        e.preventDefault();
+        setPan({
+          x: e.touches[0].clientX - touchStartXRef.current,
+          y: e.touches[0].clientY - touchStartYRef.current
+        });
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        isPinchingRef.current = false;
+      }
+      if (e.touches.length === 0) {
+        isTouchDraggingRef.current = false;
+        setIsDragging(false);
+      }
+    };
+
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    container.addEventListener('touchend', onTouchEnd);
+    container.addEventListener('touchcancel', onTouchEnd);
+
+    return () => {
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, []);
+
   // Wheel zoom handler
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -295,6 +383,7 @@ export function EstelaHorizontalTimelineView({
           background: transparent;
           overflow: hidden;
           user-select: none;
+          touch-action: none;
         }
 
         .timeline-canvas {
@@ -304,6 +393,7 @@ export function EstelaHorizontalTimelineView({
           display: flex;
           align-items: center;
           justify-content: center;
+          touch-action: none;
         }
         .timeline-canvas.dragging {
           cursor: grabbing;

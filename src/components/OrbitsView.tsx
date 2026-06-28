@@ -356,6 +356,12 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
       </div>
 
       <style jsx>{`
+        @media (max-width: 768px) {
+          .orbits-instructions {
+            display: none !important;
+          }
+        }
+
         .orbits-container {
           width: 100%;
           display: flex;

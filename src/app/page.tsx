@@ -770,7 +770,7 @@ export default function Home() {
       </aside>
 
       {/* 2. PANEL CENTRAL */}
-      <main className={`content-pane ${chatState === 'expanded' ? 'pane-hidden' : ''} ${mobileTab === 'panel' ? 'mobile-visible' : 'mobile-hidden'} ${((selectedDoorId === 'personas' && personasViewMode === 'orbits') || (selectedDoorId === 'intereses' && interesesViewMode === 'orbits')) ? 'no-scroll' : ''}`}>
+      <main className={`content-pane ${chatState === 'expanded' ? 'pane-hidden' : ''} ${mobileTab === 'panel' ? 'mobile-visible' : 'mobile-hidden'} ${((selectedDoorId === 'personas' && personasViewMode === 'orbits') || (selectedDoorId === 'intereses' && interesesViewMode === 'orbits') || (selectedDoorId === 'estela' && estelaViewMode === 'timeline')) ? 'no-scroll' : ''}`}>
         {!isOnline && (
           <div style={{
             background: 'rgba(234, 179, 8, 0.15)',
@@ -2142,7 +2142,8 @@ export default function Home() {
         }
         
         .content-pane.no-scroll {
-          overflow-y: hidden;
+          overflow-y: hidden !important;
+          overflow: hidden !important;
         }
         
         .mobile-header {
@@ -2755,12 +2756,12 @@ export default function Home() {
           }
         }
 
-          /* Adjust headings */
+          /* Adjust headings on mobile */
           .serif-title {
-            font-size: 2rem;
+            font-size: 2.2rem !important;
           }
           .door-title {
-            font-size: 1.7rem;
+            font-size: 2.1rem !important;
           }
         }
       `}</style>
