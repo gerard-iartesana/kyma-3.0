@@ -176,7 +176,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         const text = getSocraticQuestion(contextItem);
         try {
           const newMsg = await dbClient.receiveKymaMessage(text);
-          setMessages(prev => [...prev, newMsg]);
+          setMessages(prev => [...prev, { ...newMsg, isNew: true }]);
         } catch (err) {
           console.error(err);
         }
@@ -282,7 +282,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
           setIsTyping(false);
           const kymaMsg = await dbClient.receiveKymaMessage(kymaText);
-          setMessages(prev => [...prev, kymaMsg]);
+          setMessages(prev => [...prev, { ...kymaMsg, isNew: true }]);
         } catch (err) {
           setIsTyping(false);
           console.error(err);
@@ -364,7 +364,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       {/* Messages area */}
       <div className="messages-area">
         {messages.map((msg, idx) => {
-          const isLatestKyma = msg.sender === 'kyma' && idx === messages.length - 1;
+          const isLatestKyma = msg.sender === 'kyma' && idx === messages.length - 1 && Boolean((msg as any).isNew);
           return (
             <div key={msg.id} className={`message-wrapper ${msg.sender === 'user' ? 'wrapper-user' : 'wrapper-kyma'}`}>
               <div className={`message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-kyma'}`}>

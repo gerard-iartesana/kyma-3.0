@@ -892,33 +892,25 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="door-view animate-fade-in">
-            <div className="door-header" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {/* Top row: Circular back button & view controls */}
-              <div className="door-top-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <button 
-                  className="back-to-home-btn circular-back-btn" 
-                  onClick={() => handleSelectDoor(null)}
-                  title="Volver"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: 'var(--bg-tertiary)',
-                    border: '1px solid var(--border-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    padding: 0,
-                    flexShrink: 0
-                  }}
-                >
-                  <Icons.ArrowLeft size={18} />
-                </button>
+          <div className={`door-view animate-fade-in ${((selectedDoorId === 'personas' && personasViewMode === 'orbits') || (selectedDoorId === 'intereses' && interesesViewMode === 'orbits') || (selectedDoorId === 'estela' && estelaViewMode === 'timeline')) ? 'full-width-door-view' : ''}`}>
+            <div className="door-header">
+              <div className="door-header-main-row">
+                <div className="door-header-title-group">
+                  <button 
+                    className="back-to-home-btn circular-back-btn" 
+                    onClick={() => handleSelectDoor(null)}
+                    title="Volver"
+                  >
+                    <Icons.ArrowLeft size={18} />
+                  </button>
 
-                <div className="door-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <h1 className="door-title font-serif">
+                    {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
+                    {currentDoor?.title}
+                  </h1>
+                </div>
+
+                <div className="door-controls">
                   {selectedDoorId === 'intereses' && !isVelado && (
                     <div className="view-mode-selector radio-group">
                       <button 
@@ -1054,14 +1046,6 @@ export default function Home() {
                     </button>
                   )}
                 </div>
-              </div>
-
-              {/* Title row */}
-              <div className="door-title-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-                <h1 className="door-title font-serif" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
-                  {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
-                  {currentDoor?.title}
-                </h1>
               </div>
 
               {/* Active tag filter badge */}
@@ -2256,17 +2240,60 @@ export default function Home() {
           padding-top: 10px;
         }
 
+        .door-view.full-width-door-view {
+          max-width: 100% !important;
+          margin: 0 !important;
+        }
+
         .door-header {
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 16px;
-        }
-        .door-title-box {
-          display: flex;
           flex-direction: column;
-          gap: 8px;
+          width: 100%;
+          gap: 12px;
+        }
+
+        .door-header-main-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          gap: 16px;
+          flex-wrap: nowrap;
+        }
+
+        .door-header-title-group {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-shrink: 1;
+          min-width: 0;
+        }
+
+        .door-controls {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+
+        .circular-back-btn {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: var(--bg-tertiary);
+          border: 1px solid var(--border-subtle);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-primary);
+          cursor: pointer;
+          padding: 0;
+          flex-shrink: 0;
+          transition: all 0.2s ease;
+        }
+        .circular-back-btn:hover {
+          background: var(--bg-card-hover);
+          border-color: var(--border-focus);
         }
         .back-to-home-btn {
           display: flex;
@@ -2703,6 +2730,10 @@ export default function Home() {
           }
           .door-view {
             padding-top: 0 !important;
+          }
+          .door-header-main-row {
+            flex-wrap: wrap !important;
+            gap: 10px !important;
           }
           .content-pane.mobile-hidden {
             display: none;
