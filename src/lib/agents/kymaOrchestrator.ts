@@ -103,6 +103,41 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
   return {};
 }
 
+async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
+  const configured = preferredModel || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const candidateModels: string[] = [];
+  
+  // Normalize model name and add fallbacks
+  if (configured.includes('3.5') || configured.includes('3-flash')) {
+    candidateModels.push('gemini-2.0-flash', 'gemini-1.5-flash');
+  } else {
+    candidateModels.push(configured, 'gemini-2.0-flash', 'gemini-1.5-flash');
+  }
+
+  // Remove duplicates
+  const modelsToTry = Array.from(new Set(candidateModels));
+
+  for (const modelName of modelsToTry) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyObj)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      } else {
+        console.warn(`Gemini API call to ${modelName} returned status ${res.status}. Trying next fallback model...`);
+      }
+    } catch (err) {
+      console.error(`Fetch error with model ${modelName}:`, err);
+    }
+  }
+  return null;
+}
+
 export async function processKymaTurn(
   messages: ChatMessage[],
   userId?: string,
@@ -114,9 +149,7 @@ export async function processKymaTurn(
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
   }
 
-  let model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-
-  const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';
@@ -158,17 +191,12 @@ Devuelve UNICAMENTE un JSON con este formato:
 `;
 
     try {
-      const triageRes = await fetch(baseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: triagePrompt }] }],
-          generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
-        })
-      });
+      const triageData = await callGeminiWithFallback(apiKey, {
+        contents: [{ role: 'user', parts: [{ text: triagePrompt }] }],
+        generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
+      }, preferredModel);
 
-      if (triageRes.ok) {
-        const triageData = await triageRes.json();
+      if (triageData) {
         const rawTriage = triageData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawTriage) {
           const cleanJson = rawTriage.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -269,16 +297,12 @@ Devuelve ÚNICAMENTE un JSON con este formato:
 }
 `;
     try {
-      const mgmtRes = await fetch(baseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: mgmtPrompt }] }],
-          generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
-        })
-      });
-      if (mgmtRes.ok) {
-        const mgmtData = await mgmtRes.json();
+      const mgmtData = await callGeminiWithFallback(apiKey, {
+        contents: [{ role: 'user', parts: [{ text: mgmtPrompt }] }],
+        generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
+      }, preferredModel);
+
+      if (mgmtData) {
         const rawMgmt = mgmtData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawMgmt) {
           const cleanJson = rawMgmt.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -393,24 +417,19 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
     parts: [{ text: KYMA_CONSTITUTION + userContextInstruction + extraInstruction }]
   };
 
-  const kymaRes = await fetch(baseUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents,
-      systemInstruction,
-      generationConfig: {
-        maxOutputTokens: 1200,
-        temperature: 0.7
-      }
-    })
-  });
+  const kymaData = await callGeminiWithFallback(apiKey, {
+    contents,
+    systemInstruction,
+    generationConfig: {
+      maxOutputTokens: 1200,
+      temperature: 0.7
+    }
+  }, preferredModel);
 
-  if (!kymaRes.ok) {
-    throw new Error(`Gemini API error: ${kymaRes.statusText}`);
+  if (!kymaData) {
+    throw new Error('No se pudo obtener respuesta de la API de Gemini');
   }
 
-  const kymaData = await kymaRes.json();
   let replyText = kymaData.candidates?.[0]?.content?.parts?.[0]?.text || 'No he podido procesar una respuesta en este momento.';
 
   // Safe targeted sanitization of LLM preamble / artifacts

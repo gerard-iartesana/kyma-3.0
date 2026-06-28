@@ -81,6 +81,36 @@ function deriveEstelaTitle(userMessage: string, extractedTitle?: string): string
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
+  const configured = preferredModel || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const candidateModels: string[] = [];
+  
+  if (configured.includes('3.5') || configured.includes('3-flash')) {
+    candidateModels.push('gemini-2.0-flash', 'gemini-1.5-flash');
+  } else {
+    candidateModels.push(configured, 'gemini-2.0-flash', 'gemini-1.5-flash');
+  }
+
+  const modelsToTry = Array.from(new Set(candidateModels));
+
+  for (const modelName of modelsToTry) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyObj)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.error(`Fetch error with model ${modelName}:`, err);
+    }
+  }
+  return null;
+}
+
 export async function executeExtractionWorker(
   doorId: DoorId,
   userMessage: string,
@@ -111,9 +141,7 @@ export async function executeExtractionWorker(
     tags: i.tags
   }));
 
-  let model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
   const now = new Date();
   const currentDateStr = now.toISOString().split('T')[0];
@@ -167,24 +195,16 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 `;
 
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json'
-        }
-      })
-    });
+    const data = await callGeminiWithFallback(apiKey, {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: 'application/json'
+      }
+    }, preferredModel);
 
-    if (!response.ok) {
-      console.error('ExtractionWorker API error:', await response.text());
-      return { action: 'none' };
-    }
+    if (!data) return { action: 'none' };
 
-    const data = await response.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawText) return { action: 'none' };
 
