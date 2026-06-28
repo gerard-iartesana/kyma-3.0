@@ -82,16 +82,8 @@ function deriveEstelaTitle(userMessage: string, extractedTitle?: string): string
 }
 
 async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
-  const configured = preferredModel || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-  const candidateModels: string[] = [];
-  
-  if (configured.includes('3.5') || configured.includes('3-flash')) {
-    candidateModels.push('gemini-2.0-flash', 'gemini-1.5-flash');
-  } else {
-    candidateModels.push(configured, 'gemini-2.0-flash', 'gemini-1.5-flash');
-  }
-
-  const modelsToTry = Array.from(new Set(candidateModels));
+  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const modelsToTry = Array.from(new Set([targetModel, 'gemini-3.5-flash']));
 
   for (const modelName of modelsToTry) {
     try {
@@ -103,6 +95,9 @@ async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredMod
       });
       if (res.ok) {
         return await res.json();
+      } else {
+        const errText = await res.text();
+        console.warn(`ExtractionWorker Gemini API call to ${modelName} returned status ${res.status}: ${errText}`);
       }
     } catch (err) {
       console.error(`Fetch error with model ${modelName}:`, err);
@@ -141,7 +136,7 @@ export async function executeExtractionWorker(
     tags: i.tags
   }));
 
-  const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 
   const now = new Date();
   const currentDateStr = now.toISOString().split('T')[0];

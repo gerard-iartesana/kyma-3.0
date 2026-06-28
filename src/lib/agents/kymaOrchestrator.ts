@@ -104,18 +104,8 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
 }
 
 async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
-  const configured = preferredModel || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-  const candidateModels: string[] = [];
-  
-  // Normalize model name and add fallbacks
-  if (configured.includes('3.5') || configured.includes('3-flash')) {
-    candidateModels.push('gemini-2.0-flash', 'gemini-1.5-flash');
-  } else {
-    candidateModels.push(configured, 'gemini-2.0-flash', 'gemini-1.5-flash');
-  }
-
-  // Remove duplicates
-  const modelsToTry = Array.from(new Set(candidateModels));
+  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const modelsToTry = Array.from(new Set([targetModel, 'gemini-3.5-flash']));
 
   for (const modelName of modelsToTry) {
     try {
@@ -126,10 +116,10 @@ async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredMod
         body: JSON.stringify(bodyObj)
       });
       if (res.ok) {
-        const data = await res.json();
-        return data;
+        return await res.json();
       } else {
-        console.warn(`Gemini API call to ${modelName} returned status ${res.status}. Trying next fallback model...`);
+        const errText = await res.text();
+        console.warn(`Gemini API call to ${modelName} returned status ${res.status}: ${errText}`);
       }
     } catch (err) {
       console.error(`Fetch error with model ${modelName}:`, err);
@@ -149,7 +139,7 @@ export async function processKymaTurn(
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
   }
 
-  const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';
