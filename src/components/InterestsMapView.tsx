@@ -61,6 +61,14 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const zoomRef = useRef(0.85);
 
+  // Touch event refs
+  const isTouchDraggingRef = useRef(false);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const initialPinchDistRef = useRef(0);
+  const initialZoomRef = useRef(0.85);
+  const isPinchingRef = useRef(false);
+
   // Persistent simulation nodes and links
   const simNodesRef = useRef<Map<string, SimNode>>(new Map());
   const linksRef = useRef<SimLink[]>([]);
@@ -124,10 +132,83 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
       container.style.cursor = 'grab';
     };
 
+    // Touch handlers for mobile / tablet
+    const getTouchDist = (touches: TouchList) => {
+      return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+      );
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        isPinchingRef.current = true;
+        isTouchDraggingRef.current = false;
+        initialPinchDistRef.current = getTouchDist(e.touches);
+        initialZoomRef.current = zoomRef.current;
+      } else if (e.touches.length === 1) {
+        const target = e.target as HTMLElement;
+        const isInteractive = target && (target.closest('g.sim-node') || target.closest('.clickable'));
+        if (!isInteractive) {
+          isTouchDraggingRef.current = true;
+          draggedRef.current = false;
+          dragStartPosRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          touchStartXRef.current = e.touches[0].clientX - panXRef.current;
+          touchStartYRef.current = e.touches[0].clientY - panYRef.current;
+        }
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && isPinchingRef.current) {
+        e.preventDefault();
+        const currentDist = getTouchDist(e.touches);
+        if (initialPinchDistRef.current > 0) {
+          const scaleFactor = currentDist / initialPinchDistRef.current;
+          const minZoom = 0.35;
+          const maxZoom = 2.5;
+          const next = initialZoomRef.current * scaleFactor;
+          const clamped = Math.max(minZoom, Math.min(maxZoom, next));
+          setZoom(clamped);
+          if (viewportRef.current) {
+            viewportRef.current.style.transform = `translate(${panXRef.current}px, ${panYRef.current}px) scale(${clamped})`;
+          }
+        }
+      } else if (e.touches.length === 1 && isTouchDraggingRef.current) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - dragStartPosRef.current.x;
+        const dy = e.touches[0].clientY - dragStartPosRef.current.y;
+        if (Math.hypot(dx, dy) > 5) {
+          draggedRef.current = true;
+        }
+
+        panXRef.current = e.touches[0].clientX - touchStartXRef.current;
+        panYRef.current = e.touches[0].clientY - touchStartYRef.current;
+
+        if (viewportRef.current) {
+          viewportRef.current.style.transform = `translate(${panXRef.current}px, ${panYRef.current}px) scale(${zoomRef.current})`;
+        }
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        isPinchingRef.current = false;
+      }
+      if (e.touches.length === 0) {
+        isTouchDraggingRef.current = false;
+      }
+    };
+
     container.addEventListener('wheel', onWheel, { passive: false });
     container.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    container.addEventListener('touchend', onTouchEnd);
+    container.addEventListener('touchcancel', onTouchEnd);
 
     container.style.cursor = 'grab';
 
@@ -136,6 +217,11 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
       container.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
+
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchEnd);
     };
   }, []);
 
@@ -426,7 +512,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
   };
 
   return (
-    <div className="orbits-outer-container" ref={containerRef} style={{ width: '100%', height: 'calc(100vh - 200px)', overflow: 'hidden', position: 'relative' }}>
+    <div className="orbits-outer-container" ref={containerRef} style={{ width: '100%', height: 'calc(100vh - 200px)', overflow: 'hidden', position: 'relative', touchAction: 'none' }}>
       <div 
         className="orbits-viewport" 
         ref={viewportRef}
