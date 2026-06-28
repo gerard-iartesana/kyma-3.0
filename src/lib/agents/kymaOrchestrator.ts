@@ -114,10 +114,7 @@ export async function processKymaTurn(
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
   }
 
-  let model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-  if (model === 'gemini-3-flash') {
-    model = 'gemini-3.5-flash';
-  }
+  let model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 
   const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 

@@ -111,10 +111,7 @@ export async function executeExtractionWorker(
     tags: i.tags
   }));
 
-  let model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-  if (model === 'gemini-3-flash') {
-    model = 'gemini-3.5-flash';
-  }
+  let model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
