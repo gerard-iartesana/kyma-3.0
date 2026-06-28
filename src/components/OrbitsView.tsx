@@ -316,15 +316,9 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         </div>
 
         {/* Concentric Rings */}
-        <div className="orbit-ring ring-nucleo">
-          <span className="ring-label">Núcleo</span>
-        </div>
-        <div className="orbit-ring ring-cercana">
-          <span className="ring-label">Cercana</span>
-        </div>
-        <div className="orbit-ring ring-orbita">
-          <span className="ring-label">Órbita</span>
-        </div>
+        <div className="orbit-ring ring-nucleo" />
+        <div className="orbit-ring ring-cercana" />
+        <div className="orbit-ring ring-orbita" />
 
         {/* Person Nodes */}
         {people.map((p) => (

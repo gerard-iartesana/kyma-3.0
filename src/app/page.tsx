@@ -893,211 +893,193 @@ export default function Home() {
           </div>
         ) : (
           <div className="door-view animate-fade-in">
-            <div className="door-header" style={{ alignItems: ((selectedDoorId === 'personas' && personasViewMode === 'orbits') || (selectedDoorId === 'intereses' && interesesViewMode === 'orbits')) ? 'flex-start' : 'center' }}>
-              <div className="door-title-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-                <button className="back-to-home-btn" onClick={() => handleSelectDoor(null)}>
-                  <Icons.ArrowLeft size={16} />
-                  <span>Volver</span>
-                </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h1 className="door-title font-serif" style={{ margin: 0 }}>
-                    {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
-                    {currentDoor?.title}
-                  </h1>
-                </div>
+            <div className="door-header">
+              <button className="back-to-home-btn" onClick={() => handleSelectDoor(null)}>
+                <Icons.ArrowLeft size={16} />
+                <span>Volver</span>
+              </button>
 
-                {/* Active tag filter badge */}
-                {selectedTag && (
-                  <div className="active-tag-filter animate-fade-in" style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    marginTop: '2px', 
-                    fontSize: '0.78rem', 
-                    background: 'rgba(139, 92, 246, 0.12)', 
-                    border: '1px solid rgba(139, 92, 246, 0.25)', 
-                    padding: '4px 10px', 
-                    borderRadius: '14px', 
-                    color: 'var(--text-primary)' 
-                  }}>
-                    <span>Filtrado por: <strong>{selectedTag.startsWith('#') ? selectedTag.slice(1) : selectedTag}</strong></span>
+              <div className="door-header-main-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px', flexWrap: 'nowrap' }}>
+                <h1 className="door-title font-serif" style={{ margin: 0, flexShrink: 1, minWidth: 0 }}>
+                  {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
+                  {currentDoor?.title}
+                </h1>
+
+                <div className="door-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  {selectedDoorId === 'intereses' && !isVelado && (
+                    <div className="view-mode-selector radio-group">
+                      <button 
+                        className={`radio-label ${interesesViewMode === 'grid' ? 'active' : ''}`}
+                        onClick={() => setInteresesViewMode('grid')}
+                      >
+                        <Icons.Grid size={14} />
+                        <span>Lista</span>
+                      </button>
+                      <button 
+                        className={`radio-label ${interesesViewMode === 'orbits' ? 'active' : ''}`}
+                        onClick={() => setInteresesViewMode('orbits')}
+                      >
+                        <Icons.Orbit size={14} />
+                        <span>Universo</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {selectedDoorId === 'personas' && !isVelado && (
+                    <div className="view-mode-selector radio-group">
+                      <button 
+                        className={`radio-label ${personasViewMode === 'grid' ? 'active' : ''}`}
+                        onClick={() => setPersonasViewMode('grid')}
+                      >
+                        <Icons.Grid size={14} />
+                        <span>Lista</span>
+                      </button>
+                      <button 
+                        className={`radio-label ${personasViewMode === 'orbits' ? 'active' : ''}`}
+                        onClick={() => setPersonasViewMode('orbits')}
+                      >
+                        <Icons.Orbit size={14} />
+                        <span>Universo</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {selectedDoorId === 'agenda' && !isVelado && (
+                    <div className="view-mode-selector radio-group">
+                      <button 
+                        className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
+                        onClick={() => setAgendaViewMode('grid')}
+                      >
+                        <Icons.Grid size={14} />
+                        <span>Lista</span>
+                      </button>
+                      <button 
+                        className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
+                        onClick={() => setAgendaViewMode('calendar')}
+                      >
+                        <Icons.Calendar size={14} />
+                        <span>Calendario</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {selectedDoorId === 'estela' && !isVelado && (
+                    <div className="view-mode-selector radio-group">
+                      <button 
+                        className={`radio-label ${estelaViewMode === 'grid' ? 'active' : ''}`}
+                        onClick={() => setEstelaViewMode('grid')}
+                      >
+                        <Icons.Grid size={14} />
+                        <span>Lista</span>
+                      </button>
+                      <button 
+                        className={`radio-label ${estelaViewMode === 'timeline' ? 'active' : ''}`}
+                        onClick={() => setEstelaViewMode('timeline')}
+                      >
+                        <Icons.GitCommit size={14} />
+                        <span>Línea</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {selectedDoorId === 'estela' && !isVelado && (
                     <button 
-                      onClick={() => setSelectedTag(null)} 
+                      className="btn btn-secondary"
+                      onClick={() => setEstelaSortAsc(!estelaSortAsc)}
+                      title={estelaSortAsc ? "Ordenar: Más antiguos primero" : "Ordenar: Más recientes primero"}
                       style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        color: 'var(--text-secondary)', 
-                        cursor: 'pointer', 
-                        display: 'flex', 
+                        width: '38px', 
+                        height: '38px', 
+                        padding: 0, 
+                        display: 'inline-flex', 
                         alignItems: 'center', 
-                        justifyContent: 'center', 
-                        padding: '2px', 
-                        borderRadius: '50%',
-                        transition: 'all 0.2s ease',
+                        justifyContent: 'center',
+                        background: 'var(--bg-tertiary)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-secondary)'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-                      title="Quitar filtro"
                     >
-                      <Icons.X size={12} />
+                      {estelaSortAsc ? <Icons.ArrowUp size={16} /> : <Icons.ArrowDown size={16} />}
                     </button>
-                  </div>
-                )}
-                
-                {/* Inline Legend for Personas Universe View */}
-                {selectedDoorId === 'personas' && personasViewMode === 'orbits' && (
-                  <div className="orbits-legend-inline" style={{ display: 'flex', gap: '16px', marginTop: '4px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-purple)', boxShadow: '0 0 6px var(--accent-purple)', display: 'inline-block' }} />
-                      <span>Núcleo afectivo</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--text-primary)', display: 'inline-block' }} />
-                      <span>Relaciones cercanas</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--border-focus)', display: 'inline-block' }} />
-                      <span>Órbita / Contactos</span>
-                    </div>
-                  </div>
-                )}
+                  )}
+
+                  {/* Simplified/Compact View Toggle Button */}
+                  {!isVelado && !['configuracion', 'ayuda'].includes(selectedDoorId || '') &&
+                   (selectedDoorId !== 'estela' || estelaViewMode === 'grid') &&
+                   (!selectedDoorId || 
+                    (selectedDoorId !== 'personas' || personasViewMode === 'grid') && 
+                    (selectedDoorId !== 'intereses' || interesesViewMode === 'grid') && 
+                    (selectedDoorId !== 'agenda' || agendaViewMode === 'grid')) && (
+                    <button 
+                      className={`btn btn-secondary ${isCompactView ? 'active' : ''}`}
+                      onClick={() => setIsCompactView(!isCompactView)}
+                      title={isCompactView ? "Ver vista detallada" : "Simplificar vista de tarjetas"}
+                      style={{ 
+                        width: '38px', 
+                        height: '38px', 
+                        padding: 0, 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: isCompactView ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
+                        borderColor: isCompactView ? 'var(--accent-purple)' : 'var(--border-subtle)',
+                        color: isCompactView ? '#ffffff' : 'var(--text-secondary)'
+                      }}
+                    >
+                      {isCompactView ? <Icons.Maximize2 size={16} /> : <Icons.Minimize2 size={16} />}
+                    </button>
+                  )}
+
+                  {currentDoor?.category === 'utility' && !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && !showAddForm && (
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => setShowAddForm(true)}
+                      title="Añadir elemento"
+                      style={{ width: '38px', height: '38px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Icons.Plus size={18} />
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="door-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {selectedDoorId === 'intereses' && !isVelado && (
-                  <div className="view-mode-selector radio-group">
-                    <button 
-                      className={`radio-label ${interesesViewMode === 'grid' ? 'active' : ''}`}
-                      onClick={() => setInteresesViewMode('grid')}
-                    >
-                      <Icons.Grid size={14} />
-                      <span>Lista</span>
-                    </button>
-                    <button 
-                      className={`radio-label ${interesesViewMode === 'orbits' ? 'active' : ''}`}
-                      onClick={() => setInteresesViewMode('orbits')}
-                    >
-                      <Icons.Orbit size={14} />
-                      <span>Universo</span>
-                    </button>
-                  </div>
-                )}
 
-                {selectedDoorId === 'personas' && !isVelado && (
-                  <div className="view-mode-selector radio-group">
-                    <button 
-                      className={`radio-label ${personasViewMode === 'grid' ? 'active' : ''}`}
-                      onClick={() => setPersonasViewMode('grid')}
-                    >
-                      <Icons.Grid size={14} />
-                      <span>Lista</span>
-                    </button>
-                    <button 
-                      className={`radio-label ${personasViewMode === 'orbits' ? 'active' : ''}`}
-                      onClick={() => setPersonasViewMode('orbits')}
-                    >
-                      <Icons.Orbit size={14} />
-                      <span>Universo</span>
-                    </button>
-                  </div>
-                )}
-
-                {selectedDoorId === 'agenda' && !isVelado && (
-                  <div className="view-mode-selector radio-group">
-                    <button 
-                      className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
-                      onClick={() => setAgendaViewMode('grid')}
-                    >
-                      <Icons.Grid size={14} />
-                      <span>Lista</span>
-                    </button>
-                    <button 
-                      className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
-                      onClick={() => setAgendaViewMode('calendar')}
-                    >
-                      <Icons.Calendar size={14} />
-                      <span>Calendario</span>
-                    </button>
-                  </div>
-                )}
-
-                {selectedDoorId === 'estela' && !isVelado && (
-                  <div className="view-mode-selector radio-group">
-                    <button 
-                      className={`radio-label ${estelaViewMode === 'grid' ? 'active' : ''}`}
-                      onClick={() => setEstelaViewMode('grid')}
-                    >
-                      <Icons.Grid size={14} />
-                      <span>Lista</span>
-                    </button>
-                    <button 
-                      className={`radio-label ${estelaViewMode === 'timeline' ? 'active' : ''}`}
-                      onClick={() => setEstelaViewMode('timeline')}
-                    >
-                      <Icons.GitCommit size={14} />
-                      <span>Línea</span>
-                    </button>
-                  </div>
-                )}
-
-                {selectedDoorId === 'estela' && !isVelado && (
+              {/* Active tag filter badge */}
+              {selectedTag && (
+                <div className="active-tag-filter animate-fade-in" style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  marginTop: '2px', 
+                  fontSize: '0.78rem', 
+                  background: 'rgba(139, 92, 246, 0.12)', 
+                  border: '1px solid rgba(139, 92, 246, 0.25)', 
+                  padding: '4px 10px', 
+                  borderRadius: '14px', 
+                  color: 'var(--text-primary)' 
+                }}>
+                  <span>Filtrado por: <strong>{selectedTag.startsWith('#') ? selectedTag.slice(1) : selectedTag}</strong></span>
                   <button 
-                    className="btn btn-secondary"
-                    onClick={() => setEstelaSortAsc(!estelaSortAsc)}
-                    title={estelaSortAsc ? "Ordenar: Más antiguos primero" : "Ordenar: Más recientes primero"}
+                    onClick={() => setSelectedTag(null)} 
                     style={{ 
-                      width: '38px', 
-                      height: '38px', 
-                      padding: 0, 
-                      display: 'inline-flex', 
+                      background: 'none', 
+                      border: 'none', 
+                      color: 'var(--text-secondary)', 
+                      cursor: 'pointer', 
+                      display: 'flex', 
                       alignItems: 'center', 
-                      justifyContent: 'center',
-                      background: 'var(--bg-tertiary)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--text-secondary)'
+                      justifyContent: 'center', 
+                      padding: '2px', 
+                      borderRadius: '50%',
+                      transition: 'all 0.2s ease',
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                    title="Quitar filtro"
                   >
-                    {estelaSortAsc ? <Icons.ArrowUp size={16} /> : <Icons.ArrowDown size={16} />}
+                    <Icons.X size={12} />
                   </button>
-                )}
-
-                {/* Simplified/Compact View Toggle Button */}
-                {!isVelado && !['configuracion', 'ayuda'].includes(selectedDoorId || '') &&
-                 (selectedDoorId !== 'estela' || estelaViewMode === 'grid') &&
-                 (!selectedDoorId || 
-                  (selectedDoorId !== 'personas' || personasViewMode === 'grid') && 
-                  (selectedDoorId !== 'intereses' || interesesViewMode === 'grid') && 
-                  (selectedDoorId !== 'agenda' || agendaViewMode === 'grid')) && (
-                  <button 
-                    className={`btn btn-secondary ${isCompactView ? 'active' : ''}`}
-                    onClick={() => setIsCompactView(!isCompactView)}
-                    title={isCompactView ? "Ver vista detallada" : "Simplificar vista de tarjetas"}
-                    style={{ 
-                      width: '38px', 
-                      height: '38px', 
-                      padding: 0, 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      background: isCompactView ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
-                      borderColor: isCompactView ? 'var(--accent-purple)' : 'var(--border-subtle)',
-                      color: isCompactView ? '#ffffff' : 'var(--text-secondary)'
-                    }}
-                  >
-                    {isCompactView ? <Icons.Maximize2 size={16} /> : <Icons.Minimize2 size={16} />}
-                  </button>
-                )}
-
-                {currentDoor?.category === 'utility' && !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && !showAddForm && (
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={() => setShowAddForm(true)}
-                    title="Añadir elemento"
-                    style={{ width: '38px', height: '38px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Icons.Plus size={18} />
-                  </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {showAddForm && (
