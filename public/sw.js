@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kyma-cache-v98';
+const CACHE_NAME = 'kyma-cache-v99';
 
 // App shell static resources
 const PRECACHE_ASSETS = [

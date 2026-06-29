@@ -121,8 +121,22 @@ export function ItemCard({
 
   const isPastAgendaEvent = () => {
     if (item.doorId !== 'agenda' || !item.eventDate) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return item.eventDate < today;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const localTodayStr = `${year}-${month}-${day}`;
+
+    if (item.eventDate < localTodayStr) return true;
+    if (item.eventDate === localTodayStr && item.eventTime) {
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const [eventHours, eventMinutes] = item.eventTime.split(':').map(Number);
+      if (currentHours > eventHours || (currentHours === eventHours && currentMinutes >= eventMinutes)) {
+        return true;
+      }
+    }
+    return false;
   };
 
   // Helper for calculate decay / bar length for personas (Frecuencia de contacto)
@@ -876,10 +890,19 @@ export function ItemCard({
         .card.card-compact {
           padding: 10px 16px;
           gap: 0;
+          overflow: hidden;
         }
         .card-compact .card-header {
           align-items: center;
           width: 100%;
+          min-width: 0;
+          gap: 12px;
+        }
+        .card-compact .card-title-group {
+          align-items: center;
+          min-width: 0;
+          flex: 1;
+          overflow: hidden;
         }
         .card-compact .card-title {
           font-size: 1.18rem;
@@ -888,9 +911,8 @@ export function ItemCard({
           overflow: hidden;
           text-overflow: ellipsis;
           line-height: 1.2;
-        }
-        .card-compact .card-title-group {
-          align-items: center;
+          min-width: 0;
+          flex: 1;
         }
         .card-compact-right {
           display: flex;

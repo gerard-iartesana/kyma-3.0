@@ -233,7 +233,15 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     let extractedYear = result.extractedData.year;
     const currentYear = now.getFullYear();
 
-    let finalTitle = result.extractedData.title || 'Nueva ficha';
+    let rawTitle = result.extractedData.title || 'Nueva ficha';
+    if (doorId === 'agenda' || doorId === 'tareas') {
+      rawTitle = rawTitle.replace(/\bentrenamiento\b/gi, 'Entreno')
+        .replace(/\breunión\b|\breunion\b|\bcita médica\b|\bcita medica\b/gi, 'Cita')
+        .replace(/\bbicicleta\b/gi, 'Bici')
+        .replace(/\bpartido de pádel\b|\bpartido de padel\b/gi, 'Partido')
+        .replace(/\bcorte de pelo\b/gi, 'Pelo');
+    }
+    let finalTitle = rawTitle;
     if (doorId === 'estela') {
       finalTitle = deriveEstelaTitle(userMessage, result.extractedData.title);
     }

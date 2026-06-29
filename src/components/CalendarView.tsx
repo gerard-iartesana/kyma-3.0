@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { KymaItem } from '../lib/db/client';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Clock } from 'lucide-react';
 
 interface CalendarViewProps {
   items: KymaItem[];
@@ -12,6 +12,8 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(() => {
     return new Date(2026, 5, 26); // 5 represents June (0-indexed)
   });
+
+  const [selectedDayModal, setSelectedDayModal] = useState<{ dateString: string; events: KymaItem[] } | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -47,8 +49,6 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
 
     const cells = [];
     
-    // Using a fixed "today" date string of 2026-06-26 to match seed context,
-    // fallback to dynamic today if currentDate is in a different year range
     const today = new Date();
     const isDemoYear = today.getFullYear() === 2026;
     const todayString = isDemoYear
@@ -120,6 +120,22 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
       });
   };
 
+  const handleCellClick = (dateStr: string) => {
+    const dayEvents = getEventsForDate(dateStr);
+    if (dayEvents.length > 0) {
+      setSelectedDayModal({ dateString: dateStr, events: dayEvents });
+    }
+  };
+
+  const formatModalDateStr = (dateStr: string) => {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    return dateStr;
+  };
+
   return (
     <div className="calendar-view-container animate-fade-in">
       <div className="calendar-header">
@@ -155,7 +171,9 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
           return (
             <div 
               key={`${cell.dateString}-${idx}`}
-              className={`calendar-day-cell ${!cell.isCurrentMonth ? 'other-month' : ''} ${cell.isToday ? 'today' : ''}`}
+              className={`calendar-day-cell ${!cell.isCurrentMonth ? 'other-month' : ''} ${cell.isToday ? 'today' : ''} ${dayEvents.length > 0 ? 'has-events-cell' : ''}`}
+              onClick={() => handleCellClick(cell.dateString)}
+              style={{ cursor: dayEvents.length > 0 ? 'pointer' : 'default' }}
             >
               <span className="calendar-day-number">
                 {cell.dayNumber}
@@ -165,7 +183,10 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
                   <div
                     key={event.id}
                     className={`calendar-event-pill ${cell.isToday ? 'event-today' : ''}`}
-                    onClick={() => onItemClick(event)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onItemClick(event);
+                    }}
                     title={`${event.eventTime ? `${event.eventTime} - ` : ''}${event.title}`}
                   >
                     {event.eventTime && (
@@ -179,6 +200,53 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
           );
         })}
       </div>
+
+      {selectedDayModal && (
+        <div className="modal-backdrop" onClick={() => setSelectedDayModal(null)}>
+          <div className="modal-content calendar-day-events-modal animate-fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CalendarIcon size={18} color="var(--accent-purple)" />
+                <h3 className="modal-title" style={{ textTransform: 'capitalize', fontSize: '1.05rem' }}>
+                  {formatModalDateStr(selectedDayModal.dateString)}
+                </h3>
+              </div>
+              <button className="icon-btn-ghost" onClick={() => setSelectedDayModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '60vh', overflowY: 'auto' }}>
+              {selectedDayModal.events.map((evt) => (
+                <div 
+                  key={evt.id} 
+                  className="card card-compact"
+                  style={{ cursor: 'pointer', background: 'rgba(252, 252, 253, 0.04)', borderColor: 'rgba(252, 252, 253, 0.1)' }}
+                  onClick={() => {
+                    onItemClick(evt);
+                    setSelectedDayModal(null);
+                  }}
+                >
+                  <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 600, color: '#ffffff' }}>{evt.title}</h4>
+                    {evt.eventTime && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.82rem', color: 'var(--accent-purple-light)', background: 'rgba(168, 85, 247, 0.12)', padding: '2px 8px', borderRadius: '6px' }}>
+                        <Clock size={12} />
+                        {evt.eventTime} h
+                      </span>
+                    )}
+                  </div>
+                  {evt.content && (
+                    <p style={{ margin: '6px 0 0 0', fontSize: '0.84rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {evt.content}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

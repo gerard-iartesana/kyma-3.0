@@ -402,6 +402,7 @@ export default function Home() {
             } else if (item.recurrencia === 'mensual') {
               nextDate.setMonth(nextDate.getMonth() + k);
             } else if (item.recurrencia === 'anual') {
+              if (k > 1) break;
               nextDate.setFullYear(nextDate.getFullYear() + k);
             } else if (item.recurrencia === 'primer_lunes_mes') {
               const targetMonth = (month + k) % 12;
@@ -439,13 +440,23 @@ export default function Home() {
     ? (selectedDoorId === 'agenda' ? expandRecurringAgendaItems(items.filter(item => item.doorId === 'agenda')) : items.filter(item => item.doorId === selectedDoorId))
     : [];
 
-  const filteredItems = selectedDoorId 
+  let filteredItems = selectedDoorId 
     ? baseDoorItems
         .filter(item => !selectedTag || item.tags.includes(selectedTag))
         .filter(item => {
           if (selectedDoorId === 'agenda' && !showPastAgendaEvents) {
-            const today = new Date().toISOString().split('T')[0];
-            return !item.eventDate || item.eventDate >= today;
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const localTodayStr = `${year}-${month}-${day}`;
+            const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            if (!item.eventDate) return true;
+            if (item.eventDate < localTodayStr) return false;
+            if (item.eventDate === localTodayStr && item.eventTime) {
+              return item.eventTime >= currentTimeStr;
+            }
+            return true;
           }
           return true;
         })
@@ -502,6 +513,35 @@ export default function Home() {
           return 0; // Maintain original order
         })
     : [];
+
+  if (selectedDoorId === 'agenda' && showPastAgendaEvents) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const localTodayStr = `${year}-${month}-${day}`;
+    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const futureOrCurrent: KymaItem[] = [];
+    const past: KymaItem[] = [];
+
+    for (const item of filteredItems) {
+      if (!item.eventDate) {
+        futureOrCurrent.push(item);
+        continue;
+      }
+      const isPast = item.eventDate < localTodayStr || (item.eventDate === localTodayStr && item.eventTime ? item.eventTime < currentTimeStr : false);
+      if (isPast) {
+        past.push(item);
+      } else {
+        futureOrCurrent.push(item);
+      }
+    }
+
+    // Limit past events to at most 20 back
+    const limitedPast = past.slice(-20);
+    filteredItems = [...limitedPast, ...futureOrCurrent];
+  }
   const currentDoor = selectedDoorId === 'configuracion'
     ? { id: 'configuracion', title: 'Configuración y Contexto', icon: 'Settings', category: 'utility' as const, description: 'Ajustes del espacio y datos de contexto personal.', emptyPromise: '' }
     : selectedDoorId === 'busqueda'

@@ -7,7 +7,7 @@ export const DOOR_PACKAGES: Record<DoorId, DoorPackage> = {
     guardrails: [
       'PRESENCIA DE HORAS Y CITAS: Cualquier evento, cita o compromiso que especifique una hora determinada (ej: "a las 10:00", "a las 17:30", "a las 5") o cita en el calendario pertenece OBLIGATORIAMENTE a la puerta Agenda.',
       'Captura fecha y hora exactas o aproximadas mencionadas.',
-      'TÍTULOS CORTOS Y DIRECTOS: El título debe ser conciso y directo (máximo 3-4 palabras, ej: "Torneo de Pádel", "Cita Médica", "Carga de Pelo"). NUNCA incluyas personas, lugares ni horas en el título.',
+      'ECONOMÍA DEL LENGUAJE EN TÍTULOS: El título debe ser ultra conciso y directo (máximo 2-3 palabras muy cortas). Aplica la máxima economía del lenguaje usando abreviaturas y palabras breves (ej: usa "Entreno" en lugar de "Entrenamiento", "Cita" en lugar de "Reunión/Cita médica", "Bici" en lugar de "Bicicleta", "Partido" en lugar de "Partido de pádel", "Pelo" en lugar de "Corte de pelo"). NUNCA incluyas personas, lugares ni horas en el título.',
       'DESCRIPCIÓN EN PRIMERA PERSONA SIN FECHA NI HORA: Redacta el contenido en primera persona (ej: "Tengo cita para cortarme el pelo en la peluquería"). OMITE la fecha y la hora en el texto del contenido, ya que se muestran en el apartado independiente.',
       'Si el usuario aporta nuevos detalles sobre un evento ya creado, usa action = "enrich" indicando su targetItemId.',
       'EXTRAE SIEMPRE TAGS ESPECÍFICOS: Añade etiquetas temáticas como deportes (#padel), personas (#alejandro), lugares (#peluqueria) y categorías (#agenda).'
