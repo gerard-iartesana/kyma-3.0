@@ -6,18 +6,11 @@ import { DoorId, ExtractionResult } from './types';
 function formatTagList(tags: string[]): string[] {
   const map = new Map<string, string>();
   for (const t of tags) {
-    let clean = t.trim();
+    let clean = t.trim().replace(/^#/, '');
     if (!clean) continue;
-    if (!clean.startsWith('#')) clean = `#${clean}`;
     const key = clean.toLowerCase();
     if (!map.has(key)) {
-      const words = clean.split(' ').map(w => {
-        if (w.startsWith('#')) {
-          const body = w.slice(1);
-          return '#' + (body.charAt(0).toUpperCase() + body.slice(1));
-        }
-        return w.charAt(0).toUpperCase() + w.slice(1);
-      });
+      const words = clean.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1));
       map.set(key, words.join(' '));
     }
   }
@@ -301,7 +294,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     // Default to create
     const eventDate = doorId === 'agenda' ? (result.extractedData.eventDate || currentDateStr) : result.extractedData.eventDate;
-    const rawTags = [...(result.extractedData.tags || []), `#${doorId}`];
+    const rawTags = [...(result.extractedData.tags || []), doorId];
     const initialTags = formatTagList(rawTags);
 
     const newItem = await dbClient.createItem({
@@ -309,7 +302,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       title: finalTitle,
       content: result.extractedData.content || userMessage,
       peso: extractedPeso,
-      tags: initialTags.length > 0 ? initialTags : [`#${doorId}`],
+      tags: initialTags.length > 0 ? initialTags : [doorId],
       eventDate,
       eventTime: result.extractedData.eventTime,
       recurrencia: result.extractedData.recurrencia,

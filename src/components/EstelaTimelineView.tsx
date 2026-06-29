@@ -10,6 +10,8 @@ interface EstelaTimelineViewProps {
   onItemClick: (item: KymaItem) => void;
   onAskKyma?: (item: KymaItem, e: React.MouseEvent) => void;
   onTagSelect?: (tag: string) => void;
+  onConfirmItem?: (item: KymaItem, e?: React.MouseEvent) => void;
+  onDiscardItem?: (item: KymaItem, e?: React.MouseEvent) => void;
 }
 
 export function EstelaTimelineView({ 
@@ -18,7 +20,9 @@ export function EstelaTimelineView({
   sortAsc = false, 
   onItemClick, 
   onAskKyma,
-  onTagSelect 
+  onTagSelect,
+  onConfirmItem,
+  onDiscardItem
 }: EstelaTimelineViewProps) {
   const estelaItems = items.filter(i => i.doorId === 'estela');
 
@@ -76,6 +80,8 @@ export function EstelaTimelineView({
           onClick={(clickedItem) => onItemClick(clickedItem)}
           onAskKyma={(item, e) => onAskKyma && onAskKyma(item, e)}
           onTagSelect={onTagSelect}
+          onConfirmItem={onConfirmItem}
+          onDiscardItem={onDiscardItem}
         />
       ))}
     </div>

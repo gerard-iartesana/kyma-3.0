@@ -24,7 +24,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
   const [title, setTitle] = useState(item.title);
   const [content, setContent] = useState(item.content);
   const [peso, setPeso] = useState<1 | 2 | 3>(item.peso);
-  const [tagsInput, setTagsInput] = useState(item.tags.join(', '));
+  const [tagsInput, setTagsInput] = useState(item.tags.map(t => t.replace(/^#/, '')).join(', '));
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -45,7 +45,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
     setTitle(item.title);
     setContent(item.content);
     setPeso(item.peso);
-    setTagsInput(item.tags.join(', '));
+    setTagsInput(item.tags.map(t => t.replace(/^#/, '')).join(', '));
     setCompleted(item.completed || false);
     setEventDate(item.eventDate || '');
     setCercania(item.cercania || 'orbita');
@@ -64,12 +64,11 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
     setIsSaving(true);
     
     try {
-      // Parse tags: split by comma, trim, ensure starts with #
+      // Parse tags: split by comma, trim, remove #
       const tags = tagsInput
         .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0)
-        .map(t => t.startsWith('#') ? t : `#${t}`);
+        .map(t => t.trim().replace(/^#/, ''))
+        .filter(t => t.length > 0);
 
       const updates: Partial<KymaItem> = {
         title,
@@ -186,7 +185,6 @@ ${content}
         <div className="modal-header">
           <div className="header-meta">
             <span className="door-pill uppercase">{item.doorId === 'personas' ? 'vínculos' : item.doorId}</span>
-            <span className="text-muted font-mono text-xs">ID: {item.id}</span>
           </div>
           <button className="close-btn" onClick={onClose}>
             <X size={20} />
@@ -200,7 +198,8 @@ ${content}
               type="text" 
               className="input-field form-title-input" 
               value={title} 
-              onChange={e => setTitle(e.target.value)}
+              onChange={(e) => setTitle(e.target.value)} 
+              placeholder="Título de la ficha..."
               required
             />
           </div>
@@ -209,112 +208,130 @@ ${content}
             <label className="form-label">Contenido / Descripción</label>
             <textarea 
               className="input-field textarea-field" 
+              rows={4} 
               value={content} 
-              onChange={e => setContent(e.target.value)}
-              rows={4}
-              required
+              onChange={(e) => setContent(e.target.value)} 
+              placeholder="Escribe aquí los detalles..."
             />
           </div>
 
-          <div className="form-row">
-            {/* Conditional fields based on Door type */}
-            {item.doorId === 'agenda' && (
-              <>
-                <div className="form-group flex-1">
-                  <label className="form-label">Fecha del evento</label>
-                  <input 
-                    type="date" 
-                    className="input-field" 
-                    value={eventDate} 
-                    onChange={e => setEventDate(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group flex-1">
-                  <label className="form-label">Hora del evento</label>
-                  <input 
-                    type="time" 
-                    className="input-field" 
-                    value={eventTime} 
-                    onChange={e => setEventTime(e.target.value)}
-                  />
-                </div>
-                <div className="form-group flex-1">
-                  <label className="form-label">Repetición</label>
-                  <select 
-                    className="input-field" 
-                    value={recurrencia} 
-                    onChange={e => setRecurrencia(e.target.value as any)}
-                  >
-                    <option value="none">No se repite</option>
-                    <option value="semanal">Semanal</option>
-                    <option value="mensual">Mensual</option>
-                    <option value="anual">Anual</option>
-                    <option value="primer_lunes_mes">Primer lunes de cada mes</option>
-                    <option value="ultimo_viernes_mes">Último viernes de cada mes</option>
-                  </select>
-                </div>
-              </>
-            )}
-
-            {item.doorId === 'tareas' && (
-              <div className="form-group flex-1 checkbox-group">
-                <label className="form-label checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    checked={completed} 
-                    onChange={e => setCompleted(e.target.checked)}
-                    className="custom-checkbox"
-                  />
-                  <span>Completada</span>
-                </label>
+          {/* DYNAMIC DOOR-SPECIFIC FORM FIELDS */}
+          {item.doorId === 'agenda' && (
+            <div className="form-row">
+              <div className="form-group flex-1">
+                <label className="form-label">Fecha del Evento</label>
+                <input 
+                  type="date" 
+                  className="input-field" 
+                  value={eventDate} 
+                  onChange={(e) => setEventDate(e.target.value)} 
+                />
               </div>
-            )}
+              <div className="form-group flex-1">
+                <label className="form-label">Hora (Opcional)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={eventTime} 
+                  onChange={(e) => setEventTime(e.target.value)} 
+                  placeholder="ej: 18:30"
+                />
+              </div>
+              <div className="form-group flex-1">
+                <label className="form-label">Recurrencia</label>
+                <select 
+                  className="input-field"
+                  value={recurrencia}
+                  onChange={(e) => setRecurrencia(e.target.value)}
+                >
+                  <option value="none">Puntual (Sin repetición)</option>
+                  <option value="semanal">Semanal (Cada semana)</option>
+                  <option value="mensual">Mensual (Mismo día del mes)</option>
+                  <option value="anual">Anual (Cumpleaños / Aniversarios)</option>
+                  <option value="primer_lunes_mes">Primer Lunes de cada mes</option>
+                  <option value="ultimo_viernes_mes">Último Viernes de cada mes</option>
+                </select>
+              </div>
+            </div>
+          )}
 
-            {item.doorId === 'personas' && (
-              <>
-                <div className="form-group flex-1">
-                  <label className="form-label">Cercanía Afectiva</label>
-                  <select 
-                    className="input-field" 
-                    value={cercania} 
-                    onChange={e => {
-                      const val = e.target.value as 'nucleo' | 'cercana' | 'orbita';
-                      setCercania(val);
-                    }}
-                  >
-                    <option value="nucleo">Núcleo</option>
-                    <option value="cercana">Cercana</option>
-                    <option value="orbita">Órbita</option>
-                  </select>
-                </div>
-                <div className="form-group flex-1">
-                  <label className="form-label">Frecuencia de Contacto</label>
-                  <select 
-                    className="input-field" 
-                    value={frecuencia} 
-                    onChange={e => setFrecuencia(Number(e.target.value))}
-                  >
-                    <option value="100">Diario (100%)</option>
-                    <option value="75">Semanal (75%)</option>
-                    <option value="50">Mensual (50%)</option>
-                    <option value="25">Anual (25%)</option>
-                    <option value="0">Nada (0%)</option>
-                  </select>
-                </div>
-              </>
-            )}
+          {item.doorId === 'tareas' && (
+            <div className="form-group checkbox-group">
+              <label className="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  checked={completed} 
+                  onChange={(e) => setCompleted(e.target.checked)}
+                  className="custom-checkbox"
+                />
+                <span>Marcar tarea como completada</span>
+              </label>
+            </div>
+          )}
 
-            {item.doorId === 'estela' && (
-              <>
+          {item.doorId === 'personas' && (
+            <div className="form-row">
+              <div className="form-group flex-1">
+                <label className="form-label">Cercanía Afectiva</label>
+                <div className="radio-group">
+                  {(['orbita', 'cercana', 'nucleo'] as const).map((level) => (
+                    <label 
+                      key={level} 
+                      className={`radio-label ${cercania === level ? 'active' : ''}`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="cercania" 
+                        value={level} 
+                        checked={cercania === level} 
+                        onChange={() => setCercania(level)}
+                      />
+                      <span className="capitalize">{level === 'nucleo' ? 'Núcleo' : level === 'cercana' ? 'Cercana' : 'Órbita'}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="form-group flex-1">
+                <label className="form-label">Ritmo de Contacto (Frecuencia deseada)</label>
+                <div className="radio-group" style={{ gap: '6px' }}>
+                  {[
+                    { val: 100, label: 'Diario' },
+                    { val: 75, label: 'Semanal' },
+                    { val: 50, label: 'Mensual' },
+                    { val: 25, label: 'Trimestral' },
+                    { val: 0, label: 'Anual' }
+                  ].map((fOption) => (
+                    <label 
+                      key={fOption.val} 
+                      className={`radio-label ${frecuencia === fOption.val ? 'active' : ''}`}
+                      style={{ padding: '6px 8px', fontSize: '0.78rem' }}
+                    >
+                      <input 
+                        type="radio" 
+                        name="frecuencia" 
+                        value={fOption.val} 
+                        checked={frecuencia === fOption.val} 
+                        onChange={() => setFrecuencia(fOption.val)}
+                      />
+                      <span>{fOption.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {item.doorId === 'estela' && (
+            <>
+              <div className="form-row">
                 <div className="form-group flex-1">
                   <label className="form-label">Año del Hito</label>
                   <input 
                     type="number" 
                     className="input-field" 
                     value={year} 
-                    onChange={e => setYear(Number(e.target.value))}
-                    required
+                    onChange={(e) => setYear(parseInt(e.target.value) || 2026)} 
                   />
                 </div>
                 <div className="form-group flex-1">
@@ -322,83 +339,71 @@ ${content}
                   <input 
                     type="text" 
                     className="input-field" 
-                    placeholder="ej: 14 de Mayo, Verano"
                     value={dateStr} 
-                    onChange={e => setDateStr(e.target.value)}
+                    onChange={(e) => setDateStr(e.target.value)} 
+                    placeholder="ej: 14 de Mayo, Verano"
                   />
-                </div>
-                <div className="form-group flex-1">
-                  <label className="form-label">Lugar</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    placeholder="ej: París, Francia"
-                    value={lugar} 
-                    onChange={e => setLugar(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
-
-            {item.doorId === 'estela' && (
-              <div className="form-group" style={{ width: '100%', marginTop: '14px' }}>
-                <label className="form-label">Tono Emocional del Recuerdo</label>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                  {[
-                    { level: 1, label: 'Muy triste', color: '#3b82f6' },
-                    { level: 2, label: 'Triste', color: '#06b6d4' },
-                    { level: 3, label: 'Calma', color: '#10b981' },
-                    { level: 4, label: 'Alegre', color: '#f59e0b' },
-                    { level: 5, label: 'Muy alegre', color: '#ec4899' }
-                  ].map(opt => (
-                    <button
-                      key={opt.level}
-                      type="button"
-                      onClick={() => setEmocion(opt.level as any)}
-                      style={{
-                        flex: 1,
-                        padding: '8px 4px',
-                        borderRadius: '8px',
-                        border: `1px solid ${emocion === opt.level ? opt.color : 'rgba(255, 255, 255, 0.1)'}`,
-                        background: emocion === opt.level ? `${opt.color}25` : 'rgba(255, 255, 255, 0.03)',
-                        color: emocion === opt.level ? '#ffffff' : 'var(--text-muted)',
-                        fontSize: '0.75rem',
-                        fontWeight: emocion === opt.level ? 600 : 400,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: opt.color, boxShadow: emocion === opt.level ? `0 0 8px ${opt.color}` : 'none' }} />
-                      <span>{opt.label}</span>
-                    </button>
-                  ))}
                 </div>
               </div>
-            )}
-
-            {item.doorId !== 'personas' && (
-              <div className="form-group flex-1">
-                <label className="form-label">{pesoConfig.label}</label>
+              <div className="form-group">
+                <label className="form-label">Lugar</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={lugar} 
+                  onChange={(e) => setLugar(e.target.value)} 
+                  placeholder="ej: París, Francia"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tono Emocional del Recuerdo</label>
                 <div className="radio-group">
-                  {pesoConfig.options.map(opt => (
-                    <label key={opt.val} className={`radio-label ${peso === opt.val ? 'active' : ''}`}>
+                  {[
+                    { val: 1, label: 'Muy triste' },
+                    { val: 2, label: 'Triste' },
+                    { val: 3, label: 'Calma' },
+                    { val: 4, label: 'Alegre' },
+                    { val: 5, label: 'Muy alegre' }
+                  ].map((eOption) => (
+                    <label 
+                      key={eOption.val} 
+                      className={`radio-label ${emocion === eOption.val ? 'active' : ''}`}
+                    >
                       <input 
                         type="radio" 
-                        name="peso" 
-                        value={opt.val} 
-                        checked={peso === opt.val}
-                        onChange={() => setPeso(opt.val as 1 | 2 | 3)}
+                        name="emocion" 
+                        value={eOption.val} 
+                        checked={emocion === eOption.val} 
+                        onChange={() => setEmocion(eOption.val as any)}
                       />
-                      {opt.text}
+                      <span>{eOption.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
-            )}
+            </>
+          )}
+
+          {/* COMMON FIELDS: RELEVANCE / WEIGHT & TAGS */}
+          <div className="form-group">
+            <label className="form-label">{pesoConfig.label}</label>
+            <div className="radio-group">
+              {pesoConfig.options.map((opt) => (
+                <label 
+                  key={opt.val} 
+                  className={`radio-label ${peso === opt.val ? 'active' : ''}`}
+                >
+                  <input 
+                    type="radio" 
+                    name="peso" 
+                    value={opt.val} 
+                    checked={peso === opt.val} 
+                    onChange={() => setPeso(opt.val as 1 | 2 | 3)}
+                  />
+                  <span>{opt.text}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="form-group">
@@ -407,48 +412,26 @@ ${content}
               type="text" 
               className="input-field" 
               value={tagsInput} 
-              onChange={e => setTagsInput(e.target.value)}
-              placeholder="cine, filosofia, urgente"
+              onChange={(e) => setTagsInput(e.target.value)} 
+              placeholder="ej: cine, trabajo, proyecto"
             />
           </div>
 
           <div className="modal-actions-container">
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                type="button" 
-                className="btn btn-danger" 
-                onClick={handleDelete}
-                disabled={isDeleting}
-                title="Borrar dato permanentemente"
-              >
-                <Trash2 size={16} />
-                <span>{isDeleting ? 'Borrando...' : 'Borrar'}</span>
-              </button>
-
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
-                onClick={handleExportMarkdown}
-                title="Exportar esta tarjeta a archivo Markdown (.md)"
-                style={{ padding: '8px 12px', background: 'var(--bg-tertiary)' }}
-              >
-                <Download size={16} />
-                <span>Exportar .md</span>
-              </button>
-            </div>
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={handleDelete}
+              disabled={isDeleting}
+              title="Borrar dato permanentemente"
+              style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', gap: '6px' }}
+            >
+              <Trash2 size={16} />
+              <span>{isDeleting ? 'Borrando...' : 'Borrar'}</span>
+            </button>
             
             <div className="right-actions">
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
-                onClick={() => onAskKyma(item)}
-                title={item.doorId === 'estela' ? "Recordar con Kyma" : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? "Consultar con Kyma" : "Explorar con Kyma"}
-              >
-                <LogoIcon size={16} style={{ marginRight: 4 }} />
-                <span>{item.doorId === 'estela' ? 'Recordar con Kyma' : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? 'Consultar con Kyma' : 'Explorar con Kyma'}</span>
-              </button>
-              
-              <button type="submit" className="btn btn-primary" disabled={isSaving}>
+              <button type="submit" className="btn btn-primary" disabled={isSaving} style={{ gap: '6px' }}>
                 <Save size={16} />
                 <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
               </button>
@@ -464,11 +447,13 @@ ${content}
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(0, 0, 0, 0.6);
+          background: rgba(0, 0, 0, 0.45);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 100;
+          z-index: 1000;
           padding: 16px;
         }
         .modal-content {
@@ -476,12 +461,16 @@ ${content}
           max-width: 620px;
           max-height: 86vh;
           overflow-y: auto;
-          border-radius: var(--border-radius-lg);
+          border-radius: 20px;
           padding: 28px;
           display: flex;
           flex-direction: column;
           gap: 20px;
-          border: 1px solid var(--border-focus);
+          background: rgba(18, 18, 26, 0.78) !important;
+          backdrop-filter: blur(24px) saturate(180%);
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.14) !important;
+          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
           animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 

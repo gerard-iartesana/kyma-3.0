@@ -1925,6 +1925,8 @@ export default function Home() {
                   onItemClick={(item) => handleSelectItem(item)}
                   onAskKyma={(item, e) => handleAskKyma(item, e)}
                   onTagSelect={(tag) => setSelectedTag(tag)}
+                  onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                  onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                 />
               ) : (
                 <div className={`grid-layout ${isCompactView ? 'compact-layout' : ''} animate-fade-in`}>
