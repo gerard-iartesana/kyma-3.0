@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       text: result.replyText,
       createdItem: result.createdItem,
+      createdItems: (result as any).createdItems || (result.createdItem ? [result.createdItem] : []),
       action: result.action,
       updatedProfile: result.updatedProfile
     });

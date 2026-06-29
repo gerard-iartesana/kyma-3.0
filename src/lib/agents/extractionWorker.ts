@@ -216,8 +216,8 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       return { action: 'none' };
     }
 
-    // Determine origen based on category
-    const origen = pkg.category === 'utilidad' ? 'kyma_confirmado' : 'kyma_sugerido';
+    // Determine origen (todas las sugerencias de Kyma requieren confirmacion previa)
+    const origen = 'kyma_sugerido';
     const calculatedFreq = getFrequencyScore(result.extractedData.frecuenciaContacto) ?? result.extractedData.frecuencia;
 
     // Fallback for year and peso in estela
@@ -231,6 +231,14 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     let extractedPeso = result.extractedData.peso || 1;
     let extractedEmocion = result.extractedData.emocion;
+
+    if (doorId === 'tareas') {
+      const isSameDayTask = /\b(?:hoy|esta tarde|esta mañana|esta noche|ahora mismo|imprescindible hoy)\b/i.test(userMessage) || 
+        (result.extractedData.eventDate && result.extractedData.eventDate === currentDateStr);
+      if (isSameDayTask) {
+        extractedPeso = 3; // Marcar como Urgente (peso 3) directamente
+      }
+    }
 
     if (doorId === 'estela') {
       if (/importante|hito|crucial|mundial|marcó|marco|momento|inolvidable/i.test(userMessage)) {

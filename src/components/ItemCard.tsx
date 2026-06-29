@@ -261,10 +261,10 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' && item.doorId !== 'estela' ? 'card-tentative' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
       onClick={() => onClick(item)}
     >
-      {item.origen === 'kyma_sugerido' && item.doorId !== 'estela' && (
+      {item.origen === 'kyma_sugerido' && (
         <div 
           className="tentative-banner" 
           onClick={(e) => e.stopPropagation()}

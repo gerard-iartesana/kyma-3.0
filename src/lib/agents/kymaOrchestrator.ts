@@ -133,7 +133,7 @@ export async function processKymaTurn(
   userId?: string,
   accessToken?: string,
   userProfile?: { nombre?: string; edad?: string; lugarResidencia?: string; idioma?: string }
-): Promise<{ replyText: string; createdItem?: KymaItem; action?: string; updatedProfile?: any }> {
+): Promise<{ replyText: string; createdItem?: KymaItem; createdItems?: KymaItem[]; action?: string; updatedProfile?: any }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
@@ -225,7 +225,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   }
 
   // Step 2: Extraction execution across all detected doors (Multi-intent orchestration)
-  let extractedResult: { item?: KymaItem; action: 'create' | 'enrich' | 'none' } = { action: 'none' };
+  const allExtractedResults: Array<{ item: KymaItem; action: 'create' | 'enrich' | 'none'; doorId: string }> = [];
 
   const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
   const doorsToExtract: DoorId[] = [];
@@ -235,6 +235,16 @@ Devuelve UNICAMENTE un JSON con este formato:
   }
 
   // Secondary deterministic detectors for parallel intents in a single turn
+  const agendaKeywords = /\b(?:reunión|reunion|cita|evento|quedada|quedar|a las \d{1,2}|hoy a las|mañana a las|este [a-z]+ a las)\b/i;
+  if (agendaKeywords.test(userText) && !doorsToExtract.includes('agenda')) {
+    doorsToExtract.push('agenda');
+  }
+
+  const taskKeywords = /\b(?:tengo que|tengo q|hay que|debo|preparar|hacer|enviar|comprar|tarea|pendiente|recordar hacer)\b/i;
+  if (taskKeywords.test(userText) && !doorsToExtract.includes('tareas')) {
+    doorsToExtract.push('tareas');
+  }
+
   const interestKeywords = /\b(?:vea|ver|temporada|serie|película|pelicula|cine|me gusta|me apasiona|me encanta|afición|aficion|hobby|hobbies|escuchar|música|musica|juego|jugar|deporte|pádel|padel)\b/i;
   if (interestKeywords.test(userText) && !doorsToExtract.includes('intereses')) {
     doorsToExtract.push('intereses');
@@ -260,12 +270,15 @@ Devuelve UNICAMENTE un JSON con este formato:
         `Historial inmediato: ${recentMsgsSnippet}`
       );
       if (res.item && res.action !== 'none') {
-        extractedResult = res;
+        allExtractedResults.push({ item: res.item, action: res.action, doorId: dId });
       }
     } catch (err) {
       console.error(`Error en extracción multi-puerta (${dId}):`, err);
     }
   }
+
+  const primaryExtracted = allExtractedResults[0] || { action: 'none' };
+  let finalAction: string = primaryExtracted.action;
 
   // Step 3: Fetch user items context to allow Kyma to read agenda, tasks, notes, etc.
   let allUserItems: KymaItem[] = [];
@@ -278,7 +291,6 @@ Devuelve UNICAMENTE un JSON con este formato:
   // Step 3.5: AI Item Management & Relocation Engine (Deletion, Relocation, Correction)
   let deletedItemTitle = '';
   let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
-  let finalAction: string = extractedResult.action;
 
   const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|no lo pongas|no es|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
 
@@ -334,7 +346,7 @@ Devuelve ÚNICAMENTE un JSON con este formato:
               peso: 2
             }, userId, sbClient);
 
-            extractedResult = { item: newItem, action: 'create' };
+            allExtractedResults.unshift({ item: newItem, action: 'create', doorId: parsedMgmt.targetDoorId });
             finalAction = 'create';
             relocatedItemInfo = {
               targetDoorId: parsedMgmt.targetDoorId,
@@ -389,15 +401,18 @@ Devuelve ÚNICAMENTE un JSON con este formato:
     extraInstruction += `\n\n[SISTEMA]: Se ha ELIMINADO de la base de datos la ficha "${deletedItemTitle}" y se ha CREADO exitosamente la nueva ficha en la puerta "${relocatedItemInfo.targetDoorId}" titulada "${relocatedItemInfo.title}". DEBES confirmar al usuario de forma clara y cálida este cambio (ej: "Quitada de tu Estela y guardada en tus Tareas: ${relocatedItemInfo.title}.").`;
   } else if (deletedItemTitle) {
     extraInstruction += `\n\n[SISTEMA]: Se ha ELIMINADO permanentemente de la base de datos la ficha titulada "${deletedItemTitle}". DEBES confirmar al usuario de forma clara y natural que la ficha ha sido borrada (ej: "Borrado de tu espacio: ${deletedItemTitle}.").`;
-  } else if (extractedResult.item) {
-    if (extractedResult.item.doorId === 'estela') {
-      const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
-      extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un hito/recuerdo en la puerta "Estela de vida" titulado "${extractedResult.item.title}". DEBES incluir un acuse de recibo cálido e integrado en tu respuesta (ej: "Guardado en tu Estela de vida: ${extractedResult.item.title}.").`;
-    } else if (triage.category === 'utilidad') {
-      const actionType = extractedResult.action === 'enrich' ? 'actualizado' : 'registrado';
-      extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${extractedResult.item.doorId}" titulada "${extractedResult.item.title}". DEBES incluir un acuse de recibo breve y natural en tu respuesta (ej: "Apuntado en tu agenda: ${extractedResult.item.title}.").`;
-    } else if (triage.category === 'mapa') {
-      extraInstruction += `\n\n[SISTEMA]: El usuario ha compartido una inquietud/interés de Mapa. Se ha preparado una propuesta tentative en segundo plano. Tu cometido ahora es INDAGAR curiosamente y hacer una pregunta socrática o reflexiva abierta sobre ello antes de dar nada por sentado.`;
+  } else if (allExtractedResults.length > 0) {
+    for (const ext of allExtractedResults) {
+      const actionType = ext.action === 'enrich' ? 'actualizado' : 'registrado';
+      if (ext.doorId === 'estela') {
+        extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un hito/recuerdo en la puerta "Estela de vida" titulado "${ext.item.title}". DEBES incluir un acuse de recibo cálido (ej: "Guardado en tu Estela de vida: ${ext.item.title}.").`;
+      } else if (ext.doorId === 'agenda') {
+        extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un evento en la puerta "Agenda" titulado "${ext.item.title}" (${ext.item.eventTime ? `a las ${ext.item.eventTime}` : 'para hoy/mañana'}). DEBES acusar recibo de forma muy clara citando el evento y la hora (ej: "Me apunto tu reunión de las ${ext.item.eventTime || '12:00'} con ${ext.item.title}.").`;
+      } else if (ext.doorId === 'tareas') {
+        extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una tarea pendiente en la puerta "Tareas" titulada "${ext.item.title}". DEBES acusar recibo (ej: "Anotado en tus tareas: ${ext.item.title}.").`;
+      } else {
+        extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una ficha en la puerta "${ext.doorId}" titulada "${ext.item.title}". DEBES incluir un acuse de recibo breve y natural.`;
+      }
     }
   }
 
@@ -460,7 +475,8 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
 
   return {
     replyText,
-    createdItem: extractedResult.item,
+    createdItem: primaryExtracted.item,
+    createdItems: allExtractedResults.map(r => r.item),
     action: finalAction,
     updatedProfile: profileExtract.updatedProfile
   };
