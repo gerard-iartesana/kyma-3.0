@@ -1569,7 +1569,7 @@ export default function Home() {
                       <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Confianza en Kyma</h3>
                     </div>
                     <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                      Métrica de precisión calculada a partir de tus confirmaciones y descartes de fichas sugeridas durante el último mes.
+                      Métrica de precisión calculada a partir de tus confirmaciones y descartes de fichas sugeridas.
                     </p>
 
                     {(() => {
@@ -1582,20 +1582,24 @@ export default function Home() {
                       const percentage = total > 0 ? Math.round((confirms / total) * 100) : 100;
 
                       return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '4px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Nivel de Confianza</span>
-                              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-purple-light, #c084fc)' }}>{percentage}%</span>
-                            </div>
-                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Fichas Confirmadas (Último mes)</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '14px 8px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Confirmadas</span>
                               <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#10b981' }}>{confirms}</span>
                             </div>
-                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Fichas Descartadas</span>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '14px 8px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Descartadas</span>
                               <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#ef4444' }}>{discards}</span>
                             </div>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '14px 8px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Confianza</span>
+                              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-purple-light, #c084fc)' }}>{percentage}%</span>
+                            </div>
+                          </div>
+                          
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                            Datos de los últimos 30 días
                           </div>
 
                           {/* AUTO-APPROVAL TOGGLE SWITCH */}
