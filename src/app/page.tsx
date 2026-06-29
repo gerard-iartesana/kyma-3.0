@@ -105,6 +105,10 @@ export default function Home() {
 
   // View mode for Intereses ('orbits' | 'grid')
   const [interesesViewMode, setInteresesViewMode] = useState<'orbits' | 'grid'>('grid');
+  const [interesesSortMode, setInteresesSortMode] = useState<'recientes' | 'destacados'>('recientes');
+
+  // Sort mode for Reflexiones
+  const [reflexionesSortMode, setReflexionesSortMode] = useState<'recientes' | 'destacados'>('recientes');
 
   // View mode for Estela de vida ('grid' | 'timeline')
   const [estelaViewMode, setEstelaViewMode] = useState<'grid' | 'timeline'>('grid');
@@ -458,6 +462,30 @@ export default function Home() {
               const valB = b.cercania ? (cercaniaOrder[b.cercania] || 1) : (b.peso || 1);
               if (valA !== valB) {
                 return valB - valA;
+              }
+            }
+            const timeA = new Date((a as any).updatedAt || a.createdAt || 0).getTime();
+            const timeB = new Date((b as any).updatedAt || b.createdAt || 0).getTime();
+            return timeB - timeA;
+          }
+          if (selectedDoorId === 'reflexiones') {
+            if (reflexionesSortMode === 'destacados') {
+              const isFeaturedA = a.peso === 3 ? 1 : 0;
+              const isFeaturedB = b.peso === 3 ? 1 : 0;
+              if (isFeaturedA !== isFeaturedB) {
+                return isFeaturedB - isFeaturedA;
+              }
+            }
+            const timeA = new Date((a as any).updatedAt || a.createdAt || 0).getTime();
+            const timeB = new Date((b as any).updatedAt || b.createdAt || 0).getTime();
+            return timeB - timeA;
+          }
+          if (selectedDoorId === 'intereses') {
+            if (interesesSortMode === 'destacados') {
+              const isFeaturedA = a.peso === 3 ? 1 : 0;
+              const isFeaturedB = b.peso === 3 ? 1 : 0;
+              if (isFeaturedA !== isFeaturedB) {
+                return isFeaturedB - isFeaturedA;
               }
             }
             const timeA = new Date((a as any).updatedAt || a.createdAt || 0).getTime();
@@ -1317,6 +1345,50 @@ export default function Home() {
                       }}
                     >
                       <Icons.Heart size={16} fill={personasSortMode === 'cercania' ? '#ec4899' : 'none'} />
+                    </button>
+                  )}
+
+                  {/* Sorting button for Reflexiones (Destacados vs Recientes) */}
+                  {selectedDoorId === 'reflexiones' && !isVelado && (
+                    <button 
+                      className={`btn btn-secondary ${reflexionesSortMode === 'destacados' ? 'active' : ''}`}
+                      onClick={() => setReflexionesSortMode(reflexionesSortMode === 'destacados' ? 'recientes' : 'destacados')}
+                      title={reflexionesSortMode === 'destacados' ? 'Ordenado por principios destacados' : 'Ordenar por principios destacados'}
+                      style={{ 
+                        width: '38px', 
+                        height: '38px', 
+                        padding: 0, 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: reflexionesSortMode === 'destacados' ? 'rgba(236, 72, 153, 0.2)' : 'var(--bg-tertiary)',
+                        borderColor: reflexionesSortMode === 'destacados' ? '#ec4899' : 'var(--border-subtle)',
+                        color: reflexionesSortMode === 'destacados' ? '#ec4899' : 'var(--text-secondary)'
+                      }}
+                    >
+                      <Icons.Heart size={16} fill={reflexionesSortMode === 'destacados' ? '#ec4899' : 'none'} />
+                    </button>
+                  )}
+
+                  {/* Sorting button for Intereses (Pasión/Destacados vs Recientes) */}
+                  {selectedDoorId === 'intereses' && !isVelado && interesesViewMode === 'grid' && (
+                    <button 
+                      className={`btn btn-secondary ${interesesSortMode === 'destacados' ? 'active' : ''}`}
+                      onClick={() => setInteresesSortMode(interesesSortMode === 'destacados' ? 'recientes' : 'destacados')}
+                      title={interesesSortMode === 'destacados' ? 'Ordenado por pasión (destacados primero)' : 'Ordenar por grado de pasión'}
+                      style={{ 
+                        width: '38px', 
+                        height: '38px', 
+                        padding: 0, 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: interesesSortMode === 'destacados' ? 'rgba(236, 72, 153, 0.2)' : 'var(--bg-tertiary)',
+                        borderColor: interesesSortMode === 'destacados' ? '#ec4899' : 'var(--border-subtle)',
+                        color: interesesSortMode === 'destacados' ? '#ec4899' : 'var(--text-secondary)'
+                      }}
+                    >
+                      <Icons.Heart size={16} fill={interesesSortMode === 'destacados' ? '#ec4899' : 'none'} />
                     </button>
                   )}
 

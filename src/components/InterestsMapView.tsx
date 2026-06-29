@@ -530,24 +530,20 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
           viewBox="-900 -900 1800 1800"
         >
           <defs>
-            {CATEGORY_DEFINITIONS.map(cat => (
-              <linearGradient key={cat.name} id={`grad-${cat.name.replace(/\s+/g, '')}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor={cat.colors[0]} />
-                <stop offset="100%" stopColor={cat.colors[1]} />
-              </linearGradient>
-            ))}
-            <linearGradient id="grad-Otros" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#6b7280" />
-              <stop offset="100%" stopColor="#4b5563" />
+            <linearGradient id="grad-pasion" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ec4899" />
+              <stop offset="100%" stopColor="#db2777" />
             </linearGradient>
-            
-            {CATEGORY_DEFINITIONS.map(cat => (
-              <filter key={cat.name} id={`shadow-${cat.name.replace(/\s+/g, '')}`} x="-25%" y="-25%" width="150%" height="150%">
-                <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor={cat.colors[0]} floodOpacity="0.25" />
-              </filter>
-            ))}
-            <filter id="shadow-Otros" x="-25%" y="-25%" width="150%" height="150%">
-              <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#6b7280" floodOpacity="0.25" />
+            <linearGradient id="grad-interes" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#a855f7" />
+              <stop offset="100%" stopColor="#8b5cf6" />
+            </linearGradient>
+
+            <filter id="shadow-pasion" x="-25%" y="-25%" width="150%" height="150%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#ec4899" floodOpacity="0.35" />
+            </filter>
+            <filter id="shadow-interes" x="-25%" y="-25%" width="150%" height="150%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#a855f7" floodOpacity="0.3" />
             </filter>
           </defs>
 
@@ -570,7 +566,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
                   if (el) domLinesRef.current.set(link.id, el);
                   else domLinesRef.current.delete(link.id);
                 }}
-                stroke={link.target.colors[0]}
+                stroke={link.target.item?.peso === 3 ? '#ec4899' : '#a855f7'}
                 strokeWidth="1.2"
                 opacity="0.22"
                 strokeDasharray="4,2"
@@ -582,8 +578,15 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
           <g>
             {nodes.map(node => {
               const isTag = node.type === 'tag';
-              const gradId = getGradId(node);
-              const shadowId = getShadowId(node);
+              const isPasion = node.item?.peso === 3;
+              const gradId = isPasion ? 'grad-pasion' : 'grad-interes';
+              const shadowId = isPasion ? 'shadow-pasion' : 'shadow-interes';
+
+              const formatSentenceCase = (txt: string) => {
+                if (!txt) return '';
+                const clean = txt.trim();
+                return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+              };
 
               return (
                 <g
@@ -613,7 +616,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
                         cy="0"
                         r={node.radius}
                         stroke="none"
-                        fill={getFaintFill(node)}
+                        fill="rgba(161, 161, 170, 0.12)"
                         className="interest-circle-bubble tag-bubble"
                         style={{
                           transition: 'all 0.25s ease',
@@ -625,13 +628,13 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
                         y="0"
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        fill={node.colors[0]}
+                        fill="#a1a1aa"
                         fontSize={node.radius > 42 ? "12px" : "10px"}
-                        fontWeight="700"
+                        fontWeight="600"
                         fontFamily="Noto Sans"
                         style={{ pointerEvents: 'none', userSelect: 'none', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
                       >
-                        {node.title.toUpperCase()}
+                        {formatSentenceCase(node.title)}
                       </text>
                     </>
                   ) : (

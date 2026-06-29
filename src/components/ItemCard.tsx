@@ -285,6 +285,15 @@ export function ItemCard({
             </div>
           </div>
         );
+      case 'reflexiones':
+        return item.peso === 3 ? (
+          <Heart 
+            size={16} 
+            color="#ec4899" 
+            fill="none"
+            style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
+          />
+        ) : null;
       default:
         return item.peso === 3 ? (
           <Star 
@@ -299,7 +308,7 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${(item.doorId === 'personas' || item.doorId === 'intereses') ? 'card-pink-highlight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${(item.doorId === 'personas' || item.doorId === 'intereses' || item.doorId === 'reflexiones') ? 'card-pink-highlight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
       onClick={() => onClick(item)}
     >
       {item.origen === 'kyma_sugerido' && (
