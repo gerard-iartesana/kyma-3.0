@@ -209,13 +209,13 @@ Devuelve UNICAMENTE un JSON con este formato:
       // Deterministic override for time, documents/notes, person frequency, tasks, reflexiones vs memories
       const timePattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})\b/i;
       const documentNotePattern = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas|apunta|apuntar)\b/i;
-      const personFrequencyPattern = /\b(?:hablo|hablo poco|hablo mucho|veo|veo poco|veo mucho|contacto|frecuencia|una vez al año|una vez al mes|una vez a la semana|diario|diariamente|casi nunca)\b/i;
+      const personFrequencyPattern = /\b(?:hablo|hablo poco|hablo mucho|veo|veo poco|veo mucho|contacto|contacto es|frecuencia|una vez al año|una vez al mes|una vez a la semana|diario|diariamente|casi nunca)\b/i;
       const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
       const reflectionKeywords = /\b(?:reflexión|reflexion|pensamiento|filosofía|filosofia|principio vital)\b/i;
       const pastYearMatch = userText.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
       const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a/i;
       
-      if (personFrequencyPattern.test(userText) && /(?:hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|compañero|compañera|[A-ZÁÉÍÓÚa-záéíóúñ]+)/i.test(userText)) {
+      if (personFrequencyPattern.test(userText)) {
         triage = { isFicheable: true, category: 'mapa', doorId: 'personas', confidence: 0.99 };
       } else if (documentNotePattern.test(userText)) {
         triage = { isFicheable: true, category: 'utilidad', doorId: 'notas', confidence: 0.99 };

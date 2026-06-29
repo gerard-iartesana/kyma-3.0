@@ -304,9 +304,10 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           : [...(existing.tags || []), `#${doorId}`];
         const mergedTags = formatTagList(rawTags);
         
+        const targetDoorId = existing.doorId === 'personas' ? 'personas' : doorId;
         const updatedItem = await dbClient.updateItem(existing.id, {
-          doorId,
-          title: (doorId === 'estela' && finalTitle) ? finalTitle : ((result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title),
+          doorId: targetDoorId,
+          title: (targetDoorId === 'estela' && finalTitle) ? finalTitle : ((result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title),
           content: updatedContent,
           eventDate: result.extractedData.eventDate || existing.eventDate,
           eventTime: result.extractedData.eventTime || existing.eventTime,
