@@ -329,7 +329,7 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''} ${isExpanded ? 'card-expanded' : ''}`}
       onClick={() => setIsExpanded(!isExpanded)}
       style={{ cursor: 'pointer' }}
     >
@@ -480,10 +480,7 @@ export function ItemCard({
       </div>
 
       {(!isCompact || isExpanded) && item.content && (
-        <p 
-          className={`card-content ${item.completed ? 'content-completed' : ''}`}
-          style={isExpanded ? { WebkitLineClamp: 'none', display: 'block', overflow: 'visible' } : {}}
-        >
+        <p className={`card-content ${item.completed ? 'content-completed' : ''} ${isExpanded ? 'content-inline-expanded' : ''}`}>
           {item.content}
         </p>
       )}
@@ -637,7 +634,7 @@ export function ItemCard({
           flex-direction: column;
           gap: 12px;
           cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
         }
         .card:hover {
@@ -645,6 +642,11 @@ export function ItemCard({
           border-color: var(--border-focus);
           transform: translateY(-2px);
           box-shadow: var(--shadow-md);
+        }
+        .card.card-expanded {
+          border-color: rgba(139, 92, 246, 0.45);
+          box-shadow: 0 8px 32px rgba(139, 92, 246, 0.18);
+          background: rgba(24, 24, 27, 0.95);
         }
         .card-high-weight {
           border-color: rgba(236, 72, 153, 0.25);
@@ -717,6 +719,14 @@ export function ItemCard({
           -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          max-height: 4.8em;
+          transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease, opacity 0.3s ease;
+        }
+        .card-content.content-inline-expanded {
+          display: block;
+          -webkit-line-clamp: unset;
+          max-height: 2000px;
+          overflow: visible;
         }
         .content-completed {
           color: var(--text-muted);
