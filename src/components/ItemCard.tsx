@@ -12,6 +12,7 @@ interface ItemCardProps {
   onDiscardItem?: (item: KymaItem, e: React.MouseEvent) => void;
   isCompact?: boolean;
   onTagSelect?: (tag: string) => void;
+  showSectionBadge?: boolean;
 }
 
 export function ItemCard({ 
@@ -22,8 +23,40 @@ export function ItemCard({
   onConfirmItem,
   onDiscardItem,
   isCompact, 
-  onTagSelect 
+  onTagSelect,
+  showSectionBadge
 }: ItemCardProps) {
+  // Helper for section title and icon
+  const getSectionInfo = (doorId: string) => {
+    switch (doorId) {
+      case 'agenda': return { title: 'Agenda', icon: Calendar };
+      case 'tareas': return { title: 'Tareas', icon: CheckSquare };
+      case 'notas': return { title: 'Notas', icon: Square };
+      case 'intereses': return { title: 'Intereses', icon: Heart };
+      case 'personas': return { title: 'Vínculos', icon: Smile };
+      case 'reflexiones': return { title: 'Reflexiones', icon: Sparkles };
+      case 'estela': return { title: 'Estela de vida', icon: Star };
+      default: return { title: doorId, icon: Sparkles };
+    }
+  };
+
+  const formatRelativeTime = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Hace un momento';
+    if (diffMins < 60) return `Hace ${diffMins} min`;
+    if (diffHours < 24) return `Hace ${diffHours} h`;
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} d`;
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
+
   // Helper to format dates
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -269,6 +302,25 @@ export function ItemCard({
               </button>
             )}
           </div>
+        </div>
+      )}
+      {showSectionBadge && (
+        <div className="card-section-chip-row" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '8px',
+          paddingBottom: '6px',
+          borderBottom: '1px dashed rgba(255, 255, 255, 0.08)',
+          fontSize: '0.74rem'
+        }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            {React.createElement(getSectionInfo(item.doorId).icon, { size: 13, color: 'var(--accent-purple, #a855f7)' })}
+            <span>{getSectionInfo(item.doorId).title}</span>
+          </span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', opacity: 0.8 }}>
+            {formatRelativeTime(item.createdAt)}
+          </span>
         </div>
       )}
       <div className="card-header">

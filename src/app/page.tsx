@@ -92,6 +92,9 @@ export default function Home() {
   // Compact view state for list cards
   const [isCompactView, setIsCompactView] = useState(false);
 
+  // Dashboard sort tab state ('novedades' | 'destacados')
+  const [dashboardSort, setDashboardSort] = useState<'novedades' | 'destacados'>('novedades');
+
   // Quick-creation forms states
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -845,50 +848,174 @@ export default function Home() {
 
 
         {selectedDoorId === null ? (
-          <div className="home-view animate-fade-in">
+          <div className="home-view animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div className="home-hero">
               <h1 className="serif-title font-serif">
                 {userProfile.nombre?.trim() ? `¡Hola, ${userProfile.nombre.trim()}!` : '¡Hola!'}
               </h1>
               <p className="hero-subtitle">
-                Aquí tienes un resumen con tus últimas novedades y actividad en tu espacio.
+                Tu mapa personal organizado. Revisa lo que tienes hoy, lo que requiere tu atención y tus novedades recientes.
               </p>
             </div>
 
-            <div className="home-dashboard-grid">
-              {DOOR_MODULES.map(door => {
-                const doorItems = items.filter(i => i.doorId === door.id);
-                const isLocked = dbState === 'empty' && door.category === 'map';
-                
+            {/* DASHBOARD PILLARS CONTAINER */}
+            <div className="dashboard-pillars" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              
+              {/* 1. ¿QUÉ TENGO HOY? */}
+              {(() => {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const todayItems = items.filter(i => i.doorId === 'agenda' && i.eventDate && i.eventDate.split('T')[0] === todayStr);
+
                 return (
-                  <div 
-                    key={door.id} 
-                    className={`home-card ${isLocked ? 'home-card-locked' : ''}`}
-                    onClick={() => handleSelectDoor(door.id)}
-                  >
-                    <div className="home-card-header">
-                      {renderIcon(door.icon, 20, "text-purple")}
-                      <h3>{door.title}</h3>
-                      {isLocked && <Icons.Lock size={12} className="lock-icon" />}
+                  <section className="dashboard-pillar-section">
+                    <div className="pillar-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                      <div style={{ background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
+                        <Icons.Calendar size={18} color="#c084fc" />
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>¿Qué tengo hoy?</h2>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Eventos y planes agendados para la jornada</span>
+                      </div>
                     </div>
-                    
-                    {isLocked ? (
-                      <p className="home-card-text text-muted">
-                        Esta puerta se abrirá a medida que hables con Kyma sobre este tema.
-                      </p>
-                    ) : doorItems.length > 0 ? (
-                      <div className="home-card-preview">
-                        <span className="preview-title">{doorItems[0].title}</span>
-                        <p className="preview-snippet">{doorItems[0].content}</p>
+
+                    {todayItems.length > 0 ? (
+                      <div className="grid-layout compact-layout">
+                        {todayItems.map(item => (
+                          <ItemCard
+                            key={item.id}
+                            item={item}
+                            onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                            onAskKyma={(item, e) => handleAskKyma(item, e)}
+                            showSectionBadge={true}
+                          />
+                        ))}
                       </div>
                     ) : (
-                      <p className="home-card-text text-secondary">
-                        Sin datos guardados. Haz clic para explorarla.
-                      </p>
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-subtle)', borderRadius: '12px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                        <Icons.CheckCircle size={18} color="#10b981" />
+                        <span>No tienes compromisos agendados para el día de hoy. ¡Un día tranquilo por delante!</span>
+                      </div>
                     )}
-                  </div>
+                  </section>
                 );
-              })}
+              })()}
+
+              {/* 2. ¿QUÉ NECESITA MI ATENCIÓN AHORA? */}
+              {(() => {
+                const pendingTasks = items.filter(i => i.doorId === 'tareas' && !i.completed);
+                const suggestedItems = items.filter(i => i.origen === 'kyma_sugerido' && i.doorId !== 'estela');
+                const highPriorityItems = items.filter(i => i.peso === 3 && i.doorId !== 'agenda' && i.doorId !== 'tareas');
+                
+                // Combine and deduplicate
+                const attentionItemsMap = new Map<string, KymaItem>();
+                suggestedItems.forEach(i => attentionItemsMap.set(i.id, i));
+                pendingTasks.forEach(i => attentionItemsMap.set(i.id, i));
+                highPriorityItems.forEach(i => attentionItemsMap.set(i.id, i));
+                const attentionItems = Array.from(attentionItemsMap.values()).slice(0, 4);
+
+                return (
+                  <section className="dashboard-pillar-section">
+                    <div className="pillar-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                      <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
+                        <Icons.AlertCircle size={18} color="#f59e0b" />
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>¿Qué necesita mi atención ahora?</h2>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Tareas pendientes, sugerencias de Kyma e ítems destacados</span>
+                      </div>
+                    </div>
+
+                    {attentionItems.length > 0 ? (
+                      <div className="grid-layout">
+                        {attentionItems.map(item => (
+                          <ItemCard
+                            key={item.id}
+                            item={item}
+                            onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                            onAskKyma={(item, e) => handleAskKyma(item, e)}
+                            onToggleComplete={item.doorId === 'tareas' ? handleToggleComplete : undefined}
+                            onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                            onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                            showSectionBadge={true}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-subtle)', borderRadius: '12px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                        <Icons.Sparkles size={18} color="#c084fc" />
+                        <span>¡Todo en orden! No hay tareas pendientes ni elementos que requieran tu acción inmediata.</span>
+                      </div>
+                    )}
+                  </section>
+                );
+              })()}
+
+              {/* 3. ¿QUÉ HA CAMBIADO O SE HA AÑADIDO RECIENTEMENTE EN MI ESPACIO? */}
+              {(() => {
+                let recentItems = [...items];
+                if (dashboardSort === 'novedades') {
+                  recentItems.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+                } else {
+                  recentItems.sort((a, b) => (b.peso || 1) - (a.peso || 1));
+                }
+                recentItems = recentItems.slice(0, 9);
+
+                return (
+                  <section className="dashboard-pillar-section">
+                    <div className="pillar-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                      <div className="pillar-header" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
+                          <Icons.Clock size={18} color="#10b981" />
+                        </div>
+                        <div>
+                          <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>Actividad en tu espacio</h2>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Lo último registrado y modificado en tus puertas</span>
+                        </div>
+                      </div>
+
+                      {/* SORT TABS */}
+                      <div className="radio-group" style={{ display: 'inline-flex', padding: '3px', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>
+                        <button
+                          className={`radio-label ${dashboardSort === 'novedades' ? 'active' : ''}`}
+                          onClick={() => setDashboardSort('novedades')}
+                          style={{ border: 'none', padding: '4px 12px', borderRadius: '16px', cursor: 'pointer', fontSize: '0.78rem' }}
+                        >
+                          Últimas novedades
+                        </button>
+                        <button
+                          className={`radio-label ${dashboardSort === 'destacados' ? 'active' : ''}`}
+                          onClick={() => setDashboardSort('destacados')}
+                          style={{ border: 'none', padding: '4px 12px', borderRadius: '16px', cursor: 'pointer', fontSize: '0.78rem' }}
+                        >
+                          Destacados
+                        </button>
+                      </div>
+                    </div>
+
+                    {recentItems.length > 0 ? (
+                      <div className="grid-layout">
+                        {recentItems.map(item => (
+                          <ItemCard
+                            key={item.id}
+                            item={item}
+                            onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                            onAskKyma={(item, e) => handleAskKyma(item, e)}
+                            onToggleComplete={item.doorId === 'tareas' ? handleToggleComplete : undefined}
+                            onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                            onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                            showSectionBadge={true}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-subtle)', borderRadius: '12px', padding: '20px 24px', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                        Aún no tienes actividad registrada. Explora las secciones o habla con Kyma en el chat para añadir tu primera ficha.
+                      </div>
+                    )}
+                  </section>
+                );
+              })()}
+
             </div>
           </div>
         ) : (
