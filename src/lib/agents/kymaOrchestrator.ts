@@ -15,6 +15,7 @@ PRINCIPIOS FUNDAMENTALES:
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
 - Compleitud OBLIGATORIA: Concluye SIEMPRE tus oraciones, preguntas y pensamientos de forma completa y cerrada. NUNCA dejes un conector como "Por cierto" o "Además" colgado al final de tu mensaje sin haber redactado la frase completa.
+- PROHIBICIÓN DE META-RAZONAMIENTOS: NUNCA incluyas tus razonamientos internos, listas de verificación ni expresiones en inglés (como "Fits perfectly", "One/two short paragraphs", "Yes", "No") en tu respuesta. Tu salida debe ser EXCLUSIVAMENTE tu mensaje en español al usuario.
 `;
 
 function extractUserProfileUpdates(userText: string, currentProfile?: any): { updatedProfile?: any; extractedKey?: string; extractedVal?: string } {
@@ -534,6 +535,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
+  replyText = replyText.replace(/(?:Fits perfectly|One\/two short paragraphs\?|Yes, two short paragraphs|No "" or tags\?|None|\b[a-z]{1,3}"\.\s*No\s*"[^"]*")[^\n]*/gi, '');
   replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();
 
   // Trim dangling incomplete transition clauses at the end of the response (e.g. "Por", "Por cierto", "Además,")

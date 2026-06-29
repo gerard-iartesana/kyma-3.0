@@ -321,19 +321,28 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       // Safety timeout to guarantee unblocking UI in case of network stall
       const safetyTimer = setTimeout(() => {
         setIsTyping(false);
-      }, 12000);
+      }, 15000);
 
-      // Background async DB write with full context for LLM extraction
+      // Background async DB write for user message
       dbClient.sendMessage(fullTextForDB, ctx).then(savedMsg => {
         setMessages(prev => prev.map(m => m.id === tempId ? { ...savedMsg, text: displayUserText } : m));
       }).catch(err => console.error('Error enviando mensaje en segundo plano:', err));
 
-      const timer = setTimeout(async () => {
+      // Execute API call immediately without artificial delays
+      (async () => {
         try {
           let kymaText = '';
-          
+          const currentMsgs = messages;
+          const userMsgForPayload: ChatMessage = {
+            id: tempId,
+            text: fullTextForDB,
+            sender: 'user',
+            timestamp: new Date().toISOString(),
+            contextItem: ctx
+          };
+          const payloadMessages = [...currentMsgs, userMsgForPayload];
+
           try {
-            const allMsgs = await dbClient.getMessages();
             const sessionRes = await supabase.auth.getSession();
             const session = sessionRes.data.session;
             const userId = session?.user?.id;
@@ -353,7 +362,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
                 'Content-Type': 'application/json',
                 ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
               },
-              body: JSON.stringify({ messages: allMsgs, userId, accessToken, userProfile })
+              body: JSON.stringify({ messages: payloadMessages, userId, accessToken, userProfile })
             });
             
             if (response.ok) {
@@ -391,7 +400,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           setIsTyping(false);
           console.error(err);
         }
-      }, 800);
+      })();
     } catch (err) {
       setIsTyping(false);
       console.error(err);
