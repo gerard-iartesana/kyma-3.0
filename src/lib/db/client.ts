@@ -277,17 +277,23 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
   let doorId = doorIdMap[dbItem.tipo] || 'notas';
   const currentYear = new Date().getFullYear();
 
-  if (dbItem.tipo === 'nota') {
+  if (dbItem.tipo === 'vinculo') {
+    doorId = 'personas';
+  } else if (dbItem.tipo === 'nota') {
     doorId = 'notas';
+  } else if (dbItem.tipo === 'tarea') {
+    doorId = 'tareas';
+  } else if (dbItem.tipo === 'interes') {
+    doorId = 'intereses';
+  } else if (dbItem.tipo === 'reflexion') {
+    doorId = 'reflexiones';
   } else if (dbItem.tipo === 'evento') {
-    const isPastEstela = datos.is_estela && typeof datos.year === 'number' && datos.year < currentYear;
+    const isPastEstela = datos.is_estela || (typeof datos.year === 'number' && datos.year < currentYear);
     if (isPastEstela) {
       doorId = 'estela';
     } else {
       doorId = 'agenda';
     }
-  } else if (datos.is_estela || (typeof datos.year === 'number' && datos.year < currentYear)) {
-    doorId = 'estela';
   }
 
   const item: KymaItem = {
@@ -347,7 +353,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   }
 
   const datos: any = {};
-  if (item.doorId === 'estela' || item.year !== undefined || item.dateStr !== undefined || item.lugar !== undefined || item.emocion !== undefined) {
+  if (item.doorId === 'estela') {
     datos.is_estela = true;
   }
   if (item.completed !== undefined) datos.hecha = item.completed;
