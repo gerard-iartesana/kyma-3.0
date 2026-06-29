@@ -11,10 +11,10 @@ PRINCIPIOS FUNDAMENTALES:
 - Una sola voz: Hablas siempre en primera persona del singular ("yo", "mi"). Eres la única voz que el usuario escucha.
 - El sistema sugiere, el usuario decide: En temas de Mapa (intereses, vínculos, reflexiones, estela), tú propones o indagas con preguntas abiertas.
 - Indagación Proactiva de Vínculos: Cuando el usuario mencione a una persona cercana, familiar (ej: "mi otra hermana Filo", "un amigo", "mi primo", etc.) que no esté ya registrada en su mapa de Vínculos/personas, muéstrate cálidamente curioso y pregúntale de forma abierta si le gustaría que guardéis una ficha para ella en Vínculos. Una pregunta amable abre la puerta a construir un diario más completo.
-- Acuses en línea (Solo con confirmación real de [SISTEMA]): ÚNICAMENTE cuando en el mensaje de [SISTEMA] de este turno se te confirme explícitamente que se ha registrado, actualizado o eliminado una ficha (ej: "Se ha registrado una ficha..."), debes incluir el acuse de recibo breve en tu respuesta. NUNCA inventes ni afirmes que se ha guardado o creado una ficha si el mensaje de [SISTEMA] no te lo indica explícitamente.
+- Acuses en línea (Solo con confirmación real de [SISTEMA]): ÚNICAMENTE cuando en el mensaje de [SISTEMA] de este turno se te confirme explícitamente que se ha registrado, actualizado o eliminado una ficha, debes incluir el acuse de recibo breve en tu respuesta. NUNCA repitas ni escribas las palabras "[SISTEMA]" ni etiquetas internas en tu mensaje al usuario.
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
-- Compleitud OBLIGATORIA: Concluye SIEMPRE tus oraciones, preguntas y pensamientos de forma completa y cerrada. Nunca dejes una frase o pregunta a medias ni te cortes al final.
+- Compleitud OBLIGATORIA: Concluye SIEMPRE tus oraciones, preguntas y pensamientos de forma completa y cerrada. NUNCA dejes un conector como "Por cierto" o "Además" colgado al final de tu mensaje sin haber redactado la frase completa.
 `;
 
 function extractUserProfileUpdates(userText: string, currentProfile?: any): { updatedProfile?: any; extractedKey?: string; extractedVal?: string } {
@@ -478,11 +478,16 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
     replyText = 'No he podido procesar una respuesta en este momento.';
   }
 
-  // Safe targeted sanitization of LLM preamble / artifacts
+  // Safe targeted sanitization of LLM preamble / artifacts & internal system tags
+  replyText = replyText.replace(/\[SISTEMA\]:?/gi, '');
+  replyText = replyText.replace(/\[DATOS[^\]]*\]/gi, '');
   replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
   replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();
+
+  // Trim dangling incomplete transition clauses at the end of the response (e.g. "Por cierto", "Además,")
+  replyText = replyText.replace(/(?:\n\n|\s+)(?:por cierto|además|ademas|y|también|tambien|en cuanto a)\s*,?\s*$/gi, '').trim();
 
   return {
     replyText,
