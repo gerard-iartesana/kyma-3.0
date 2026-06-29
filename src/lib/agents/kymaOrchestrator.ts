@@ -347,7 +347,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   let deletedItemTitle = '';
   let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
 
-  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
+  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|muévelo|muevelo|pásalo|pasalo|muévela|muevela|cámbiala a|cambiala a|muévela a|muevela a|pásala a|pasala a)\b/i.test(userText);
 
   if (isManagementRequested && allUserItems.length > 0) {
     const mgmtPrompt = `
@@ -358,9 +358,10 @@ ${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.t
 
 FRASE DEL USUARIO: "${userText}"
 
-REGLAS DE SALIDA:
-- Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false.
-- Si el usuario quiere corregir o mover una ficha (ej: "no lo pongas en estela, ponlo como tarea" o "cámbialo a tareas"): "shouldDelete": true, "itemIdToDelete": "<id de la ficha incorrecta>", "shouldCreateNew": true, "targetDoorId": "tareas" (o la puerta indicada), "newTitle": "Título conciso para la nueva ficha", "newContent": "Contenido en primera persona".
+REGLAS DE SALIDA E INVIOLABILIDAD:
+1. REGLA SAGRADA PARA PERSONAS (VÍNCULOS): Las fichas en la puerta "personas" (vínculos) NUNCA SE MOVERÁN NI REUBICARÁN a otra puerta (NUNCA a estela, notas, tareas, etc.). Si el usuario pide modificar o ajustar la frecuencia, relación, notas o comunicación de una persona, "shouldDelete" DEBE SER false y "shouldCreateNew" DEBE SER false.
+2. Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false.
+3. Si el usuario pide explícitamente mover una ficha de otra puerta (ej: "no lo pongas en estela, ponlo como tarea" o "pásalo a tareas"): "shouldDelete": true, "itemIdToDelete": "<id de la ficha incorrecta>", "shouldCreateNew": true, "targetDoorId": "tareas" (o la puerta indicada), "newTitle": "Título conciso para la nueva ficha", "newContent": "Contenido en primera persona".
 
 Devuelve ÚNICAMENTE un JSON con este formato:
 {
@@ -481,8 +482,8 @@ Devuelve ÚNICAMENTE un JSON con este formato:
     /\b(buenos aires|bogotá|bogota|cdmx|santiago|lima|montevideo|caracas|quito|san josé|medellín|medellin|guadalajara|miami)\b/i.test(resLower);
 
   const dialectInstruction = isLatam
-    ? `REGISTRO DIALECTAL LATINOAMERICANO (${userResidence}): Puedes usar giros y expresiones cálidas propias de Latinoamérica ("qué lindo", "lindo", "platicar", etc.) adaptadas a la naturalidad de la región.`
-    : `REGISTRO DIALECTAL CASTELLANO DE ESPAÑA (ESTRICTO Y OBLIGATORIO): El usuario reside en España/Europa (${userResidence}). Queda TOTALMENTE PROHIBIDO usar expresiones o giros propios de Latinoamérica (NUNCA digas "qué lindo", "tan lindo", "platicar", "apuntarse" en lugar de apuntar, ni tiempos verbales o vocabulario latinoamericano). Usa un castellano fluido, cálido, natural y propio de España (ej: "qué bien", "qué bonito", "genial", "estupendo", "hablar", "charlar").`;
+    ? `Expresate de forma cálida adaptada a Latinoamérica (${userResidence}).`
+    : `Expresate en castellano fluido y natural de España (${userResidence}). No utilices expresiones latinoamericanas como "lindo" o "platicar".`;
 
   const userContextInstruction = `
 \n\n[DATOS DE CONTEXTO PERSONAL DEL USUARIO]:
@@ -535,7 +536,9 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
-  replyText = replyText.replace(/(?:Fits perfectly|One\/two short paragraphs\?|Yes, two short paragraphs|No "" or tags\?|None|\b[a-z]{1,3}"\.\s*No\s*"[^"]*")[^\n]*/gi, '');
+  replyText = replyText.replace(/(?:Fits perfectly|One\/two short paragraphs\?|Yes, two short paragraphs|No "" or tags\?|None|Spanish \(Spain\) dialect[^\n]*|\b[A-Z][a-z]+\s*\([A-Za-z]+\)\s*dialect[^\n]*|\b[a-z]{1,3}"\.\s*No\s*"[^"]*")[^\n]*/gi, '');
+  replyText = replyText.replace(/(?:\n|^)\s*(?:"[A-Za-zÁÉÍÓÚa-záéíóúñ]+"\s*,?\s*){2,}[^\n]*/gi, '');
+  replyText = replyText.replace(/(?:\n|^)\s*[A-Za-zÁÉÍÓÚa-záéíóúñ\s]+" & [A-Za-zÁÉÍÓÚa-záéíóúñ\s]+"[^\n]*/gi, '');
   replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();
 
   // Trim dangling incomplete transition clauses at the end of the response (e.g. "Por", "Por cierto", "Además,")

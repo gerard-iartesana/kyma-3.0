@@ -29,6 +29,7 @@ export interface ChatMessage {
   sender: 'user' | 'kyma';
   text: string;
   timestamp: string;
+  isNew?: boolean;
   contextItem?: {
     id: string;
     title: string;

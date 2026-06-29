@@ -392,9 +392,24 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           }
 
           clearTimeout(safetyTimer);
-          const kymaMsg = await dbClient.receiveKymaMessage(kymaText);
-          setMessages(prev => [...prev, { ...kymaMsg, isNew: true }]);
+          
+          // INSTANT OPTIMISTIC RENDER (0ms latency transition from Pensando... to message)
+          const tempKymaId = `kyma-${Date.now()}`;
+          const optimisticKymaMsg: ChatMessage = {
+            id: tempKymaId,
+            sender: 'kyma',
+            text: kymaText,
+            timestamp: new Date().toISOString(),
+            isNew: true
+          };
+
+          setMessages(prev => [...prev, optimisticKymaMsg]);
           setIsTyping(false);
+
+          // Background async DB write for Kyma message
+          dbClient.receiveKymaMessage(kymaText).then(savedKymaMsg => {
+            setMessages(prev => prev.map(m => m.id === tempKymaId ? { ...savedKymaMsg, isNew: true } : m));
+          }).catch(err => console.error('Error guardando mensaje de Kyma en segundo plano:', err));
         } catch (err) {
           clearTimeout(safetyTimer);
           setIsTyping(false);
