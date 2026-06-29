@@ -332,6 +332,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       (async () => {
         try {
           let kymaText = '';
+          let pendingItemCallback: (() => void) | null = null;
           const currentMsgs = messages;
           const userMsgForPayload: ChatMessage = {
             id: tempId,
@@ -378,7 +379,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
                 }
               }
               if (data.createdItem || data.action === 'create' || data.action === 'enrich' || data.action === 'delete') {
-                onItemAddedOrModified(data.createdItem, data.action);
+                pendingItemCallback = () => onItemAddedOrModified(data.createdItem, data.action);
               }
             } else {
               console.warn('Gemini API route returned an error, falling back to simulated response');
@@ -405,6 +406,10 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
           setMessages(prev => [...prev, optimisticKymaMsg]);
           setIsTyping(false);
+
+          if (pendingItemCallback) {
+            pendingItemCallback();
+          }
 
           // Background async DB write for Kyma message
           dbClient.receiveKymaMessage(kymaText).then(savedKymaMsg => {

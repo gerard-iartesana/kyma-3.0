@@ -219,7 +219,23 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     let extractedYear = result.extractedData.year;
     const currentYear = now.getFullYear();
 
+    let finalTitle = result.extractedData.title || 'Nueva ficha';
     if (doorId === 'estela') {
+      finalTitle = deriveEstelaTitle(userMessage, result.extractedData.title);
+    }
+
+    if (doorId === 'estela') {
+      // PROHIBICIÓN ABSOLUTA: Las personas/vínculos NUNCA se crean en Estela de vida
+      const personKeywords = /\b(?:hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|sobrina|sobrino|compañero|compañera|vicenta|marta|alejandro|david)\b/i;
+      const isPersonIntent = personKeywords.test(userMessage) || personKeywords.test(finalTitle) || result.extractedData.cercania !== undefined || result.extractedData.frecuenciaContacto !== undefined;
+      const memoryKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|distanciamiento|me dejé de hablar|nos dejamos de hablar)\b/i;
+
+      // Si se trata de la persona como tal (o cambio de frecuencia) y no de un evento/hito del pasado explícito, rechazar Estela
+      if (isPersonIntent && !memoryKeywords.test(userMessage)) {
+        console.warn('[Strict Guardrail Block] Rechazado Estela por tratarse de una persona o frecuencia de contacto.');
+        return { action: 'none' };
+      }
+
       const documentOrNoteKeywords = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|para tenerlo a mano|guardar en notas)\b/i;
       if (documentOrNoteKeywords.test(userMessage)) {
         console.warn('[Strict Guardrail Block] Rechazado Estela por tratarse de un documento o nota utilitaria.');
@@ -280,11 +296,6 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         extractedEmocion = 5;
         extractedPeso = 3;
       }
-    }
-
-    let finalTitle = result.extractedData.title || 'Nueva ficha';
-    if (doorId === 'estela') {
-      finalTitle = deriveEstelaTitle(userMessage, result.extractedData.title);
     }
 
     if (result.action === 'enrich' && result.targetItemId) {
