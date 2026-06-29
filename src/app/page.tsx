@@ -3234,13 +3234,19 @@ export default function Home() {
 
           /* Active tab handling: Browser mode (Mobile Web Browser) */
           .content-pane {
-            padding: calc(136px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
+            padding: calc(76px + env(safe-area-inset-top, 0px)) 16px 36px 16px !important;
             margin-top: 0 !important;
             height: 100dvh !important;
             height: 100vh !important;
             flex: 1;
             overflow-y: auto;
             box-sizing: border-box;
+          }
+          .content-pane.no-scroll {
+            padding-top: calc(76px + env(safe-area-inset-top, 0px)) !important;
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            padding-bottom: 95px !important;
           }
           .door-view {
             padding-top: 0 !important;
