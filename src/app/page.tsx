@@ -791,7 +791,11 @@ export default function Home() {
                   <span>{door.title}</span>
                   
                   <span className="item-count">
-                    {items.filter(i => i.doorId === door.id).length}
+                    {door.id === 'agenda'
+                      ? (showPastAgendaEvents 
+                          ? items.filter(i => i.doorId === 'agenda').length 
+                          : items.filter(i => i.doorId === 'agenda' && (!i.eventDate || i.eventDate >= new Date().toISOString().split('T')[0])).length)
+                      : items.filter(i => i.doorId === door.id).length}
                   </span>
                   
                   {isLocked && (
@@ -1259,22 +1263,44 @@ export default function Home() {
                   )}
 
                   {selectedDoorId === 'agenda' && !isVelado && (
-                    <div className="view-mode-selector radio-group">
+                    <>
+                      <div className="view-mode-selector radio-group">
+                        <button 
+                          className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
+                          onClick={() => setAgendaViewMode('grid')}
+                        >
+                          <Icons.Grid size={14} />
+                          <span>Lista</span>
+                        </button>
+                        <button 
+                          className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
+                          onClick={() => setAgendaViewMode('calendar')}
+                        >
+                          <Icons.Calendar size={14} />
+                          <span>Calendario</span>
+                        </button>
+                      </div>
                       <button 
-                        className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
-                        onClick={() => setAgendaViewMode('grid')}
+                        className={`btn btn-secondary ${showPastAgendaEvents ? 'active' : ''}`}
+                        onClick={() => setShowPastAgendaEvents(!showPastAgendaEvents)}
+                        title={showPastAgendaEvents ? "Mostrando eventos pasados y futuros" : "Mostrar histórico de eventos pasados"}
+                        style={{ 
+                          height: '38px', 
+                          padding: '0 12px', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 500,
+                          background: showPastAgendaEvents ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
+                          borderColor: showPastAgendaEvents ? 'var(--accent-purple)' : 'var(--border-subtle)',
+                          color: showPastAgendaEvents ? '#ffffff' : 'var(--text-secondary)'
+                        }}
                       >
-                        <Icons.Grid size={14} />
-                        <span>Lista</span>
+                        <Icons.Clock size={15} />
+                        <span>{showPastAgendaEvents ? 'Todos (inc. pasados)' : 'Próximos'}</span>
                       </button>
-                      <button 
-                        className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
-                        onClick={() => setAgendaViewMode('calendar')}
-                      >
-                        <Icons.Calendar size={14} />
-                        <span>Calendario</span>
-                      </button>
-                    </div>
+                    </>
                   )}
 
                   {selectedDoorId === 'estela' && !isVelado && (
