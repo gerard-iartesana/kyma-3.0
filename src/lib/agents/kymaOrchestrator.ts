@@ -455,6 +455,9 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   const kymaData = await callGeminiWithFallback(apiKey, {
     contents,
     systemInstruction,
+    tools: [
+      { googleSearch: {} }
+    ],
     generationConfig: {
       maxOutputTokens: 1200,
       temperature: 0.7
