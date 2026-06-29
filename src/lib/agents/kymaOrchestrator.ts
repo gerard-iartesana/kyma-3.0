@@ -200,7 +200,7 @@ Devuelve UNICAMENTE un JSON con este formato:
 
     // Question / query check & management intent check
     const isQuestion = /^\s*¿|\?|qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir/i.test(userText.trim());
-    const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|no lo pongas|no es|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
+    const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
     
     if (isQuestion || isManagementIntent) {
       triage = { isFicheable: false, confidence: 0 };
@@ -292,7 +292,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   let deletedItemTitle = '';
   let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
 
-  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|no lo pongas|no es|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
+  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
 
   if (isManagementRequested && allUserItems.length > 0) {
     const mgmtPrompt = `

@@ -267,7 +267,9 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
             updatedContent = `${updatedContent}\n\n${newChunk}`;
           }
         }
-        const rawTags = [...(existing.tags || []), ...(result.extractedData.tags || []), `#${doorId}`];
+        const rawTags = result.extractedData.tags && result.extractedData.tags.length > 0 
+          ? [...result.extractedData.tags, `#${doorId}`]
+          : [...(existing.tags || []), `#${doorId}`];
         const mergedTags = formatTagList(rawTags);
         
         const updatedItem = await dbClient.updateItem(existing.id, {
