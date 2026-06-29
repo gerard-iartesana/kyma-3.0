@@ -512,7 +512,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
   };
 
   return (
-    <div className="orbits-outer-container" ref={containerRef} style={{ width: '100%', flex: 1, height: '100%', minHeight: '480px', overflow: 'hidden', position: 'relative', touchAction: 'none' }}>
+    <div className="orbits-outer-container" ref={containerRef} style={{ width: '100%', flex: 1, height: '100%', minHeight: 0, overflow: 'hidden', position: 'relative', touchAction: 'none' }}>
       <div 
         className="orbits-viewport" 
         ref={viewportRef}

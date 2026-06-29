@@ -351,29 +351,19 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         ))}
       </div>
 
-      <div className="orbits-instructions" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '8px', opacity: 0.6, userSelect: 'none', textAlign: 'center', padding: '0 16px' }}>
-        Arrastra con el dedo o ratón para moverte. Pincha con dos dedos o usa la rueda para ampliar o reducir.
-      </div>
-
       <style jsx>{`
-        @media (max-width: 768px) {
-          .orbits-instructions {
-            display: none !important;
-          }
-        }
-
         .orbits-container {
           width: 100%;
           flex: 1;
           height: 100%;
+          min-height: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 10px 0;
+          padding: 0;
           background: transparent;
           border: none;
-          min-height: 480px;
           touch-action: none;
         }
 

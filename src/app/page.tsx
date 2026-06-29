@@ -2128,6 +2128,8 @@ export default function Home() {
         .content-pane.no-scroll {
           overflow-y: hidden !important;
           overflow: hidden !important;
+          flex: 1 !important;
+          min-height: 0 !important;
         }
         
         .mobile-header {
@@ -2245,6 +2247,7 @@ export default function Home() {
           margin: 0 !important;
           flex: 1 !important;
           height: 100% !important;
+          min-height: 0 !important;
           display: flex !important;
           flex-direction: column !important;
           gap: 12px !important;
@@ -2253,6 +2256,7 @@ export default function Home() {
         .full-width-door-view .door-viewport {
           flex: 1 !important;
           height: 100% !important;
+          min-height: 0 !important;
           display: flex !important;
           flex-direction: column !important;
         }

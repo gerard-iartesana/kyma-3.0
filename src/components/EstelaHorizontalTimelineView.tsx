@@ -276,7 +276,7 @@ export function EstelaHorizontalTimelineView({
             transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)'
           }}
         >
-          <div className="timeline-graph-wrapper" style={{ width: `${totalWidth}px`, minWidth: `${totalWidth}px`, height: '260px' }}>
+          <div className="timeline-graph-wrapper" style={{ width: `${totalWidth}px`, minWidth: `${totalWidth}px`, height: '360px' }}>
             {/* Center Axis Line */}
             <div className="horizontal-axis-line" />
 
@@ -381,7 +381,7 @@ export function EstelaHorizontalTimelineView({
           width: 100%;
           flex: 1;
           height: 100%;
-          min-height: 480px;
+          min-height: 0;
           background: transparent;
           overflow: hidden;
           user-select: none;
@@ -405,7 +405,7 @@ export function EstelaHorizontalTimelineView({
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 120px 240px;
+          padding: 60px 180px;
         }
 
         .timeline-graph-wrapper {
