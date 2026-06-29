@@ -236,19 +236,23 @@ Devuelve UNICAMENTE un JSON con este formato:
 
   // Detector de confirmaciones cortas del usuario a propuestas previas de Kyma (ej: "ok", "sí", "vale", "adelante")
   const isShortConfirmation = /^(?:ok|sí|si|vale|perfecto|adelante|de acuerdo|claro|por supuesto|hazlo|créala|creala)\b/i.test(userText.trim());
-  const lastKymaMsg = [...messages].reverse().find(m => m.sender === 'kyma')?.text || '';
+  const recentKymaMsgs = [...messages].reverse().filter(m => m.sender === 'kyma').slice(0, 3).map(m => m.text).join(' ');
   
   let syntheticProposalPrompt = '';
-  if (isShortConfirmation && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|ficha en Vínculos|ficha para ella|ficha para él)/i.test(lastKymaMsg)) {
+  if (isShortConfirmation && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|vínculos|vinculos|hermana|hermano|amigo|amiga)/i.test(recentKymaMsgs)) {
     let targetDoor: DoorId = 'personas';
-    if (/interés|intereses|gusto|pasión|hobby/i.test(lastKymaMsg)) targetDoor = 'intereses';
-    else if (/nota|apunte|documento/i.test(lastKymaMsg)) targetDoor = 'notas';
-    else if (/cita|reunión|evento|agenda/i.test(lastKymaMsg)) targetDoor = 'agenda';
+    if (/interés|intereses|gusto|pasión|hobby/i.test(recentKymaMsgs)) targetDoor = 'intereses';
+    else if (/nota|apunte|documento/i.test(recentKymaMsgs) && !/hermana|hermano|amigo|amiga|pareja/i.test(recentKymaMsgs)) targetDoor = 'notas';
+    else if (/cita|reunión|evento|agenda/i.test(recentKymaMsgs)) targetDoor = 'agenda';
 
     if (!doorsToExtract.includes(targetDoor)) {
       doorsToExtract.push(targetDoor);
     }
-    syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando expresamente la propuesta de Kyma: "${lastKymaMsg}". Extrae y crea la ficha prometida.`;
+
+    const proposedNameMatch = recentKymaMsgs.match(/(?:hermana|hermano|amigo|amiga|pareja|sobre|para)\s+([A-ZÁÉÍÓÚa-záéíóúñ]+)/i);
+    const proposedName = proposedNameMatch ? proposedNameMatch[1] : '';
+
+    syntheticProposalPrompt = `OBLIGATORIO: El usuario ha dicho "${userText}" confirmando la propuesta. DEBES ESTABLECER action = "create" Y CREAR UNA NUEVA FICHA OBLIGATORIAMENTE en la puerta "${targetDoor}" ${proposedName ? `titulada "${proposedName}"` : ''}. Redacta el contenido en primera persona del singular.`;
   }
 
   if (triage.isFicheable && triage.confidence >= 0.55 && triage.doorId) {
