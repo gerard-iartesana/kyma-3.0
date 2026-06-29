@@ -46,12 +46,13 @@ Extrae o actualiza apuntes en primera persona del singular.`
     category: 'mapa',
     guardrails: [
       'Comprueba siempre la lista de intereses existentes del usuario.',
+      'NIVEL DE INTERÉS / PASIÓN (peso): Si el usuario expresa que le apasiona el tema ("me apasiona", "mi pasión", "me encanta", "mi gran afición", "apasionante"), asigna OBLIGATORIAMENTE peso = 3 (Pasión destacada). Si es un interés habitual ("me gusta", "practico"), asigna peso = 2 (Interés). Si es mera curiosidad ("me llama la atención"), asigna peso = 1.',
       'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: El texto es un diario personal del usuario. Usa "Me apasiona...", "Me encanta...", "Mi película favorita...". NUNCA uses tercera persona ("Le apasiona", "Le encanta", "Su película").',
       'Si el tema o gusto expresado ya encaja con un interés existente, enriquécelo (action = "enrich").',
-      'ETIQUETAS TEMÁTICAS Y GÉNEROS (TAGS): Genera etiquetas temáticas generales y sus subgrupos o géneros (ej: "#Cine", "#CineDeTerror", "#CienciaFicción", "#Literatura", "#NovelaNegra", "#Música", "#Rock", "#Jazz", "#Filosofía", "#Videojuegos", "#Deporte", "#Pádel", "#Series"). PROHIBIDO generar etiquetas con títulos de obras específicas, películas concretas, libros concretos o nombres de autores/directores (ej: NUNCA crees tags como "#LaCasaDelDragon", "#ChristopherNolan", "#StephenKing"). Las obras concretas y autores van dentro del título o texto de la ficha, NUNCA en las etiquetas.'
+      'ETIQUETAS TEMÁTICAS (TAGS) CON ESPACIOS Y SIN REDUNDANCIA: Usa siempre espacios entre palabras compuestas (ej: "#Inteligencia Artificial", "#Desarrollo de Software", "#Cine de Terror"). PROHIBIDO concatenar palabras sin espacios en CamelCase (NUNCA "#InteligenciaArtificial" ni "#DesarrolloSoftware"). PROHIBIDO incluir etiquetas redundantes o sinónimas en la misma ficha (ej: NUNCA pongas "#Desarrollo de Software" y "#Programación" juntas; elige únicamente la más inclusiva).'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Intereses.
-Analiza pasiones y gustos expresados. REDACTA SIEMPRE EL CONTENIDO EN PRIMERA PERSONA DEL SINGULAR ("Me apasiona...", "Me encanta..."). NUNCA uses tercera persona.`
+Analiza pasiones y gustos expresados. Si el usuario usa expresiones de pasión ("me apasiona"), asigna peso = 3. Escribe etiquetas separadas por espacios sin CamelCase ni redundancias. REDACTA SIEMPRE EL CONTENIDO EN PRIMERA PERSONA DEL SINGULAR.`
   },
   personas: {
     doorId: 'personas',

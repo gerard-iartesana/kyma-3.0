@@ -8,13 +8,26 @@ function formatTagList(tags: string[]): string[] {
   for (const t of tags) {
     let clean = t.trim().replace(/^#/, '');
     if (!clean) continue;
-    const key = clean.toLowerCase();
+
+    // Convert CamelCase to spaced words if needed (ej: InteligenciaArtificial -> Inteligencia Artificial)
+    clean = clean.replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, '$1 $2').replace(/([A-ZÁÉÍÓÚÑ]+)([A-ZÁÉÍÓÚÑ][a-záéíóúñ])/g, '$1 $2');
+    
+    const key = clean.toLowerCase().replace(/\s+/g, ' ');
     if (!map.has(key)) {
-      const words = clean.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1));
+      const words = clean.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1));
       map.set(key, words.join(' '));
     }
   }
-  return Array.from(map.values());
+  let resultTags = Array.from(map.values());
+
+  // Filtrar redundancias evidentes (ej: si existe Desarrollo de Software o Desarrollo Software, eliminar Programación)
+  const hasSoftware = resultTags.some(t => t.toLowerCase().includes('desarrollo') || t.toLowerCase().includes('software'));
+  const hasProg = resultTags.some(t => t.toLowerCase().includes('programación') || t.toLowerCase().includes('programacion'));
+  if (hasSoftware && hasProg) {
+    resultTags = resultTags.filter(t => !t.toLowerCase().includes('programación') && !t.toLowerCase().includes('programacion'));
+  }
+
+  return resultTags;
 }
 
 function getFrequencyScore(freqLabel?: string): number | undefined {
@@ -273,6 +286,16 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     let extractedPeso = result.extractedData.peso || 1;
     let extractedEmocion = result.extractedData.emocion;
+
+    if (doorId === 'intereses') {
+      const isPassion = /\b(?:apasiona|apasionante|apasionado|apasionada|pasión|pasion|me encanta|locura|favorito|favorita|gran afición|mi mayor afición)\b/i.test(userMessage) || 
+        /\b(?:apasiona|apasionante|pasión|pasion)\b/i.test(result.extractedData.content || '');
+      if (isPassion) {
+        extractedPeso = 3; // Marcar como Pasión (peso 3) directamente
+      } else if (/\b(?:me gusta|interesa|interesante|afición|aficion)\b/i.test(userMessage) && !result.extractedData.peso) {
+        extractedPeso = 2; // Marcar como Interés (peso 2)
+      }
+    }
 
     if (doorId === 'tareas') {
       const isSameDayTask = /\b(?:hoy|esta tarde|esta mañana|esta noche|ahora mismo|imprescindible hoy)\b/i.test(userMessage) || 
