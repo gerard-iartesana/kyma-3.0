@@ -2245,52 +2245,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* UNDO DELETED ITEM TOAST (Centered within middle content section) */}
-        {undoToast && undoToast.show && (
-          <div className="undo-toast-wrapper animate-fade-in" style={{
-            position: 'sticky',
-            bottom: '24px',
-            alignSelf: 'center',
-            marginTop: 'auto',
-            zIndex: 999,
-            pointerEvents: 'none'
-          }}>
-            <div style={{
-              pointerEvents: 'auto',
-              background: '#18181b',
-              border: '1px solid var(--accent-purple)',
-              borderRadius: '12px',
-              padding: '10px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
-            }}>
-              <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 500 }}>
-                Ficha "{undoToast.title}" eliminada
-              </span>
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={async () => {
-                  try {
-                    const restored = await dbClient.restoreLastDeletedItem();
-                    if (restored) {
-                      refreshItems();
-                      setUndoToast(null);
-                      setToastNotification({ show: true, message: `Ficha "${restored.title}" recuperada con éxito`, doorId: restored.doorId as any, item: restored });
-                    }
-                  } catch (e) {
-                    console.error('Error restaurando elemento:', e);
-                  }
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '0.82rem', cursor: 'pointer' }}
-              >
-                <Icons.RotateCcw size={14} />
-                Deshacer
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 3. COLUMNA CHAT DE KYMA */}
@@ -2323,6 +2277,42 @@ export default function Home() {
           }}
           onAskKyma={(item) => handleAskKyma(item)}
         />
+      )}
+
+      {/* UNDO TOAST NOTIFICATION WINDOW */}
+      {undoToast && undoToast.show && (
+        <div className="toast-notification">
+          <div className="toast-content">
+            <div className="toast-icon-wrapper">
+              <LogoIcon size={16} />
+            </div>
+            <span className="toast-message">Ficha "{undoToast.title}" eliminada</span>
+            <button 
+              className="toast-action-btn"
+              onClick={async () => {
+                try {
+                  const restored = await dbClient.restoreLastDeletedItem();
+                  if (restored) {
+                    refreshItems();
+                    setUndoToast(null);
+                    setToastNotification({ show: true, message: `Ficha "${restored.title}" recuperada con éxito`, doorId: restored.doorId as any, item: restored });
+                  }
+                } catch (e) {
+                  console.error('Error restaurando elemento:', e);
+                }
+              }}
+            >
+              <span>Deshacer</span>
+              <Icons.RotateCcw size={14} />
+            </button>
+            <button 
+              className="toast-close-btn"
+              onClick={() => setUndoToast(null)}
+            >
+              <Icons.X size={14} />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* 7. TOAST NOTIFICATION WINDOW */}
