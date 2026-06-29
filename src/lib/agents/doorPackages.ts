@@ -48,11 +48,11 @@ Extrae o actualiza apuntes en primera persona del singular.`
       'Comprueba siempre la lista de intereses existentes del usuario.',
       'NIVEL DE INTERÉS / PASIÓN (peso): Si el usuario expresa que le apasiona el tema ("me apasiona", "mi pasión", "me encanta", "mi gran afición", "apasionante"), asigna OBLIGATORIAMENTE peso = 3 (Pasión destacada). Si es un interés habitual ("me gusta", "practico"), asigna peso = 2 (Interés). Si es mera curiosidad ("me llama la atención"), asigna peso = 1.',
       'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: El texto es un diario personal del usuario. Usa "Me apasiona...", "Me encanta...", "Mi película favorita...". NUNCA uses tercera persona ("Le apasiona", "Le encanta", "Su película").',
-      'Si el tema o gusto expresado ya encaja con un interés existente, enriquécelo (action = "enrich").',
+      'ENRIQUECIMIENTO COHESIVO DE CONTENIDO (action = "enrich"): Si el tema encaja con un interés existente, enriquécelo (action = "enrich"). NUNCA concatenes frases sueltas ni redundantes al final (NUNCA repitas "Me gusta el pádel" si ya se menciona). En su lugar, lee el contenido existente de la ficha y REDACTA EN "content" UN TEXTO COMPLETO, REESTRUCTURADO Y COHERENTE que integre armónicamente los nuevos matices en un relato fluido en primera persona.',
       'ETIQUETAS TEMÁTICAS (TAGS) CON ESPACIOS Y SIN REDUNDANCIA: Usa siempre espacios entre palabras compuestas (ej: "#Inteligencia Artificial", "#Desarrollo de Software", "#Cine de Terror"). PROHIBIDO concatenar palabras sin espacios en CamelCase (NUNCA "#InteligenciaArtificial" ni "#DesarrolloSoftware"). PROHIBIDO incluir etiquetas redundantes o sinónimas en la misma ficha (ej: NUNCA pongas "#Desarrollo de Software" y "#Programación" juntas; elige únicamente la más inclusiva).'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Intereses.
-Analiza pasiones y gustos expresados. Si el usuario usa expresiones de pasión ("me apasiona"), asigna peso = 3. Escribe etiquetas separadas por espacios sin CamelCase ni redundancias. REDACTA SIEMPRE EL CONTENIDO EN PRIMERA PERSONA DEL SINGULAR.`
+Analiza pasiones y gustos expresados. Si el usuario usa expresiones de pasión ("me apasiona"), asigna peso = 3. Escribe etiquetas separadas por espacios sin CamelCase ni redundancias. Cuando enriquezcas una ficha (action = "enrich"), reestructura y redacta el texto completo de forma cohesiva sin repetir frases redundantes. REDACTA SIEMPRE EL CONTENIDO EN PRIMERA PERSONA DEL SINGULAR.`
   },
   personas: {
     doorId: 'personas',

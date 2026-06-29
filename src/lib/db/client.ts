@@ -755,6 +755,37 @@ export const dbClient = {
   async deleteItem(id: string, overrideUserId?: string, customClient?: any): Promise<void> {
     const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
+    
+    // Fetch item before deleting to save it in trash recovery stack
+    try {
+      const { data: dbRow } = await sb
+        .from('elementos')
+        .select('*, elementos_etiquetas(etiquetas(nombre))')
+        .eq('user_id', userId)
+        .eq('id', id)
+        .single();
+        
+      if (dbRow) {
+        const tagNames = (dbRow.elementos_etiquetas || []).map((ee: any) => ee.etiquetas?.nombre).filter(Boolean);
+        const itemToTrash = mapDbToKymaItem(dbRow, tagNames);
+        let currentTrash: KymaItem[] = [];
+        if (typeof window !== 'undefined') {
+          try {
+            const saved = localStorage.getItem('kyma_deleted_trash');
+            if (saved) currentTrash = JSON.parse(saved);
+          } catch (e) {}
+        }
+        currentTrash.unshift(itemToTrash);
+        // Keep up to 10 recently deleted items in trash
+        currentTrash = currentTrash.slice(0, 10);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('kyma_deleted_trash', JSON.stringify(currentTrash));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not cache deleted item in trash stack:', e);
+    }
+
     const { error } = await sb
       .from('elementos')
       .delete()
@@ -764,6 +795,46 @@ export const dbClient = {
     if (error) {
       throw new Error(`Error deleting element: ${error.message}`);
     }
+  },
+
+  async restoreLastDeletedItem(overrideUserId?: string, customClient?: any): Promise<KymaItem | null> {
+    let currentTrash: KymaItem[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('kyma_deleted_trash');
+        if (saved) currentTrash = JSON.parse(saved);
+      } catch (e) {}
+    }
+    if (currentTrash.length === 0) return null;
+
+    const itemToRestore = currentTrash.shift()!;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kyma_deleted_trash', JSON.stringify(currentTrash));
+    }
+
+    // Re-create item in database
+    const restored = await this.createItem({
+      doorId: itemToRestore.doorId,
+      title: itemToRestore.title,
+      content: itemToRestore.content,
+      tags: itemToRestore.tags,
+      peso: itemToRestore.peso,
+      origen: itemToRestore.origen || 'manual',
+      eventDate: itemToRestore.eventDate,
+      eventTime: itemToRestore.eventTime,
+      recurrencia: itemToRestore.recurrencia,
+      completed: itemToRestore.completed,
+      cercania: itemToRestore.cercania,
+      frecuencia: itemToRestore.frecuencia,
+      year: itemToRestore.year,
+      dateStr: itemToRestore.dateStr,
+      lugar: itemToRestore.lugar,
+      emocion: itemToRestore.emocion,
+      fileUrl: itemToRestore.fileUrl,
+      fileName: itemToRestore.fileName
+    }, overrideUserId, customClient);
+
+    return restored;
   },
 
   async confirmItem(id: string, overrideUserId?: string, customClient?: any): Promise<KymaItem> {

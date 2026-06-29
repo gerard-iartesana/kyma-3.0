@@ -118,6 +118,7 @@ export default function Home() {
 
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [undoToast, setUndoToast] = useState<{ show: boolean; title?: string } | null>(null);
 
   // Search state for Búsqueda global
   const [searchQuery, setSearchQuery] = useState('');
@@ -1482,6 +1483,40 @@ export default function Home() {
                     </button>
                   )}
 
+                  {!isVelado && !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && (
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={async () => {
+                        try {
+                          const restored = await dbClient.restoreLastDeletedItem();
+                          if (restored) {
+                            refreshItems();
+                            setUndoToast(null);
+                            setToastNotification({ show: true, message: `Ficha "${restored.title}" recuperada con éxito`, doorId: restored.doorId as any, item: restored });
+                          } else {
+                            setToastNotification({ show: true, message: 'No hay fichas en la papelera para recuperar', doorId: selectedDoorId as any });
+                          }
+                        } catch (e) {
+                          console.error('Error al recuperar ficha:', e);
+                        }
+                      }}
+                      title="Deshacer acción / Recuperar ficha eliminada"
+                      style={{ 
+                        width: '38px', 
+                        height: '38px', 
+                        padding: 0, 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: 'var(--bg-tertiary)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-secondary)'
+                      }}
+                    >
+                      <Icons.RotateCcw size={16} />
+                    </button>
+                  )}
+
                   {currentDoor?.category === 'utility' && !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && !showAddForm && (
                     <button 
                       className="btn btn-primary" 
@@ -2225,11 +2260,55 @@ export default function Home() {
             setSelectedItem(null);
           }}
           onDelete={() => {
+            const deletedTitle = selectedItem?.title || 'Ficha';
             refreshItems();
             setSelectedItem(null);
+            setUndoToast({ show: true, title: deletedTitle });
           }}
           onAskKyma={(item) => handleAskKyma(item)}
         />
+      )}
+
+      {/* UNDO DELETED ITEM TOAST */}
+      {undoToast && undoToast.show && (
+        <div className="undo-toast animate-fade-in" style={{
+          position: 'fixed',
+          bottom: '85px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          background: '#18181b',
+          border: '1px solid var(--accent-purple)',
+          borderRadius: '12px',
+          padding: '10px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
+        }}>
+          <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 500 }}>
+            Ficha "{undoToast.title}" eliminada
+          </span>
+          <button 
+            className="btn btn-primary btn-sm"
+            onClick={async () => {
+              try {
+                const restored = await dbClient.restoreLastDeletedItem();
+                if (restored) {
+                  refreshItems();
+                  setUndoToast(null);
+                  setToastNotification({ show: true, message: `Ficha "${restored.title}" recuperada con éxito`, doorId: restored.doorId as any, item: restored });
+                }
+              } catch (e) {
+                console.error('Error restaurando elemento:', e);
+              }
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '0.82rem' }}
+          >
+            <Icons.RotateCcw size={14} />
+            Deshacer
+          </button>
+        </div>
       )}
 
       {/* 7. TOAST NOTIFICATION WINDOW */}

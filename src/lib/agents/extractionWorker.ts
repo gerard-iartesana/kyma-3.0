@@ -338,8 +338,16 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           const newChunk = result.extractedData.content.trim();
           if (!updatedContent) {
             updatedContent = newChunk;
-          } else if (!updatedContent.toLowerCase().includes(newChunk.toLowerCase())) {
-            updatedContent = `${updatedContent}\n\n${newChunk}`;
+          } else if (doorId === 'intereses' || newChunk.length > updatedContent.length * 0.7) {
+            // Si la IA ha reescrito el contenido completo de forma cohesiva, usar la nueva version estructurada
+            updatedContent = newChunk;
+          } else {
+            // Verificar si el nuevo fragmento ya esta presente parcialmente para evitar redundancia aditiva
+            const existingLower = updatedContent.toLowerCase();
+            const chunkLower = newChunk.toLowerCase();
+            if (!existingLower.includes(chunkLower) && !chunkLower.split('.').some(s => s.trim().length > 10 && existingLower.includes(s.trim()))) {
+              updatedContent = `${updatedContent}\n\n${newChunk}`;
+            }
           }
         }
         const rawTags = result.extractedData.tags && result.extractedData.tags.length > 0 
