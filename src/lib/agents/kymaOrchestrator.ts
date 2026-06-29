@@ -206,15 +206,18 @@ Devuelve UNICAMENTE un JSON con este formato:
     if (isQuestion || isManagementIntent) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
-      // Deterministic override for time, documents/notes, tasks, reflexiones vs memories
+      // Deterministic override for time, documents/notes, person frequency, tasks, reflexiones vs memories
       const timePattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})\b/i;
       const documentNotePattern = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas|apunta|apuntar)\b/i;
+      const personFrequencyPattern = /\b(?:hablo|hablo poco|hablo mucho|veo|veo poco|veo mucho|contacto|frecuencia|una vez al año|una vez al mes|una vez a la semana|diario|diariamente|casi nunca)\b/i;
       const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
       const reflectionKeywords = /\b(?:reflexión|reflexion|pensamiento|filosofía|filosofia|principio vital)\b/i;
-      const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
+      const pastYearMatch = userText.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
       const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a/i;
       
-      if (documentNotePattern.test(userText)) {
+      if (personFrequencyPattern.test(userText) && /(?:hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|compañero|compañera|[A-ZÁÉÍÓÚa-záéíóúñ]+)/i.test(userText)) {
+        triage = { isFicheable: true, category: 'mapa', doorId: 'personas', confidence: 0.99 };
+      } else if (documentNotePattern.test(userText)) {
         triage = { isFicheable: true, category: 'utilidad', doorId: 'notas', confidence: 0.99 };
       } else if (timePattern.test(userText)) {
         triage = { isFicheable: true, category: 'utilidad', doorId: 'agenda', confidence: 0.98 };
@@ -489,9 +492,9 @@ IDIOMA PREFERIDO: ${userLang}
 ${dialectInstruction}
 
 [INFORMACIÓN DEL ESPACIO Y AGENDA DEL USUARIO]:
-FECHA DE HOY: ${todayStr} (${now.toLocaleDateString('es-ES', { weekday: 'long' })})
-HORA ACTUAL DEL DISPOSITIVO: ${now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} h
-FECHA DE MAÑANA: ${tomorrowStr} (${tomorrow.toLocaleDateString('es-ES', { weekday: 'long' })})
+FECHA DE HOY: ${todayStr} (${now.toLocaleDateString('es-ES', { weekday: 'long', timeZone: isLatam ? undefined : 'Europe/Madrid' })})
+HORA ACTUAL DEL DISPOSITIVO DEL USUARIO: ${now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: isLatam ? undefined : 'Europe/Madrid' })} h
+FECHA DE MAÑANA: ${tomorrowStr} (${tomorrow.toLocaleDateString('es-ES', { weekday: 'long', timeZone: isLatam ? undefined : 'Europe/Madrid' })})
 
 FICHAS GUARDADAS EN EL ESPACIO DEL USUARIO:
 ${userItemsContext || 'No hay fichas guardadas actualmente.'}

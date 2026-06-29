@@ -233,7 +233,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         }
       }
 
-      const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|año|ano|19\d\d|20[0-1]\d|202[0-5])\b/i;
+      const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|19\d\d|20[0-1]\d|202[0-5])\b/i;
       const hasExplicitPastYear = extractedYear && extractedYear < currentYear;
       const isHistoricalMemory = historicalKeywords.test(userMessage);
 
