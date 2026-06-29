@@ -79,33 +79,62 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const baseTextRef = useRef<string>('');
+  const accumulatedSpeechRef = useRef<string>('');
+  const isListeningRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognitionAPI) {
         const rec = new SpeechRecognitionAPI();
-        rec.continuous = true;
+        rec.continuous = false;
         rec.interimResults = true;
         rec.lang = 'es-ES';
 
         rec.onresult = (event: any) => {
-          let sessionTranscript = '';
-          for (let i = 0; i < event.results.length; ++i) {
-            sessionTranscript += event.results[i][0].transcript;
+          let finalChunk = '';
+          let interimChunk = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const res = event.results[i];
+            if (res.isFinal) {
+              finalChunk += res[0].transcript;
+            } else {
+              interimChunk += res[0].transcript;
+            }
           }
+
+          if (finalChunk) {
+            const cleanFinal = finalChunk.trim();
+            if (cleanFinal && !accumulatedSpeechRef.current.endsWith(cleanFinal)) {
+              accumulatedSpeechRef.current = (accumulatedSpeechRef.current + ' ' + cleanFinal).trim();
+            }
+          }
+
+          const currentSpeech = (accumulatedSpeechRef.current + (interimChunk ? ' ' + interimChunk.trim() : '')).trim();
           const base = baseTextRef.current || '';
-          const separator = base && !base.endsWith(' ') && !sessionTranscript.startsWith(' ') ? ' ' : '';
-          setInputText(base + separator + sessionTranscript);
+          const separator = base && currentSpeech && !base.endsWith(' ') ? ' ' : '';
+          setInputText(base + separator + currentSpeech);
         };
 
         rec.onerror = (e: any) => {
           console.error('Speech recognition error', e);
-          setIsListening(false);
+          if (e.error !== 'no-speech') {
+            isListeningRef.current = false;
+            setIsListening(false);
+          }
         };
 
         rec.onend = () => {
-          setIsListening(false);
+          if (isListeningRef.current) {
+            try {
+              rec.start();
+            } catch (err) {
+              isListeningRef.current = false;
+              setIsListening(false);
+            }
+          } else {
+            setIsListening(false);
+          }
         };
 
         recognitionRef.current = rec;
@@ -119,14 +148,19 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       return;
     }
 
-    if (isListening) {
-      recognitionRef.current.stop();
+    if (isListeningRef.current) {
+      isListeningRef.current = false;
       setIsListening(false);
-    } else {
       try {
-        baseTextRef.current = inputText;
+        recognitionRef.current.stop();
+      } catch (e) {}
+    } else {
+      baseTextRef.current = inputText;
+      accumulatedSpeechRef.current = '';
+      isListeningRef.current = true;
+      setIsListening(true);
+      try {
         recognitionRef.current.start();
-        setIsListening(true);
       } catch (e) {
         console.error(e);
       }
@@ -207,8 +241,15 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
     e.preventDefault();
     if (!inputText.trim()) return;
 
+    if (isListeningRef.current) {
+      isListeningRef.current = false;
+      setIsListening(false);
+      try { recognitionRef.current?.stop(); } catch (err) {}
+    }
+
     const userText = inputText;
     setInputText('');
+    accumulatedSpeechRef.current = '';
     if (onMessageSent) onMessageSent();
 
     try {
