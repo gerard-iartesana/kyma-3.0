@@ -436,7 +436,15 @@ export function ItemCard({
                 const cleanTag = tag.replace('#', '').toLowerCase();
                 const doorId = item.doorId.toLowerCase();
                 if (cleanTag === doorId) return false;
-                if (doorId === 'personas' && (cleanTag === 'personas' || cleanTag === 'vinculos')) return false;
+                if (doorId === 'personas') {
+                  if (cleanTag === 'personas' || cleanTag === 'vinculos' || cleanTag === 'vínculos') return false;
+                  // Filter out duplicate person title
+                  const personName = item.title.toLowerCase();
+                  if (cleanTag === personName || personName.includes(cleanTag)) return false;
+                  // Filter out anecdotal activity / place / noise tags for personas
+                  const noiseTags = ['playa', 'contacto', 'conversacion', 'conversación', 'cine', 'padel', 'pádel', 'duelo', 'recuerdo', 'hito', 'viaje', 'general'];
+                  if (noiseTags.includes(cleanTag)) return false;
+                }
                 return true;
               })
               .map((tag) => (
