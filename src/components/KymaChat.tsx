@@ -383,9 +383,9 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           }
 
           clearTimeout(safetyTimer);
-          setIsTyping(false);
           const kymaMsg = await dbClient.receiveKymaMessage(kymaText);
           setMessages(prev => [...prev, { ...kymaMsg, isNew: true }]);
+          setIsTyping(false);
         } catch (err) {
           clearTimeout(safetyTimer);
           setIsTyping(false);
