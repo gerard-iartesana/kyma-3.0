@@ -97,7 +97,20 @@ export function EstelaHorizontalTimelineView({
     return positions;
   }, [sortedItems]);
 
-  const totalWidth = itemPositions.length > 0 ? itemPositions[itemPositions.length - 1].x : 0;
+  const currentYear = new Date().getFullYear();
+  const { currentYearX, graphWidth } = React.useMemo(() => {
+    if (itemPositions.length === 0) return { currentYearX: 0, graphWidth: 0 };
+    const lastPos = itemPositions[itemPositions.length - 1];
+    let endX = lastPos.x;
+    if (lastPos.year < currentYear) {
+      const yearDiff = currentYear - lastPos.year;
+      const dist = Math.max(yearDiff * 35, 120);
+      endX = lastPos.x + dist;
+    }
+    return { currentYearX: endX, graphWidth: Math.max(endX, lastPos.x) };
+  }, [itemPositions, currentYear]);
+
+  const totalWidth = graphWidth;
 
   // Pan & Zoom State
   const [scale, setScale] = useState(1);
@@ -277,8 +290,15 @@ export function EstelaHorizontalTimelineView({
           }}
         >
           <div className="timeline-graph-wrapper" style={{ width: `${totalWidth}px`, minWidth: `${totalWidth}px`, height: '360px' }}>
-            {/* Center Axis Line */}
-            <div className="horizontal-axis-line" />
+            {/* Center Axis Line (Faint at origin, intense at current year) */}
+            <div 
+              className="horizontal-axis-line" 
+              style={{
+                left: '-80px',
+                width: `${currentYearX + 80}px`,
+                right: 'auto'
+              }}
+            />
 
             {/* Nodes Sequence along axis */}
             <div className="timeline-nodes-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -370,6 +390,35 @@ export function EstelaHorizontalTimelineView({
                   </div>
                 );
               })}
+
+              {/* Current Year Cutoff Node */}
+              <div 
+                className="timeline-node-column current-year-cutoff-col"
+                style={{
+                  position: 'absolute',
+                  left: `${currentYearX}px`,
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 6
+                }}
+              >
+                <div 
+                  className="current-year-cutoff-dot"
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    background: '#ec4899',
+                    boxShadow: '0 0 16px #ec4899, 0 0 6px #ffffff',
+                    border: '2px solid #ffffff'
+                  }}
+                  title={`Año actual (${currentYear})`}
+                />
+                <div className="axis-year-reference" style={{ marginTop: '16px' }}>
+                  <div className="axis-tick" style={{ background: '#ec4899' }} />
+                  <span className="axis-year-text" style={{ color: '#ec4899', fontWeight: 700 }}>{currentYear}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -417,14 +466,12 @@ export function EstelaHorizontalTimelineView({
 
         .horizontal-axis-line {
           position: absolute;
-          left: -160px;
-          right: -160px;
           top: 50%;
-          height: 3px;
-          background: linear-gradient(90deg, rgba(139,92,246,0.05), rgba(192,132,252,0.7), rgba(139,92,246,0.05));
+          height: 4px;
+          background: linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(168, 85, 247, 0.45) 60%, rgba(236, 72, 153, 1) 100%);
           transform: translateY(-50%);
           z-index: 1;
-          box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+          box-shadow: 0 0 16px rgba(236, 72, 153, 0.6);
           border-radius: 2px;
         }
 
