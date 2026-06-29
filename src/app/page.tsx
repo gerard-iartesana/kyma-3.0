@@ -850,22 +850,16 @@ export default function Home() {
 
         {selectedDoorId === null ? (
           <div className="home-view animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-            <div className="home-hero" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <h1 className="serif-title font-serif">
-                  {userProfile.nombre?.trim() ? `¡Hola, ${userProfile.nombre.trim()}!` : '¡Hola!'}
-                </h1>
-                <p className="hero-subtitle">
-                  Tu espacio personal de un vistazo. Accede directamente a tus novedades y actividad reciente.
-                </p>
-              </div>
-
-              {/* VIEW TOGGLE CONTROL: BOTÓN CIRCULAR CON FLECHAS */}
+            <div className="home-hero" style={{ position: 'relative', width: '100%' }}>
+              {/* VIEW TOGGLE CONTROL: BOTÓN CIRCULAR CON FLECHAS EN TOP RIGHT */}
               <button 
                 className={`btn btn-secondary ${!dashboardExpanded ? 'active' : ''}`}
                 onClick={() => setDashboardExpanded(!dashboardExpanded)}
                 title={dashboardExpanded ? "Simplificar vista de tarjetas" : "Ver vista detallada"}
                 style={{ 
+                  position: 'absolute',
+                  top: '0',
+                  right: '0',
                   width: '38px', 
                   height: '38px', 
                   padding: 0, 
@@ -874,11 +868,19 @@ export default function Home() {
                   justifyContent: 'center',
                   background: !dashboardExpanded ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
                   borderColor: !dashboardExpanded ? 'var(--accent-purple)' : 'var(--border-subtle)',
-                  color: !dashboardExpanded ? '#ffffff' : 'var(--text-secondary)'
+                  color: !dashboardExpanded ? '#ffffff' : 'var(--text-secondary)',
+                  zIndex: 10
                 }}
               >
                 {dashboardExpanded ? <Icons.Minimize2 size={16} /> : <Icons.Maximize2 size={16} />}
               </button>
+
+              <h1 className="serif-title font-serif">
+                {userProfile.nombre?.trim() ? `¡Hola, ${userProfile.nombre.trim()}!` : '¡Hola!'}
+              </h1>
+              <p className="hero-subtitle">
+                Tu espacio personal de un vistazo. Accede directamente a tus novedades y actividad reciente.
+              </p>
             </div>
 
             {/* RESPONSIVE MODULAR DASHBOARD GRID (2 to 3 columns) */}
@@ -940,8 +942,8 @@ export default function Home() {
                 if (!hasAnyContent) {
                   return (
                     <div style={{ gridColumn: '1 / -1', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-subtle)', borderRadius: '16px', padding: '32px 24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      <Icons.Sparkles size={24} color="#c084fc" style={{ margin: '0 auto 12px' }} />
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>Tu mapa está tranquilo</h3>
+                      <Icons.Sparkles size={24} color="var(--accent-purple-light, #c084fc)" style={{ margin: '0 auto 12px' }} />
+                      <h3 className="font-serif" style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>Tu mapa está tranquilo</h3>
                       <p style={{ fontSize: '0.88rem', maxWidth: '460px', margin: '0 auto', color: 'var(--text-muted)' }}>
                         No hay novedades recientes esta semana. Explora tus puertas en el menú lateral o habla con Kyma en el chat para registrar nuevas ideas y recuerdos.
                       </p>
@@ -956,8 +958,8 @@ export default function Home() {
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Icons.Calendar size={16} color="#c084fc" />
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Próximos eventos</h2>
+                            <Icons.Calendar size={16} color="var(--accent-purple-light, #c084fc)" />
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Próximos eventos</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('agenda')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -977,8 +979,8 @@ export default function Home() {
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Icons.CheckSquare size={16} color="#f59e0b" />
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Tareas urgentes</h2>
+                            <Icons.CheckSquare size={16} color="var(--accent-purple-light, #c084fc)" />
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Tareas urgentes</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('tareas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -999,8 +1001,8 @@ export default function Home() {
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Icons.Users size={16} color="#ec4899" />
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Nuevos vínculos</h2>
+                            <Icons.Users size={16} color="var(--accent-purple-light, #c084fc)" />
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Nuevos vínculos</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('personas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1020,8 +1022,8 @@ export default function Home() {
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Icons.Compass size={16} color="#c084fc" />
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Intereses</h2>
+                            <Icons.Compass size={16} color="var(--accent-purple-light, #c084fc)" />
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Intereses</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('intereses')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1041,8 +1043,8 @@ export default function Home() {
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Icons.Sparkles size={16} color="#60a5fa" />
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Reflexiones</h2>
+                            <Icons.Lightbulb size={16} color="var(--accent-purple-light, #c084fc)" />
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Reflexiones</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('reflexiones')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1062,8 +1064,8 @@ export default function Home() {
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Icons.FileText size={16} color="#94a3b8" />
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Notas</h2>
+                            <Icons.FileText size={16} color="var(--accent-purple-light, #c084fc)" />
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Notas</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('notas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1083,8 +1085,8 @@ export default function Home() {
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Icons.Activity size={16} color="#10b981" />
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Recuerdos añadidos</h2>
+                            <Icons.Activity size={16} color="var(--accent-purple-light, #c084fc)" />
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Recuerdos añadidos</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('estela')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
