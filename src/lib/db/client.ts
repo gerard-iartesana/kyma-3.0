@@ -274,7 +274,16 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
 
   const datos = dbItem.datos || {};
   let doorId = doorIdMap[dbItem.tipo] || 'notas';
-  if (datos.is_estela || typeof datos.year === 'number' || (tagNames || []).some(t => t.toLowerCase() === '#estela')) {
+  const currentYear = new Date().getFullYear();
+
+  if (dbItem.tipo === 'evento') {
+    const isPastEstela = datos.is_estela && typeof datos.year === 'number' && datos.year < currentYear;
+    if (isPastEstela) {
+      doorId = 'estela';
+    } else {
+      doorId = 'agenda';
+    }
+  } else if (datos.is_estela || (typeof datos.year === 'number' && datos.year < currentYear)) {
     doorId = 'estela';
   }
 

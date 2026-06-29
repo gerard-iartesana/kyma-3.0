@@ -217,10 +217,28 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     // Fallback for year and peso in estela
     let extractedYear = result.extractedData.year;
-    if (doorId === 'estela' && !extractedYear) {
-      const yearMatch = userMessage.match(/\b(19\d\d|20[0-2]\d)\b/);
-      if (yearMatch) {
-        extractedYear = parseInt(yearMatch[1]);
+    const currentYear = now.getFullYear();
+
+    if (doorId === 'estela') {
+      if (!extractedYear) {
+        const yearMatch = userMessage.match(/\b(19\d\d|20[0-2]\d)\b/);
+        if (yearMatch) {
+          extractedYear = parseInt(yearMatch[1]);
+        }
+      }
+
+      // HARD CODE-LEVEL GUARDRAIL: Estela de vida is strictly for HISTORICAL PAST YEARS (< currentYear)
+      if (extractedYear && extractedYear >= currentYear) {
+        console.warn(`[Strict Guardrail Block] Rechazado Estela para el año ${extractedYear} (debe ser estricto pasado < ${currentYear}).`);
+        return { action: 'none' };
+      }
+
+      const timeOrCurrentPattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}|hoy|mañana|esta tarde|esta mañana|esta noche|próximo|proximo)\b/i;
+      const historicalKeywords = /falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|año|ano|19\d\d|20[0-2]\d/i;
+
+      if (timeOrCurrentPattern.test(userMessage) || (timeOrCurrentPattern.test(contextSnippet || '') && !historicalKeywords.test(userMessage))) {
+        console.warn('[Strict Guardrail Block] Rechazado Estela por ser evento actual/futuro o tener hora.');
+        return { action: 'none' };
       }
     }
 
