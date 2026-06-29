@@ -439,6 +439,7 @@ ${dialectInstruction}
 
 [INFORMACIÓN DEL ESPACIO Y AGENDA DEL USUARIO]:
 FECHA DE HOY: ${todayStr} (${now.toLocaleDateString('es-ES', { weekday: 'long' })})
+HORA ACTUAL DEL DISPOSITIVO: ${now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} h
 FECHA DE MAÑANA: ${tomorrowStr} (${tomorrow.toLocaleDateString('es-ES', { weekday: 'long' })})
 
 FICHAS GUARDADAS EN EL ESPACIO DEL USUARIO:

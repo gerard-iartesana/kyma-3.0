@@ -156,9 +156,9 @@ export function ItemCard({
         return item.peso === 3 ? (
           <AlertCircle 
             size={16} 
-            color="var(--accent-purple)" 
+            color="#ec4899" 
             fill="none"
-            style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }} 
+            style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
           />
         ) : null;
       case 'intereses':
@@ -197,9 +197,9 @@ export function ItemCard({
             {item.peso === 3 && (
               <Star 
                 size={16} 
-                color="#fcd34d" 
+                color="#ec4899" 
                 fill="none"
-                style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.45))', flexShrink: 0 }} 
+                style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
               />
             )}
             <div className="agenda-badge-box" style={{
@@ -244,9 +244,9 @@ export function ItemCard({
             {item.peso === 3 && (
               <Star 
                 size={16} 
-                color="var(--accent-purple)" 
+                color="#ec4899" 
                 fill="none"
-                style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }} 
+                style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
               />
             )}
             <div className="agenda-badge-box" style={{
@@ -298,9 +298,9 @@ export function ItemCard({
         return item.peso === 3 ? (
           <Star 
             size={16} 
-            color="var(--accent-purple)" 
+            color="#ec4899" 
             fill="none"
-            style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }} 
+            style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
           />
         ) : null;
     }

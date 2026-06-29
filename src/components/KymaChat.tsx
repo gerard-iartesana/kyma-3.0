@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, dbClient, KymaItem } from '../lib/db/client';
 import { supabase } from '../lib/supabase';
-import { Send, X, Sparkles, PlusCircle, Trash2, Mic } from 'lucide-react';
+import { Send, X, Sparkles, PlusCircle, Trash2, Mic, Plus, Paperclip } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface KymaChatProps {
@@ -81,6 +81,38 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
   const baseTextRef = useRef<string>('');
   const accumulatedSpeechRef = useRef<string>('');
   const isListeningRef = useRef<boolean>(false);
+
+  const [attachedFile, setAttachedFile] = useState<{ name: string; type: string; content?: string; previewUrl?: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachedFile({
+          name: file.name,
+          type: file.type,
+          previewUrl: event.target?.result as string,
+          content: `[Imagen adjunta: ${file.name}]`
+        });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachedFile({
+          name: file.name,
+          type: file.type,
+          content: event.target?.result as string
+        });
+      };
+      reader.readAsText(file);
+    }
+    if (e.target) e.target.value = '';
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -239,7 +271,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() && !attachedFile) return;
 
     if (isListeningRef.current) {
       isListeningRef.current = false;
@@ -247,7 +279,16 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       try { recognitionRef.current?.stop(); } catch (err) {}
     }
 
-    const userText = inputText;
+    let userText = inputText.trim();
+    if (attachedFile) {
+      if (attachedFile.previewUrl) {
+        userText += (userText ? '\n\n' : '') + `[Adjunto imagen/ticket "${attachedFile.name}": Analiza los datos o texto de esta nota/ticket]`;
+      } else if (attachedFile.content) {
+        userText += (userText ? '\n\n' : '') + `[Contenido del archivo adjunto "${attachedFile.name}":\n${attachedFile.content.slice(0, 4000)}]`;
+      }
+      setAttachedFile(null);
+    }
+
     setInputText('');
     accumulatedSpeechRef.current = '';
     if (onMessageSent) onMessageSent();
@@ -457,8 +498,63 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         </div>
       )}
 
+      {/* Attached file preview chip */}
+      {attachedFile && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '6px 12px',
+          background: 'rgba(236, 72, 153, 0.12)',
+          border: '1px solid rgba(236, 72, 153, 0.3)',
+          borderRadius: '8px',
+          margin: '0 16px 8px 16px',
+          fontSize: '0.8rem',
+          color: '#f472b6'
+        }}>
+          <Paperclip size={14} />
+          <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
+            {attachedFile.name}
+          </span>
+          <button 
+            type="button" 
+            onClick={() => setAttachedFile(null)}
+            style={{ background: 'none', border: 'none', color: '#f472b6', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Input area */}
       <form onSubmit={handleSend} className="chat-input-form">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          title="Adjuntar archivo o imagen (txt, md, ticket...)"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: attachedFile ? '#ec4899' : 'var(--text-muted)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px',
+            borderRadius: '50%',
+            transition: 'all 0.2s ease',
+            flexShrink: 0
+          }}
+        >
+          <Plus size={22} />
+        </button>
+        <input 
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept="image/*,.txt,.md,.pdf,.json"
+          onChange={handleFileSelect}
+        />
         <div className="input-wrapper" style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
           <input
             type="text"
@@ -491,7 +587,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           </button>
         </div>
 
-        <button type="submit" className="btn btn-primary send-btn" disabled={!inputText.trim()}>
+        <button type="submit" className="btn btn-primary send-btn" disabled={!inputText.trim() && !attachedFile}>
           <Send size={20} />
         </button>
       </form>
