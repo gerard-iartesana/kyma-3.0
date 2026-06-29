@@ -998,13 +998,14 @@ export default function Home() {
                     {agendaItems.length > 0 && (
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div 
+                            onClick={() => handleSelectDoor('agenda')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            title="Ver sección Agenda"
+                          >
                             <Icons.Calendar size={16} color="var(--accent-purple-light, #c084fc)" />
                             <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Próximos eventos</h2>
                           </div>
-                          <button onClick={() => handleSelectDoor('agenda')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            Ver todo <Icons.ArrowRight size={11} />
-                          </button>
                         </div>
                         <ItemCard
                           item={agendaItems[0]}
@@ -1021,13 +1022,14 @@ export default function Home() {
                     {urgentTaskItems.length > 0 && (
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div 
+                            onClick={() => handleSelectDoor('tareas')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            title="Ver sección Tareas"
+                          >
                             <Icons.CheckSquare size={16} color="var(--accent-purple-light, #c084fc)" />
                             <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Tareas urgentes</h2>
                           </div>
-                          <button onClick={() => handleSelectDoor('tareas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            Ver todo <Icons.ArrowRight size={11} />
-                          </button>
                         </div>
                         <ItemCard
                           item={urgentTaskItems[0]}
@@ -1045,13 +1047,14 @@ export default function Home() {
                     {newVinculoItems.length > 0 && (
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div 
+                            onClick={() => handleSelectDoor('personas')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            title="Ver sección Vínculos"
+                          >
                             <Icons.Users size={16} color="var(--accent-purple-light, #c084fc)" />
                             <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Nuevos vínculos</h2>
                           </div>
-                          <button onClick={() => handleSelectDoor('personas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            Ver todo <Icons.ArrowRight size={11} />
-                          </button>
                         </div>
                         <ItemCard
                           item={newVinculoItems[0]}
@@ -1068,13 +1071,14 @@ export default function Home() {
                     {recienteIntereses.length > 0 && (
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div 
+                            onClick={() => handleSelectDoor('intereses')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            title="Ver sección Intereses"
+                          >
                             <Icons.Compass size={16} color="var(--accent-purple-light, #c084fc)" />
                             <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Intereses</h2>
                           </div>
-                          <button onClick={() => handleSelectDoor('intereses')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            Ver todo <Icons.ArrowRight size={11} />
-                          </button>
                         </div>
                         <ItemCard
                           item={recienteIntereses[0]}
@@ -1091,13 +1095,14 @@ export default function Home() {
                     {recienteReflexiones.length > 0 && (
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div 
+                            onClick={() => handleSelectDoor('reflexiones')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            title="Ver sección Reflexiones"
+                          >
                             <Icons.Lightbulb size={16} color="var(--accent-purple-light, #c084fc)" />
                             <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Reflexiones</h2>
                           </div>
-                          <button onClick={() => handleSelectDoor('reflexiones')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            Ver todo <Icons.ArrowRight size={11} />
-                          </button>
                         </div>
                         <ItemCard
                           item={recienteReflexiones[0]}
@@ -1114,13 +1119,14 @@ export default function Home() {
                     {recienteNotas.length > 0 && (
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div 
+                            onClick={() => handleSelectDoor('notas')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            title="Ver sección Notas"
+                          >
                             <Icons.FileText size={16} color="var(--accent-purple-light, #c084fc)" />
                             <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Notas</h2>
                           </div>
-                          <button onClick={() => handleSelectDoor('notas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            Ver todo <Icons.ArrowRight size={11} />
-                          </button>
                         </div>
                         <ItemCard
                           item={recienteNotas[0]}
@@ -1137,13 +1143,14 @@ export default function Home() {
                     {recienteEstela.length > 0 && (
                       <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div 
+                            onClick={() => handleSelectDoor('estela')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            title="Ver sección Estela de vida"
+                          >
                             <Icons.Activity size={16} color="var(--accent-purple-light, #c084fc)" />
                             <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Recuerdos añadidos</h2>
                           </div>
-                          <button onClick={() => handleSelectDoor('estela')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            Ver todo <Icons.ArrowRight size={11} />
-                          </button>
                         </div>
                         <ItemCard
                           item={recienteEstela[0]}

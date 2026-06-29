@@ -216,32 +216,32 @@ export function ItemCard({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(0, 0, 0, 0.35)',
+              background: 'rgba(0, 0, 0, 0.4)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '8px',
-              padding: '6px 11px',
+              padding: '6px 12px',
               gap: '2px',
-              minWidth: '68px',
+              minWidth: '74px',
               flexShrink: 0
             }}>
               <span style={{
-                fontSize: '0.78rem',
-                fontWeight: 600,
+                fontSize: '1.12rem',
+                fontWeight: 700,
                 color: '#ffffff',
-                textTransform: 'uppercase',
                 letterSpacing: '0.02em',
                 whiteSpace: 'nowrap'
               }}>
-                {item.dateStr ? item.dateStr.toUpperCase() : (item.year || 'HITO')}
+                {item.year || (item.eventDate ? new Date(item.eventDate).getFullYear() : (item.createdAt ? new Date(item.createdAt).getFullYear() : new Date().getFullYear()))}
               </span>
-              {item.dateStr && item.year && (
+              {(item.dateStr || item.eventDate) && (
                 <span style={{
-                  fontSize: '0.68rem',
-                  color: '#8a8a93',
+                  fontSize: '0.76rem',
+                  color: '#a1a1aa',
                   fontWeight: 500,
+                  textTransform: 'uppercase',
                   whiteSpace: 'nowrap'
                 }}>
-                  {item.year}
+                  {item.dateStr ? item.dateStr : (item.eventDate ? formatDate(item.eventDate) : '')}
                 </span>
               )}
             </div>
@@ -355,10 +355,16 @@ export function ItemCard({
         {isCompact ? (
           <div className="card-compact-right">
             {item.doorId === 'agenda' && item.eventDate && (
-              <span className="agenda-compact-date">
-                {formatDate(item.eventDate)}
-                {item.eventTime ? ` ${item.eventTime} h` : ''}
-              </span>
+              <div className="agenda-compact-date" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.94rem' }}>
+                  {formatDate(item.eventDate)}
+                </span>
+                {item.eventTime && (
+                  <span style={{ color: '#a1a1aa', fontWeight: 500, fontSize: '0.84rem' }}>
+                    {item.eventTime} h
+                  </span>
+                )}
+              </div>
             )}
             {item.doorId !== 'agenda' && renderBadge()}
           </div>

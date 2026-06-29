@@ -180,8 +180,45 @@ ${content}
   const pesoConfig = getPesoLabel();
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="modal-backdrop" 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(0, 0, 0, 0.45)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+        padding: '16px'
+      }}
+    >
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '620px',
+          maxHeight: '86vh',
+          overflowY: 'auto',
+          borderRadius: '20px',
+          padding: '28px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          background: 'rgba(18, 18, 28, 0.72)',
+          backdropFilter: 'blur(28px) saturate(190%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+          border: '1px solid rgba(255, 255, 255, 0.16)',
+          boxShadow: '0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+        }}
+      >
         <div className="modal-header">
           <div className="header-meta">
             <span className="door-pill uppercase">{item.doorId === 'personas' ? 'vínculos' : item.doorId}</span>
@@ -440,7 +477,7 @@ ${content}
         </form>
       </div>
 
-      <style jsx>{`
+      <style jsx global>{`
         .modal-backdrop {
           position: fixed;
           top: 0;
