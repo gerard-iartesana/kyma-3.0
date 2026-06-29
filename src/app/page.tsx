@@ -273,11 +273,7 @@ export default function Home() {
     setNewPeso(1);
     setNewCercania('orbita');
     setMobileMenuOpen(false);
-    if (doorId) {
-      setMobileTab('panel');
-    } else {
-      setMobileTab('chat');
-    }
+    setMobileTab('panel');
   };
 
   // Quick Item Addition
@@ -3008,7 +3004,7 @@ export default function Home() {
             border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 0;
             flex-shrink: 0;
-            z-index: 100;
+            z-index: 250 !important;
             box-sizing: border-box;
           }
           .menu-toggle-btn {
@@ -3037,7 +3033,7 @@ export default function Home() {
             border-bottom: 1px solid var(--border-subtle);
             transform: translateX(100%);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 90;
+            z-index: 200 !important;
             overflow-y: auto;
           }
           

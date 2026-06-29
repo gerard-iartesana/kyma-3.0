@@ -170,17 +170,17 @@ export function ItemCard({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.35)',
+            background: 'rgba(0, 0, 0, 0.4)',
             border: '1px solid var(--border-subtle)',
             borderRadius: '8px',
-            padding: '6px 11px',
+            padding: '6px 12px',
             gap: '2px',
-            minWidth: '68px',
+            minWidth: '74px',
             flexShrink: 0
           }}>
             <span style={{
-              fontSize: '0.78rem',
-              fontWeight: 600,
+              fontSize: '0.92rem',
+              fontWeight: 700,
               color: '#ffffff',
               textTransform: 'uppercase',
               letterSpacing: '0.02em',
@@ -190,8 +190,8 @@ export function ItemCard({
             </span>
             {item.eventTime && (
               <span style={{
-                fontSize: '0.68rem',
-                color: '#8a8a93',
+                fontSize: '0.80rem',
+                color: '#a1a1aa',
                 fontWeight: 500,
                 whiteSpace: 'nowrap'
               }}>
@@ -751,13 +751,13 @@ export function ItemCard({
           flex-shrink: 0;
         }
         .agenda-compact-date {
-          font-size: 0.8rem;
-          font-weight: 500;
-          color: var(--text-secondary);
-          background: rgba(0, 0, 0, 0.25);
+          font-size: 0.90rem;
+          font-weight: 600;
+          color: #ffffff;
+          background: rgba(0, 0, 0, 0.35);
           border: 1px solid var(--border-subtle);
-          border-radius: 4px;
-          padding: 2px 6px;
+          border-radius: 6px;
+          padding: 3px 8px;
           white-space: nowrap;
         }
       `}</style>
