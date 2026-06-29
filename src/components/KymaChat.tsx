@@ -473,12 +473,10 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         })}
         
         {isTyping && (
-          <div className="message-wrapper wrapper-kyma animate-fade-in">
-            <div className="message-bubble bubble-kyma thinking-bubble">
-              <div className="thinking-content">
-                <LogoIcon size={18} className="thinking-logo-icon spin-pulse" />
-                <span className="thinking-text">Pensando...</span>
-              </div>
+          <div className="message-wrapper wrapper-kyma animate-fade-in" style={{ padding: '4px 8px', margin: '4px 0' }}>
+            <div className="thinking-content-clean" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary, #94a3b8)', fontSize: '0.86rem', fontWeight: 500 }}>
+              <div className="minimal-chat-spinner" />
+              <span>Pensando...</span>
             </div>
           </div>
         )}
@@ -763,44 +761,19 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
 
         /* Thinking indicator styling */
-        .thinking-bubble {
-          padding: 10px 16px !important;
-          background: rgba(139, 92, 246, 0.08) !important;
-          border: 1px solid rgba(139, 92, 246, 0.25) !important;
+        .minimal-chat-spinner {
+          width: 15px;
+          height: 15px;
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          border-top-color: #ec4899;
+          border-right-color: #a855f7;
+          border-radius: 50%;
+          animation: kymaSpin 0.75s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          flex-shrink: 0;
         }
 
-        .thinking-content {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          color: var(--accent-purple, #a855f7);
-        }
-
-        .spin-pulse {
-          animation: spinPulse 2s infinite linear;
-        }
-
-        @keyframes spinPulse {
-          0% {
-            transform: rotate(0deg) scale(1);
-            opacity: 0.85;
-          }
-          50% {
-            transform: rotate(180deg) scale(1.18);
-            opacity: 1;
-          }
-          100% {
-            transform: rotate(360deg) scale(1);
-            opacity: 0.85;
-          }
-        }
-
-        .thinking-text {
-          font-size: 0.88rem;
-          font-weight: 500;
-          color: var(--text-secondary, #94a3b8);
-          letter-spacing: 0.02em;
-          animation: pulseText 1.5s infinite ease-in-out;
+        @keyframes kymaSpin {
+          to { transform: rotate(360deg); }
         }
 
         @keyframes pulseText {

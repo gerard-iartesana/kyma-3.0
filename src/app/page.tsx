@@ -516,7 +516,7 @@ export default function Home() {
     return (
       <div className="kyma-loading-screen">
         <div className="loading-content">
-          <LogoIcon size={96} className="loading-logo animate-premium-glow" />
+          <div className="minimal-spinner-large" />
         </div>
         <style jsx>{`
           .kyma-loading-screen {
@@ -536,26 +536,17 @@ export default function Home() {
             align-items: center;
             justify-content: center;
           }
-          .animate-premium-glow {
-            color: #ffffff;
-            animation: premiumFloatGlow 2.4s infinite ease-in-out;
+          .minimal-spinner-large {
+            width: 38px;
+            height: 38px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: #ec4899;
+            border-right-color: #a855f7;
+            border-radius: 50%;
+            animation: kymaSpin 0.75s cubic-bezier(0.4, 0, 0.2, 1) infinite;
           }
-          @keyframes premiumFloatGlow {
-            0% {
-              transform: translateY(0) scale(0.95) rotate(-4deg);
-              filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.25));
-              opacity: 0.65;
-            }
-            50% {
-              transform: translateY(-12px) scale(1.05) rotate(4deg);
-              filter: drop-shadow(0 0 26px rgba(139, 92, 246, 0.7));
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(0) scale(0.95) rotate(-4deg);
-              filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.25));
-              opacity: 0.65;
-            }
+          @keyframes kymaSpin {
+            to { transform: rotate(360deg); }
           }
         `}</style>
       </div>
