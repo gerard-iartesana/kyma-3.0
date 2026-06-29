@@ -9,6 +9,7 @@ interface KymaChatProps {
   onClearContext: () => void;
   onItemAddedOrModified: (item?: KymaItem, action?: string) => void;
   onUserProfileUpdated?: (updatedProfile: any) => void;
+  onMessageSent?: () => void;
 }
 
 function renderFormattedText(text: string) {
@@ -70,13 +71,14 @@ function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string;
   );
 }
 
-export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, onUserProfileUpdated }: KymaChatProps) {
+export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, onUserProfileUpdated, onMessageSent }: KymaChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const baseTextRef = useRef<string>('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -88,18 +90,13 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         rec.lang = 'es-ES';
 
         rec.onresult = (event: any) => {
-          let transcript = '';
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-              transcript += event.results[i][0].transcript;
-            }
+          let sessionTranscript = '';
+          for (let i = 0; i < event.results.length; ++i) {
+            sessionTranscript += event.results[i][0].transcript;
           }
-          if (transcript) {
-            setInputText(prev => {
-              const separator = prev.endsWith(' ') || prev.length === 0 ? '' : ' ';
-              return prev + separator + transcript;
-            });
-          }
+          const base = baseTextRef.current || '';
+          const separator = base && !base.endsWith(' ') && !sessionTranscript.startsWith(' ') ? ' ' : '';
+          setInputText(base + separator + sessionTranscript);
         };
 
         rec.onerror = (e: any) => {
@@ -127,6 +124,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       setIsListening(false);
     } else {
       try {
+        baseTextRef.current = inputText;
         recognitionRef.current.start();
         setIsListening(true);
       } catch (e) {
@@ -211,6 +209,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
     const userText = inputText;
     setInputText('');
+    if (onMessageSent) onMessageSent();
 
     try {
       // Send user message
@@ -447,7 +446,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
               transition: 'all 0.2s ease'
             }}
           >
-            <Mic size={20} />
+            <Mic size={22} className="mic-icon-svg" />
           </button>
         </div>
 

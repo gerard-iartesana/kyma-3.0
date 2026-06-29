@@ -93,7 +93,7 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Mobile navigation state ('chat' | 'panel')
-  const [mobileTab, setMobileTab] = useState<'chat' | 'panel'>('chat');
+  const [mobileTab, setMobileTab] = useState<'chat' | 'panel'>('panel');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // View mode for Personas ('orbits' | 'grid')
@@ -2021,6 +2021,7 @@ export default function Home() {
           onClearContext={() => setChatContextItem(null)}
           onItemAddedOrModified={handleItemAddedOrModified}
           onUserProfileUpdated={(updatedProf) => setUserProfile(updatedProf)}
+          onMessageSent={() => setMobileTab('chat')}
         />
       </section>
 
@@ -3105,6 +3106,7 @@ export default function Home() {
           }
           .content-pane.mobile-visible {
             display: flex;
+            padding-bottom: 95px !important;
           }
 
           .chat-pane {
@@ -3119,10 +3121,37 @@ export default function Home() {
             box-sizing: border-box;
           }
           .chat-pane.mobile-hidden {
-            display: none;
+            display: flex !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            height: auto !important;
+            z-index: 95 !important;
+            background: rgba(10, 10, 15, 0.88) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+          }
+          .chat-pane.mobile-hidden .chat-header,
+          .chat-pane.mobile-hidden .chat-messages {
+            display: none !important;
           }
           .chat-pane.mobile-visible {
-            display: flex;
+            display: flex !important;
+            position: fixed !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 100 !important;
+            background: var(--bg-primary) !important;
+          }
+
+          .mic-icon-svg {
+            width: 26px !important;
+            height: 26px !important;
           }
 
           /* Hide scrollbars on mobile views */
