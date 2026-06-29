@@ -82,31 +82,31 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
   const accumulatedSpeechRef = useRef<string>('');
   const isListeningRef = useRef<boolean>(false);
 
-  const [attachedFile, setAttachedFile] = useState<{ name: string; type: string; content?: string; previewUrl?: string } | null>(null);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; type: string; content?: string; previewUrl?: string; fileObj?: File } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const objectUrl = URL.createObjectURL(file);
     if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAttachedFile({
-          name: file.name,
-          type: file.type,
-          previewUrl: event.target?.result as string,
-          content: `[Imagen adjunta: ${file.name}]`
-        });
-      };
-      reader.readAsDataURL(file);
+      setAttachedFile({
+        name: file.name,
+        type: file.type,
+        previewUrl: objectUrl,
+        fileObj: file,
+        content: `[Imagen adjunta: ${file.name}]`
+      });
     } else {
       const reader = new FileReader();
       reader.onload = (event) => {
         setAttachedFile({
           name: file.name,
           type: file.type,
-          content: event.target?.result as string
+          previewUrl: objectUrl,
+          fileObj: file,
+          content: (event.target?.result as string || '').slice(0, 2000)
         });
       };
       reader.readAsText(file);
@@ -318,6 +318,11 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
     }
 
     try {
+      // Safety timeout to guarantee unblocking UI in case of network stall
+      const safetyTimer = setTimeout(() => {
+        setIsTyping(false);
+      }, 12000);
+
       // Background async DB write with full context for LLM extraction
       dbClient.sendMessage(fullTextForDB, ctx).then(savedMsg => {
         setMessages(prev => prev.map(m => m.id === tempId ? { ...savedMsg, text: displayUserText } : m));
@@ -377,10 +382,12 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             kymaText = await generateResponse(fullTextForDB, contextItem);
           }
 
+          clearTimeout(safetyTimer);
           setIsTyping(false);
           const kymaMsg = await dbClient.receiveKymaMessage(kymaText);
           setMessages(prev => [...prev, { ...kymaMsg, isNew: true }]);
         } catch (err) {
+          clearTimeout(safetyTimer);
           setIsTyping(false);
           console.error(err);
         }

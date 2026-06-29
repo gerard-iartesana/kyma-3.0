@@ -1,6 +1,6 @@
 import React from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin, Download, FileText } from 'lucide-react';
+import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin, Download, FileText, Eye } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface ItemCardProps {
@@ -440,44 +440,7 @@ export function ItemCard({
         </p>
       )}
 
-      {(item.fileUrl || item.fileName || item.title.toLowerCase().includes('dni') || item.content.toLowerCase().includes('dni')) && (
-        <div style={{ marginTop: isCompact ? '4px' : '8px', marginBottom: isCompact ? '4px' : '6px' }}>
-          <a 
-            href={item.fileUrl || '#'} 
-            download={item.fileName || `${item.title}.pdf`}
-            target="_blank" 
-            rel="noopener noreferrer"
-            onClick={(e) => {
-              if (!item.fileUrl) {
-                e.preventDefault();
-                alert(`Documento adjunto: ${item.fileName || item.title}. En un entorno real abriría/descargaría el archivo adjunto.`);
-              } else {
-                e.stopPropagation();
-              }
-            }}
-            className="file-download-btn"
-            title={`Descargar ${item.fileName || item.title}`}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              background: 'rgba(236, 72, 153, 0.12)',
-              border: '1px solid rgba(236, 72, 153, 0.3)',
-              color: '#f472b6',
-              fontSize: '0.78rem',
-              fontWeight: 500,
-              textDecoration: 'none',
-              width: 'fit-content',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <Download size={13} />
-            <span>Descargar {item.fileName || 'documento adjunto'}</span>
-          </a>
-        </div>
-      )}
+
 
       {!isCompact && item.doorId === 'estela' && item.lugar && (
         <div className="estela-lugar-badge" style={{
@@ -566,14 +529,53 @@ export function ItemCard({
               ))}
           </div>
           
-          <button 
-            className="ask-kyma-btn btn"
-            onClick={(e) => onAskKyma(item, e)}
-            title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? "Consultar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
-          >
-            <LogoIcon size={13} className="kyma-btn-icon" />
-            <span>{item.doorId === 'estela' ? 'Recordar' : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? 'Consultar' : 'Explorar'}</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {(item.fileUrl || item.fileName || item.title.toLowerCase().includes('dni') || item.content.toLowerCase().includes('dni')) && (
+              <>
+                <a 
+                  href={item.fileUrl || '#'} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!item.fileUrl) {
+                      alert(`Visualizando archivo adjunto: ${item.fileName || item.title}`);
+                    }
+                  }}
+                  className="card-action-grey-btn btn"
+                  title={`Ver ${item.fileName || item.title}`}
+                >
+                  <Eye size={13} className="action-grey-icon" />
+                  <span>Ver</span>
+                </a>
+                <a 
+                  href={item.fileUrl || '#'} 
+                  download={item.fileName || `${item.title}.pdf`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!item.fileUrl) {
+                      alert(`Descargando archivo adjunto: ${item.fileName || item.title}`);
+                    }
+                  }}
+                  className="card-action-grey-btn btn"
+                  title={`Descargar ${item.fileName || item.title}`}
+                >
+                  <Download size={13} className="action-grey-icon" />
+                  <span>Descargar</span>
+                </a>
+              </>
+            )}
+            <button 
+              className="ask-kyma-btn btn"
+              onClick={(e) => onAskKyma(item, e)}
+              title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? "Consultar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
+            >
+              <LogoIcon size={13} className="kyma-btn-icon" />
+              <span>{item.doorId === 'estela' ? 'Recordar' : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? 'Consultar' : 'Explorar'}</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -838,6 +840,36 @@ export function ItemCard({
           filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.45)) !important;
           opacity: 1;
         }
+
+        .card-action-grey-btn {
+          font-size: 0.72rem;
+          padding: 4px 8px;
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--text-muted);
+          border-radius: var(--border-radius-sm);
+          transition: all 0.25s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .card-action-grey-btn :global(.action-grey-icon) {
+          color: var(--text-muted) !important;
+          opacity: 0.55;
+          transition: all 0.25s ease;
+        }
+        .card-action-grey-btn:hover {
+          background: rgba(252, 252, 253, 0.04);
+          border-color: rgba(252, 252, 253, 0.08);
+          color: var(--text-primary);
+        }
+        .card-action-grey-btn:hover :global(.action-grey-icon) {
+          color: var(--accent-purple) !important;
+          opacity: 1;
+        }
+
         .text-success { color: var(--success); }
         .text-muted { color: var(--text-muted); }
 
