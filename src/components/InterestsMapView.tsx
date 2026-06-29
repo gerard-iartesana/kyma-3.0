@@ -30,18 +30,21 @@ interface SimLink {
 }
 
 const CATEGORY_DEFINITIONS = [
-  { name: 'Arte', tags: ['#cine', '#literatura', '#musica', '#música', '#pintura', '#teatro', '#arte', '#fotografia', '#fotografía', '#diseno', '#diseño'], colors: ['#f43f5e', '#ec4899', 'rgba(244, 63, 94, 0.12)'] },
-  { name: 'Humanidades', tags: ['#filosofia', '#filosofía', '#historia', '#psicologia', '#psicología', '#sociologia', '#sociología', '#antropologia', '#antropología', '#humanidades', '#la-llegada'], colors: ['#f59e0b', '#d97706', 'rgba(245, 158, 11, 0.12)'] },
-  { name: 'Tecnología', tags: ['#desarrollo', '#ia', '#software', '#tecnologia', '#tecnología', '#programacion', '#programación', '#ingenieria', '#ingeniería', '#kyma'], colors: ['#3b82f6', '#1d4ed8', 'rgba(59, 130, 246, 0.12)'] },
-  { name: 'Ciencia', tags: ['#fisica', '#física', '#biologia', '#biología', '#matematicas', '#matemáticas', '#ciencia', '#astronomia', '#astronomía', '#quimica', '#química'], colors: ['#10b981', '#047857', 'rgba(16, 185, 129, 0.12)'] },
-  { name: 'Estilo de Vida', tags: ['#deporte', '#viajes', '#cocina', '#gastronomia', '#gastronomía', '#bienestar', '#salud', '#naturaleza', '#estilo-de-vida'], colors: ['#a855f7', '#7c3aed', 'rgba(168, 85, 247, 0.12)'] }
+  { name: 'Arte', tags: ['#cine', '#cinedeterror', '#terror', '#series', '#literatura', '#novelanegra', '#novela', '#musica', '#música', '#rock', '#jazz', '#pop', '#pintura', '#teatro', '#arte', '#fotografia', '#fotografía', '#diseno', '#diseño', '#poesia', '#poesía', '#comic', '#cómic'], colors: ['#f43f5e', '#ec4899', 'rgba(244, 63, 94, 0.12)'] },
+  { name: 'Humanidades', tags: ['#filosofia', '#filosofía', '#historia', '#psicologia', '#psicología', '#sociologia', '#sociología', '#antropologia', '#antropología', '#humanidades', '#politica', '#política', '#etica', '#ética'], colors: ['#f59e0b', '#d97706', 'rgba(245, 158, 11, 0.12)'] },
+  { name: 'Tecnología', tags: ['#desarrollo', '#ia', '#software', '#tecnologia', '#tecnología', '#programacion', '#programación', '#ingenieria', '#ingeniería', '#videojuegos', '#rol', '#gaming', '#kyma'], colors: ['#3b82f6', '#1d4ed8', 'rgba(59, 130, 246, 0.12)'] },
+  { name: 'Ciencia', tags: ['#fisica', '#física', '#cienciaficcion', '#cienciaficción', '#biologia', '#biología', '#matematicas', '#matemáticas', '#ciencia', '#astronomia', '#astronomía', '#quimica', '#química', '#divulgacion', '#divulgación'], colors: ['#10b981', '#047857', 'rgba(16, 185, 129, 0.12)'] },
+  { name: 'Estilo de Vida', tags: ['#deporte', '#padel', '#pádel', '#futbol', '#fútbol', '#baloncesto', '#running', '#viajes', '#cocina', '#gastronomia', '#gastronomía', '#bienestar', '#salud', '#naturaleza', '#estilo-de-vida', '#ocio'], colors: ['#a855f7', '#7c3aed', 'rgba(168, 85, 247, 0.12)'] }
 ];
 
 const getCategoryForTag = (tag: string) => {
-  const t = tag.toLowerCase();
+  const t = tag.toLowerCase().replace(/[\s\-_]/g, '');
   for (const cat of CATEGORY_DEFINITIONS) {
-    if (cat.tags.includes(t)) {
-      return cat;
+    for (const catTag of cat.tags) {
+      const cleanCatTag = catTag.toLowerCase().replace(/[\s\-_]/g, '');
+      if (t.includes(cleanCatTag) || cleanCatTag.includes(t)) {
+        return cat;
+      }
     }
   }
   return null;
