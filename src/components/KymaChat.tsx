@@ -463,7 +463,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           <input
             type="text"
             className="input-field chat-input"
-            placeholder={contextItem ? "Responde a Kyma..." : "Háblale a Kyma, o captura una nota/tarea..."}
+            placeholder="Escribir aquí..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
           />

@@ -271,13 +271,19 @@ export function ItemCard({
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
-            background: 'transparent',
-            padding: '2px 0 6px 0',
+            justifyContent: 'space-between',
+            background: 'rgba(139, 92, 246, 0.08)',
+            border: '1px solid rgba(139, 92, 246, 0.25)',
+            borderRadius: '8px',
+            padding: '6px 10px',
+            marginBottom: '10px',
             width: '100%'
           }}
         >
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <LogoIcon size={13} /> Propuesta de Kyma
+          </span>
+          <div style={{ display: 'flex', gap: '6px' }}>
             {onConfirmItem && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onConfirmItem(item, e); }}
@@ -527,7 +533,7 @@ export function ItemCard({
         }
         .card-title {
           font-family: var(--font-noto), var(--font-sans), sans-serif;
-          font-size: 1.2rem;
+          font-size: 1.28rem;
           font-weight: 600;
           color: var(--text-primary);
           line-height: 1.3;
@@ -538,9 +544,9 @@ export function ItemCard({
         }
 
         .card-content {
-          font-size: 0.92rem;
+          font-size: 1.02rem;
           color: var(--text-secondary);
-          line-height: 1.5;
+          line-height: 1.55;
           display: -webkit-box;
           -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
@@ -728,7 +734,7 @@ export function ItemCard({
           width: 100%;
         }
         .card-compact .card-title {
-          font-size: 0.95rem;
+          font-size: 1.06rem;
           font-weight: 500;
           white-space: nowrap;
           overflow: hidden;

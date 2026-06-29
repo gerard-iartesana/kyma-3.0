@@ -921,7 +921,7 @@ export default function Home() {
               </button>
 
               <h1 className="serif-title font-serif">
-                {userProfile.nombre?.trim() ? `¡Hola, ${userProfile.nombre.trim()}!` : '¡Hola!'}
+                ¡Hola, {userProfile.nombre?.trim() || user?.user_metadata?.full_name?.split(' ')[0] || (user?.email ? user.email.split('@')[0] : 'David')}!
               </h1>
               <p className="hero-subtitle">
                 Tu espacio personal de un vistazo. Accede directamente a tus novedades y actividad reciente.
@@ -1004,7 +1004,7 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icons.Calendar size={16} color="var(--accent-purple-light, #c084fc)" />
-                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Próximos eventos</h2>
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Próximos eventos</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('agenda')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1015,6 +1015,8 @@ export default function Home() {
                           isCompact={!dashboardExpanded}
                           onClick={(clickedItem) => handleSelectItem(clickedItem)}
                           onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                         />
                       </div>
                     )}
@@ -1025,7 +1027,7 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icons.CheckSquare size={16} color="var(--accent-purple-light, #c084fc)" />
-                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Tareas urgentes</h2>
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Tareas urgentes</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('tareas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1037,6 +1039,8 @@ export default function Home() {
                           onClick={(clickedItem) => handleSelectItem(clickedItem)}
                           onAskKyma={(item, e) => handleAskKyma(item, e)}
                           onToggleComplete={handleToggleComplete}
+                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                         />
                       </div>
                     )}
@@ -1047,7 +1051,7 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icons.Users size={16} color="var(--accent-purple-light, #c084fc)" />
-                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Nuevos vínculos</h2>
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Nuevos vínculos</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('personas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1058,6 +1062,8 @@ export default function Home() {
                           isCompact={!dashboardExpanded}
                           onClick={(clickedItem) => handleSelectItem(clickedItem)}
                           onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                         />
                       </div>
                     )}
@@ -1068,7 +1074,7 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icons.Compass size={16} color="var(--accent-purple-light, #c084fc)" />
-                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Intereses</h2>
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Intereses</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('intereses')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1079,6 +1085,8 @@ export default function Home() {
                           isCompact={!dashboardExpanded}
                           onClick={(clickedItem) => handleSelectItem(clickedItem)}
                           onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                         />
                       </div>
                     )}
@@ -1089,7 +1097,7 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icons.Lightbulb size={16} color="var(--accent-purple-light, #c084fc)" />
-                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Reflexiones</h2>
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Reflexiones</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('reflexiones')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1100,6 +1108,8 @@ export default function Home() {
                           isCompact={!dashboardExpanded}
                           onClick={(clickedItem) => handleSelectItem(clickedItem)}
                           onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                         />
                       </div>
                     )}
@@ -1110,7 +1120,7 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icons.FileText size={16} color="var(--accent-purple-light, #c084fc)" />
-                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Notas</h2>
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Notas</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('notas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1121,6 +1131,8 @@ export default function Home() {
                           isCompact={!dashboardExpanded}
                           onClick={(clickedItem) => handleSelectItem(clickedItem)}
                           onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                         />
                       </div>
                     )}
@@ -1131,7 +1143,7 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icons.Activity size={16} color="var(--accent-purple-light, #c084fc)" />
-                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Recuerdos añadidos</h2>
+                            <h2 className="font-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-secondary, #a1a1aa)', margin: 0 }}>Recuerdos añadidos</h2>
                           </div>
                           <button onClick={() => handleSelectDoor('estela')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             Ver todo <Icons.ArrowRight size={11} />
@@ -1142,6 +1154,8 @@ export default function Home() {
                           isCompact={!dashboardExpanded}
                           onClick={(clickedItem) => handleSelectItem(clickedItem)}
                           onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                         />
                       </div>
                     )}
