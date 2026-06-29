@@ -526,26 +526,6 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
       {/* Input area */}
       <form onSubmit={handleSend} className="chat-input-form">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          title="Adjuntar archivo o imagen (txt, md, ticket...)"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: attachedFile ? '#ec4899' : 'var(--text-muted)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px',
-            borderRadius: '50%',
-            transition: 'all 0.2s ease',
-            flexShrink: 0
-          }}
-        >
-          <Plus size={22} />
-        </button>
         <input 
           type="file"
           ref={fileInputRef}
@@ -554,6 +534,29 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           onChange={handleFileSelect}
         />
         <div className="input-wrapper" style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="attach-btn"
+            onClick={() => fileInputRef.current?.click()}
+            title="Adjuntar archivo o imagen (txt, md, ticket...)"
+            style={{
+              position: 'absolute',
+              left: '12px',
+              background: 'none',
+              border: 'none',
+              color: attachedFile ? '#ec4899' : 'var(--text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '8px',
+              borderRadius: '50%',
+              transition: 'all 0.2s ease',
+              zIndex: 2
+            }}
+          >
+            <Plus size={22} />
+          </button>
           <input
             type="text"
             className="input-field chat-input"
@@ -578,7 +581,8 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
               justifyContent: 'center',
               padding: '8px',
               borderRadius: '50%',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              zIndex: 2
             }}
           >
             <Mic size={22} className="mic-icon-svg" />
@@ -823,6 +827,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         }
         .chat-input {
           flex: 1;
+          padding-left: 48px;
           padding-right: 48px;
         }
         .send-btn {
@@ -841,6 +846,10 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             width: 52px;
             height: 52px;
           }
+        }
+        .attach-btn:hover {
+          color: #ec4899 !important;
+          background: rgba(236, 72, 153, 0.1);
         }
         .mic-btn:hover {
           color: var(--accent-purple) !important;
