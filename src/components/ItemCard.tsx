@@ -271,20 +271,13 @@ export function ItemCard({
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'rgba(139, 92, 246, 0.12)',
-            border: '1px solid rgba(139, 92, 246, 0.28)',
-            borderRadius: '6px',
-            padding: '6px 10px',
-            fontSize: '0.75rem',
-            color: '#c084fc',
+            justifyContent: 'flex-end',
+            background: 'transparent',
+            padding: '2px 0 6px 0',
             width: '100%'
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}>
-            <Sparkles size={13} color="#c084fc" /> Sugerido por Kyma
-          </span>
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             {onConfirmItem && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onConfirmItem(item, e); }}

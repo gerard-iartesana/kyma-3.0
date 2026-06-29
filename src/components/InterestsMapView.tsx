@@ -30,11 +30,11 @@ interface SimLink {
 }
 
 const CATEGORY_DEFINITIONS = [
-  { name: 'Arte', tags: ['#cine', '#cinedeterror', '#terror', '#series', '#literatura', '#novelanegra', '#novela', '#musica', '#música', '#rock', '#jazz', '#pop', '#pintura', '#teatro', '#arte', '#fotografia', '#fotografía', '#diseno', '#diseño', '#poesia', '#poesía', '#comic', '#cómic'], colors: ['#f43f5e', '#ec4899', 'rgba(244, 63, 94, 0.12)'] },
-  { name: 'Humanidades', tags: ['#filosofia', '#filosofía', '#historia', '#psicologia', '#psicología', '#sociologia', '#sociología', '#antropologia', '#antropología', '#humanidades', '#politica', '#política', '#etica', '#ética'], colors: ['#f59e0b', '#d97706', 'rgba(245, 158, 11, 0.12)'] },
-  { name: 'Tecnología', tags: ['#desarrollo', '#ia', '#software', '#tecnologia', '#tecnología', '#programacion', '#programación', '#ingenieria', '#ingeniería', '#videojuegos', '#rol', '#gaming', '#kyma'], colors: ['#3b82f6', '#1d4ed8', 'rgba(59, 130, 246, 0.12)'] },
-  { name: 'Ciencia', tags: ['#fisica', '#física', '#cienciaficcion', '#cienciaficción', '#biologia', '#biología', '#matematicas', '#matemáticas', '#ciencia', '#astronomia', '#astronomía', '#quimica', '#química', '#divulgacion', '#divulgación'], colors: ['#10b981', '#047857', 'rgba(16, 185, 129, 0.12)'] },
-  { name: 'Estilo de Vida', tags: ['#deporte', '#padel', '#pádel', '#futbol', '#fútbol', '#baloncesto', '#running', '#viajes', '#cocina', '#gastronomia', '#gastronomía', '#bienestar', '#salud', '#naturaleza', '#estilo-de-vida', '#ocio'], colors: ['#a855f7', '#7c3aed', 'rgba(168, 85, 247, 0.12)'] }
+  { name: 'Arte', tags: ['#cine', '#cinedeterror', '#terror', '#series', '#literatura', '#novelanegra', '#novela', '#musica', '#música', '#rock', '#jazz', '#pop', '#pintura', '#teatro', '#arte', '#fotografia', '#fotografía', '#diseno', '#diseño', '#poesia', '#poesía', '#comic', '#cómic'], colors: ['#9ca3af', '#6b7280', 'rgba(156, 163, 175, 0.12)'] },
+  { name: 'Humanidades', tags: ['#filosofia', '#filosofía', '#historia', '#psicologia', '#psicología', '#sociologia', '#sociología', '#antropologia', '#antropología', '#humanidades', '#politica', '#política', '#etica', '#ética'], colors: ['#a1a1aa', '#71717a', 'rgba(161, 161, 170, 0.12)'] },
+  { name: 'Tecnología', tags: ['#desarrollo', '#ia', '#software', '#tecnologia', '#tecnología', '#programacion', '#programación', '#ingenieria', '#ingeniería', '#videojuegos', '#rol', '#gaming', '#kyma'], colors: ['#9ca3af', '#6b7280', 'rgba(156, 163, 175, 0.12)'] },
+  { name: 'Ciencia', tags: ['#fisica', '#física', '#cienciaficcion', '#cienciaficción', '#biologia', '#biología', '#matematicas', '#matemáticas', '#ciencia', '#astronomia', '#astronomía', '#quimica', '#química', '#divulgacion', '#divulgación'], colors: ['#a1a1aa', '#71717a', 'rgba(161, 161, 170, 0.12)'] },
+  { name: 'Estilo de Vida', tags: ['#deporte', '#padel', '#pádel', '#futbol', '#fútbol', '#baloncesto', '#running', '#viajes', '#cocina', '#gastronomia', '#gastronomía', '#bienestar', '#salud', '#naturaleza', '#estilo-de-vida', '#ocio'], colors: ['#9ca3af', '#6b7280', 'rgba(156, 163, 175, 0.12)'] }
 ];
 
 const getCategoryForTag = (tag: string) => {
@@ -247,7 +247,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
   // 2. Build Tag Nodes (Hubs) - faint background, borderless
   uniqueTagsMap.forEach((itemsWithTag, tag) => {
     const cat = getCategoryForTag(tag);
-    const colors = cat ? cat.colors : ['#6b7280', '#4b5563', 'rgba(107, 114, 128, 0.12)'];
+    const colors = cat ? cat.colors : ['#a1a1aa', '#71717a', 'rgba(161, 161, 170, 0.12)'];
     // Tag radius is proportional to the number of cards that mention it
     const tagRadius = 26 + itemsWithTag.length * 8; // 1 card = 34px, 3 cards = 50px
 
