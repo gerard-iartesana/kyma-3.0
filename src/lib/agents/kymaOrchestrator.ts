@@ -347,11 +347,14 @@ Devuelve UNICAMENTE un JSON con este formato:
   let deletedItemTitle = '';
   let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
 
-  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|muévelo|muevelo|pásalo|pasalo|muévela|muevela|cámbiala a|cambiala a|muévela a|muevela a|pásala a|pasala a)\b/i.test(userText);
+  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|muévelo|muevelo|pásalo|pasalo|muévela|muevela|cámbiala a|cambiala a|muévela a|muevela a|pásala a|pasala a|cambia|cambiar|modifica|modificar|renombra|renombrar|edita|editar|título|titulo)\b/i.test(userText);
 
   if (isManagementRequested && allUserItems.length > 0) {
     const mgmtPrompt = `
-Analiza la siguiente frase del usuario dentro del historial reciente. Determina si el usuario solicita ELIMINAR / BORRAR una ficha existente o MOVER / CORREGIR la clasificación de una ficha existente de una puerta a otra (por ejemplo, de "estela" a "tareas" o de "notas" a "agenda").
+Analiza la siguiente frase del usuario dentro del historial reciente. Determina si el usuario solicita:
+1. ELIMINAR / BORRAR una ficha existente.
+2. MOVER / CORREGIR la clasificación de una ficha existente de una puerta a otra.
+3. CAMBIAR O EDITAR EL TÍTULO o CONTENIDO de una ficha existente (por ejemplo: "cambia el título de entrenamiento de pádel y pon entreno de pádel" o "pon de título X").
 
 FICHAS ACTUALES DEL USUARIO:
 ${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.title, content: i.content, eventDate: i.eventDate })), null, 2)}
@@ -359,19 +362,23 @@ ${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.t
 FRASE DEL USUARIO: "${userText}"
 
 REGLAS DE SALIDA E INVIOLABILIDAD:
-1. REGLA SAGRADA PARA PERSONAS (VÍNCULOS): Las fichas en la puerta "personas" (vínculos) NUNCA SE MOVERÁN NI REUBICARÁN a otra puerta (NUNCA a estela, notas, tareas, etc.). Si el usuario pide modificar o ajustar la frecuencia, relación, notas o comunicación de una persona, "shouldDelete" DEBE SER false y "shouldCreateNew" DEBE SER false.
-2. Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false.
-3. Si el usuario pide explícitamente mover una ficha de otra puerta (ej: "no lo pongas en estela, ponlo como tarea" o "pásalo a tareas"): "shouldDelete": true, "itemIdToDelete": "<id de la ficha incorrecta>", "shouldCreateNew": true, "targetDoorId": "tareas" (o la puerta indicada), "newTitle": "Título conciso para la nueva ficha", "newContent": "Contenido en primera persona".
+1. REGLA SAGRADA PARA PERSONAS (VÍNCULOS): Las fichas en la puerta "personas" (vínculos) NUNCA SE MOVERÁN NI REUBICARÁN a otra puerta.
+2. Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false, "shouldUpdateTitle": false.
+3. Si el usuario pide explícitamente mover una ficha de otra puerta: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": true, "targetDoorId": "<puerta>", "newTitle": "<titulo>", "shouldUpdateTitle": false.
+4. Si el usuario pide CAMBIAR EL TÍTULO o EDITAR una ficha existente: "shouldDelete": false, "shouldCreateNew": false, "shouldUpdateTitle": true, "targetItemIdToUpdate": "<id de la ficha a modificar>", "newUpdatedTitle": "<nuevo título exacto e ideal usando economía del lenguaje, ej: Entreno de pádel>".
 
 Devuelve ÚNICAMENTE un JSON con este formato:
 {
   "shouldDelete": boolean,
-  "itemIdToDelete": "ID exacto de la ficha a eliminar/mover o null",
-  "itemTitleToDelete": "Título de la ficha eliminada o null",
+  "itemIdToDelete": "ID exacto o null",
+  "itemTitleToDelete": "Título o null",
   "shouldCreateNew": boolean,
   "targetDoorId": "agenda" | "tareas" | "notas" | "intereses" | "personas" | "reflexiones" | "estela" | null,
-  "newTitle": "Título corto para la nueva ficha",
-  "newContent": "Contenido en primera persona"
+  "newTitle": "Título corto o null",
+  "newContent": "Contenido o null",
+  "shouldUpdateTitle": boolean,
+  "targetItemIdToUpdate": "ID exacto de la ficha a cambiar título o null",
+  "newUpdatedTitle": "Nuevo título exacto para la ficha o null"
 }
 `;
     try {
@@ -385,6 +392,21 @@ Devuelve ÚNICAMENTE un JSON con este formato:
         if (rawMgmt) {
           const cleanJson = rawMgmt.replace(/```json/gi, '').replace(/```/g, '').trim();
           const parsedMgmt = JSON.parse(cleanJson);
+
+          if (parsedMgmt.shouldUpdateTitle && parsedMgmt.targetItemIdToUpdate && parsedMgmt.newUpdatedTitle) {
+            let cleanNewTitle = parsedMgmt.newUpdatedTitle.replace(/\bentrenamiento\b/gi, 'Entreno')
+              .replace(/\breunión\b|\breunion\b|\bcita médica\b|\bcita medica\b/gi, 'Cita')
+              .replace(/\bbicicleta\b/gi, 'Bici')
+              .replace(/\bpartido de pádel\b|\bpartido de padel\b/gi, 'Partido')
+              .replace(/\bcorte de pelo\b/gi, 'Pelo');
+
+            const updatedItem = await dbClient.updateItem(parsedMgmt.targetItemIdToUpdate, {
+              title: cleanNewTitle
+            }, userId, sbClient);
+
+            allExtractedResults.unshift({ item: updatedItem, action: 'enrich', doorId: updatedItem.doorId });
+            finalAction = 'enrich';
+          }
 
           if (parsedMgmt.shouldDelete && parsedMgmt.itemIdToDelete) {
             const itemObj = allUserItems.find(i => i.id === parsedMgmt.itemIdToDelete);
