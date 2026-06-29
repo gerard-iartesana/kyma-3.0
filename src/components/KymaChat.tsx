@@ -293,19 +293,30 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
     accumulatedSpeechRef.current = '';
     if (onMessageSent) onMessageSent();
 
+    const ctx = contextItem ? { id: contextItem.id, title: contextItem.title, doorId: contextItem.doorId } : undefined;
+    
+    // INSTANT OPTIMISTIC UPDATE (0ms latency for user)
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      text: userText,
+      sender: 'user',
+      timestamp: new Date().toISOString(),
+      contextItem: ctx
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
+    setIsTyping(true);
+
+    if (contextItem) {
+      onClearContext();
+    }
+
     try {
-      // Send user message
-      const ctx = contextItem ? { id: contextItem.id, title: contextItem.title, doorId: contextItem.doorId } : undefined;
-      const userMsg = await dbClient.sendMessage(userText, ctx);
-      setMessages(prev => [...prev, userMsg]);
-
-      // Clear context after sending message with it
-      if (contextItem) {
-        onClearContext();
-      }
-
-      // Trigger Kyma response
-      setIsTyping(true);
+      // Background async DB write
+      dbClient.sendMessage(userText, ctx).then(savedMsg => {
+        setMessages(prev => prev.map(m => m.id === tempId ? savedMsg : m));
+      }).catch(err => console.error('Error enviando mensaje en segundo plano:', err));
 
       const timer = setTimeout(async () => {
         try {
