@@ -364,14 +364,16 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
 
         .orbits-container {
           width: 100%;
+          flex: 1;
+          height: 100%;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 20px 0;
+          padding: 10px 0;
           background: transparent;
           border: none;
-          min-height: 520px;
+          min-height: 480px;
           touch-action: none;
         }
 

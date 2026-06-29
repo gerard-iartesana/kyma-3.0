@@ -379,7 +379,9 @@ export function EstelaHorizontalTimelineView({
         .interactive-timeline-viewport {
           position: relative;
           width: 100%;
-          height: 540px;
+          flex: 1;
+          height: 100%;
+          min-height: 480px;
           background: transparent;
           overflow: hidden;
           user-select: none;

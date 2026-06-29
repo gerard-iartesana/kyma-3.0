@@ -2243,6 +2243,18 @@ export default function Home() {
         .door-view.full-width-door-view {
           max-width: 100% !important;
           margin: 0 !important;
+          flex: 1 !important;
+          height: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 12px !important;
+        }
+
+        .full-width-door-view .door-viewport {
+          flex: 1 !important;
+          height: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
         }
 
         .door-header {
