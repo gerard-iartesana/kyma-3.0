@@ -94,6 +94,7 @@ export default function Home() {
 
   // Dashboard sort tab state ('novedades' | 'destacados')
   const [dashboardSort, setDashboardSort] = useState<'novedades' | 'destacados'>('novedades');
+  const [dashboardExpanded, setDashboardExpanded] = useState(false);
 
   // Quick-creation forms states
   const [showAddForm, setShowAddForm] = useState(false);
@@ -849,13 +850,35 @@ export default function Home() {
 
         {selectedDoorId === null ? (
           <div className="home-view animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-            <div className="home-hero">
-              <h1 className="serif-title font-serif">
-                {userProfile.nombre?.trim() ? `¡Hola, ${userProfile.nombre.trim()}!` : '¡Hola!'}
-              </h1>
-              <p className="hero-subtitle">
-                Tu espacio personal de un vistazo. Accede directamente a tus secciones y a tu actividad destacada.
-              </p>
+            <div className="home-hero" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h1 className="serif-title font-serif">
+                  {userProfile.nombre?.trim() ? `¡Hola, ${userProfile.nombre.trim()}!` : '¡Hola!'}
+                </h1>
+                <p className="hero-subtitle">
+                  Tu espacio personal de un vistazo. Accede directamente a tus novedades y actividad reciente.
+                </p>
+              </div>
+
+              {/* VIEW TOGGLE CONTROL: SIMPLIFICADA VS EXPANDIDA */}
+              <div className="view-mode-selector radio-group" style={{ display: 'inline-flex', padding: '4px', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>
+                <button
+                  className={`radio-label ${!dashboardExpanded ? 'active' : ''}`}
+                  onClick={() => setDashboardExpanded(false)}
+                  style={{ border: 'none', padding: '5px 14px', borderRadius: '16px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <Icons.Grid size={13} />
+                  <span>Vista simplificada</span>
+                </button>
+                <button
+                  className={`radio-label ${dashboardExpanded ? 'active' : ''}`}
+                  onClick={() => setDashboardExpanded(true)}
+                  style={{ border: 'none', padding: '5px 14px', borderRadius: '16px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <Icons.Maximize2 size={13} />
+                  <span>Vista expandida</span>
+                </button>
+              </div>
             </div>
 
             {/* RESPONSIVE MODULAR DASHBOARD GRID (2 to 3 columns) */}
@@ -864,264 +887,220 @@ export default function Home() {
               style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', 
-                gap: '20px',
+                gap: '24px',
                 alignItems: 'start'
               }}
             >
-              
-              {/* 1. AGENDA: Próximos eventos */}
               {(() => {
+                const isRecentDashboardItem = (item: KymaItem) => {
+                  if (!item.createdAt) return true;
+                  const itemDate = new Date(item.createdAt).getTime();
+                  if (isNaN(itemDate)) return true;
+                  const now = Date.now();
+                  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+                  return (now - itemDate) <= oneWeekMs || itemDate >= now;
+                };
+
+                // 1. Agenda: Próximos eventos
                 const agendaItems = items
-                  .filter(i => i.doorId === 'agenda')
+                  .filter(i => i.doorId === 'agenda' && i.eventDate && i.eventDate >= new Date().toISOString().split('T')[0])
                   .sort((a, b) => new Date(a.eventDate || 0).getTime() - new Date(b.eventDate || 0).getTime());
-                const topItem = agendaItems[0];
+                
+                // 2. Tareas urgentes (solo si hay alguna marcada con peso === 3)
+                const urgentTaskItems = items
+                  .filter(i => i.doorId === 'tareas' && !i.completed && i.peso === 3);
 
-                return (
-                  <div className="home-section-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius-md)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
-                          <Icons.Calendar size={18} color="#c084fc" />
-                        </div>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Próximos eventos</h2>
-                      </div>
-                      <button onClick={() => handleSelectDoor('agenda')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Ver todo <Icons.ArrowRight size={12} />
-                      </button>
-                    </div>
-
-                    {topItem ? (
-                      <ItemCard
-                        item={topItem}
-                        onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                        onAskKyma={(item, e) => handleAskKyma(item, e)}
-                      />
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '12px 0' }}>
-                        Sin eventos próximos agendados.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* 2. TAREAS: Tareas urgentes */}
-              {(() => {
-                const taskItems = items
-                  .filter(i => i.doorId === 'tareas' && !i.completed)
-                  .sort((a, b) => (b.peso || 1) - (a.peso || 1));
-                const topItem = taskItems[0];
-
-                return (
-                  <div className="home-section-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius-md)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
-                          <Icons.CheckSquare size={18} color="#f59e0b" />
-                        </div>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Tareas urgentes</h2>
-                      </div>
-                      <button onClick={() => handleSelectDoor('tareas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Ver todo <Icons.ArrowRight size={12} />
-                      </button>
-                    </div>
-
-                    {topItem ? (
-                      <ItemCard
-                        item={topItem}
-                        onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                        onAskKyma={(item, e) => handleAskKyma(item, e)}
-                        onToggleComplete={handleToggleComplete}
-                      />
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '12px 0' }}>
-                        ¡Genial! No tienes tareas pendientes.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* 3. VÍNCULOS */}
-              {(() => {
-                const vinculoItems = items
-                  .filter(i => i.doorId === 'personas')
+                // 3. Nuevos vínculos (creados la última semana)
+                const newVinculoItems = items
+                  .filter(i => i.doorId === 'personas' && isRecentDashboardItem(i))
                   .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-                const topItem = vinculoItems[0];
 
-                return (
-                  <div className="home-section-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius-md)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(236, 72, 153, 0.15)', border: '1px solid rgba(236, 72, 153, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
-                          <Icons.Users size={18} color="#ec4899" />
-                        </div>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Vínculos</h2>
-                      </div>
-                      <button onClick={() => handleSelectDoor('personas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Ver todo <Icons.ArrowRight size={12} />
-                      </button>
-                    </div>
-
-                    {topItem ? (
-                      <ItemCard
-                        item={topItem}
-                        onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                        onAskKyma={(item, e) => handleAskKyma(item, e)}
-                      />
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '12px 0' }}>
-                        Sin vínculos registrados.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* 4. ESTELA DE VIDA */}
-              {(() => {
-                const estelaItems = items
-                  .filter(i => i.doorId === 'estela')
+                // 4. Intereses (últimos modificados/creados en la última semana)
+                const recienteIntereses = items
+                  .filter(i => i.doorId === 'intereses' && isRecentDashboardItem(i))
                   .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-                const topItem = estelaItems[0];
 
-                return (
-                  <div className="home-section-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius-md)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
-                          <Icons.Activity size={18} color="#10b981" />
-                        </div>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Estela de vida</h2>
-                      </div>
-                      <button onClick={() => handleSelectDoor('estela')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Ver todo <Icons.ArrowRight size={12} />
-                      </button>
-                    </div>
-
-                    {topItem ? (
-                      <ItemCard
-                        item={topItem}
-                        onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                        onAskKyma={(item, e) => handleAskKyma(item, e)}
-                      />
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '12px 0' }}>
-                        Sin hitos o recuerdos registrados.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* 5. REFLEXIONES */}
-              {(() => {
-                const reflexionesItems = items
-                  .filter(i => i.doorId === 'reflexiones')
+                // 5. Reflexiones (últimas modificadas en la última semana)
+                const recienteReflexiones = items
+                  .filter(i => i.doorId === 'reflexiones' && isRecentDashboardItem(i))
                   .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-                const topItem = reflexionesItems[0];
 
-                return (
-                  <div className="home-section-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius-md)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
-                          <Icons.Sparkles size={18} color="#60a5fa" />
-                        </div>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Reflexiones</h2>
-                      </div>
-                      <button onClick={() => handleSelectDoor('reflexiones')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Ver todo <Icons.ArrowRight size={12} />
-                      </button>
-                    </div>
-
-                    {topItem ? (
-                      <ItemCard
-                        item={topItem}
-                        onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                        onAskKyma={(item, e) => handleAskKyma(item, e)}
-                      />
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '12px 0' }}>
-                        Sin reflexiones guardadas.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* 6. INTERESES */}
-              {(() => {
-                const interesesItems = items
-                  .filter(i => i.doorId === 'intereses')
+                // 6. Notas (últimas añadidas en la última semana)
+                const recienteNotas = items
+                  .filter(i => i.doorId === 'notas' && isRecentDashboardItem(i))
                   .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-                const topItem = interesesItems[0];
 
-                return (
-                  <div className="home-section-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius-md)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
-                          <Icons.Compass size={18} color="#c084fc" />
-                        </div>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Intereses</h2>
-                      </div>
-                      <button onClick={() => handleSelectDoor('intereses')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Ver todo <Icons.ArrowRight size={12} />
-                      </button>
-                    </div>
-
-                    {topItem ? (
-                      <ItemCard
-                        item={topItem}
-                        onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                        onAskKyma={(item, e) => handleAskKyma(item, e)}
-                      />
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '12px 0' }}>
-                        Sin intereses registrados.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* 7. NOTAS */}
-              {(() => {
-                const notasItems = items
-                  .filter(i => i.doorId === 'notas')
+                // 7. Recuerdos añadidos (Estela de vida, ÚLTIMO BLOQUE)
+                const recienteEstela = items
+                  .filter(i => i.doorId === 'estela' && isRecentDashboardItem(i))
                   .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-                const topItem = notasItems[0];
+
+                const hasAnyContent = agendaItems.length > 0 || urgentTaskItems.length > 0 || newVinculoItems.length > 0 || recienteIntereses.length > 0 || recienteReflexiones.length > 0 || recienteNotas.length > 0 || recienteEstela.length > 0;
+
+                if (!hasAnyContent) {
+                  return (
+                    <div style={{ gridColumn: '1 / -1', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-subtle)', borderRadius: '16px', padding: '32px 24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      <Icons.Sparkles size={24} color="#c084fc" style={{ margin: '0 auto 12px' }} />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>Tu mapa está tranquilo</h3>
+                      <p style={{ fontSize: '0.88rem', maxWidth: '460px', margin: '0 auto', color: 'var(--text-muted)' }}>
+                        No hay novedades recientes esta semana. Explora tus puertas en el menú lateral o habla con Kyma en el chat para registrar nuevas ideas y recuerdos.
+                      </p>
+                    </div>
+                  );
+                }
 
                 return (
-                  <div className="home-section-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius-md)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(148, 163, 184, 0.15)', border: '1px solid rgba(148, 163, 184, 0.3)', borderRadius: '8px', padding: '6px', display: 'flex' }}>
-                          <Icons.FileText size={18} color="#94a3b8" />
+                  <>
+                    {/* 1. AGENDA */}
+                    {agendaItems.length > 0 && (
+                      <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icons.Calendar size={16} color="#c084fc" />
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Próximos eventos</h2>
+                          </div>
+                          <button onClick={() => handleSelectDoor('agenda')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            Ver todo <Icons.ArrowRight size={11} />
+                          </button>
                         </div>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Notas</h2>
+                        <ItemCard
+                          item={agendaItems[0]}
+                          isCompact={!dashboardExpanded}
+                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                        />
                       </div>
-                      <button onClick={() => handleSelectDoor('notas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Ver todo <Icons.ArrowRight size={12} />
-                      </button>
-                    </div>
-
-                    {topItem ? (
-                      <ItemCard
-                        item={topItem}
-                        onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                        onAskKyma={(item, e) => handleAskKyma(item, e)}
-                      />
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '12px 0' }}>
-                        Sin notas guardadas.
-                      </p>
                     )}
-                  </div>
+
+                    {/* 2. TAREAS URGENTES */}
+                    {urgentTaskItems.length > 0 && (
+                      <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icons.CheckSquare size={16} color="#f59e0b" />
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Tareas urgentes</h2>
+                          </div>
+                          <button onClick={() => handleSelectDoor('tareas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            Ver todo <Icons.ArrowRight size={11} />
+                          </button>
+                        </div>
+                        <ItemCard
+                          item={urgentTaskItems[0]}
+                          isCompact={!dashboardExpanded}
+                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onToggleComplete={handleToggleComplete}
+                        />
+                      </div>
+                    )}
+
+                    {/* 3. NUEVOS VÍNCULOS */}
+                    {newVinculoItems.length > 0 && (
+                      <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icons.Users size={16} color="#ec4899" />
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Nuevos vínculos</h2>
+                          </div>
+                          <button onClick={() => handleSelectDoor('personas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            Ver todo <Icons.ArrowRight size={11} />
+                          </button>
+                        </div>
+                        <ItemCard
+                          item={newVinculoItems[0]}
+                          isCompact={!dashboardExpanded}
+                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                        />
+                      </div>
+                    )}
+
+                    {/* 4. INTERESES */}
+                    {recienteIntereses.length > 0 && (
+                      <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icons.Compass size={16} color="#c084fc" />
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Intereses</h2>
+                          </div>
+                          <button onClick={() => handleSelectDoor('intereses')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            Ver todo <Icons.ArrowRight size={11} />
+                          </button>
+                        </div>
+                        <ItemCard
+                          item={recienteIntereses[0]}
+                          isCompact={!dashboardExpanded}
+                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                        />
+                      </div>
+                    )}
+
+                    {/* 5. REFLEXIONES */}
+                    {recienteReflexiones.length > 0 && (
+                      <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icons.Sparkles size={16} color="#60a5fa" />
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Reflexiones</h2>
+                          </div>
+                          <button onClick={() => handleSelectDoor('reflexiones')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            Ver todo <Icons.ArrowRight size={11} />
+                          </button>
+                        </div>
+                        <ItemCard
+                          item={recienteReflexiones[0]}
+                          isCompact={!dashboardExpanded}
+                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                        />
+                      </div>
+                    )}
+
+                    {/* 6. NOTAS */}
+                    {recienteNotas.length > 0 && (
+                      <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icons.FileText size={16} color="#94a3b8" />
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Notas</h2>
+                          </div>
+                          <button onClick={() => handleSelectDoor('notas')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            Ver todo <Icons.ArrowRight size={11} />
+                          </button>
+                        </div>
+                        <ItemCard
+                          item={recienteNotas[0]}
+                          isCompact={!dashboardExpanded}
+                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                        />
+                      </div>
+                    )}
+
+                    {/* 7. RECUERDOS AÑADIDOS (ESTELA DE VIDA - ÚLTIMO BLOQUE) */}
+                    {recienteEstela.length > 0 && (
+                      <div className="home-section-block" style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icons.Activity size={16} color="#10b981" />
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Recuerdos añadidos</h2>
+                          </div>
+                          <button onClick={() => handleSelectDoor('estela')} style={{ background: 'none', border: 'none', color: 'var(--accent-purple-light, #c084fc)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            Ver todo <Icons.ArrowRight size={11} />
+                          </button>
+                        </div>
+                        <ItemCard
+                          item={recienteEstela[0]}
+                          isCompact={!dashboardExpanded}
+                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                        />
+                      </div>
+                    )}
+                  </>
                 );
               })()}
-
             </div>
           </div>
         ) : (
