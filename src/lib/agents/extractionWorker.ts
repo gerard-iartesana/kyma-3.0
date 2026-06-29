@@ -3,9 +3,10 @@ import { createSupabaseClient } from '../supabase';
 import { DOOR_PACKAGES } from './doorPackages';
 import { DoorId, ExtractionResult } from './types';
 
-function formatTagList(tags: string[]): string[] {
+function formatTagList(tags: string[], itemTitle?: string): string[] {
   const map = new Map<string, string>();
   const ignoredGenericTags = new Set(['intereses', 'interes', 'personas', 'agenda', 'tareas', 'notas', 'reflexiones', 'estela', 'general']);
+  const titleLower = itemTitle ? itemTitle.trim().toLowerCase() : '';
 
   for (const t of tags) {
     let clean = t.trim().replace(/^#/, '');
@@ -17,8 +18,18 @@ function formatTagList(tags: string[]): string[] {
     const key = clean.toLowerCase().replace(/\s+/g, ' ');
     if (ignoredGenericTags.has(key)) continue;
 
+    // Evitar que la etiqueta duplique exactamente el título de la propia ficha
+    if (titleLower && (key === titleLower || key === titleLower.replace(/\s+/g, ' '))) continue;
+
     if (!map.has(key)) {
-      const words = clean.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1));
+      const lowercaseParticles = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'en', 'y', 'para', 'con', 'a']);
+      const words = clean.split(/\s+/).map((w, index) => {
+        const lowerW = w.toLowerCase();
+        if (index > 0 && lowercaseParticles.has(lowerW)) {
+          return lowerW;
+        }
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+      });
       map.set(key, words.join(' '));
     }
   }
@@ -359,12 +370,13 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         const rawTags = result.extractedData.tags && result.extractedData.tags.length > 0 
           ? [...result.extractedData.tags]
           : [...(existing.tags || [])];
-        const mergedTags = formatTagList(rawTags);
+        const targetTitle = (finalTitle && finalTitle !== 'Nueva ficha') ? finalTitle : ((result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title);
+        const mergedTags = formatTagList(rawTags, targetTitle);
         
         const targetDoorId = existing.doorId === 'personas' ? 'personas' : doorId;
         const updatedItem = await dbClient.updateItem(existing.id, {
           doorId: targetDoorId,
-          title: (finalTitle && finalTitle !== 'Nueva ficha') ? finalTitle : ((result.extractedData.title && result.extractedData.title !== 'Nueva ficha') ? result.extractedData.title : existing.title),
+          title: targetTitle,
           content: updatedContent,
           eventDate: result.extractedData.eventDate || existing.eventDate,
           eventTime: result.extractedData.eventTime || existing.eventTime,
@@ -387,7 +399,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     // Default to create
     const eventDate = doorId === 'agenda' ? (result.extractedData.eventDate || currentDateStr) : result.extractedData.eventDate;
     const rawTags = [...(result.extractedData.tags || [])];
-    const initialTags = formatTagList(rawTags);
+    const initialTags = formatTagList(rawTags, finalTitle);
 
     let extractedFileUrl = result.extractedData.fileUrl;
     let extractedFileName = result.extractedData.fileName;
