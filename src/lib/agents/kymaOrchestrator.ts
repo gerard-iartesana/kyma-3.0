@@ -403,8 +403,16 @@ Devuelve ÚNICAMENTE un JSON con este formato:
 
   const userName = activeUserProfile?.nombre || 'Usuario';
   const userAge = activeUserProfile?.edad || 'No especificada';
-  const userResidence = activeUserProfile?.lugarResidencia || 'No especificado';
+  const userResidence = activeUserProfile?.lugarResidencia || 'España';
   const userLang = activeUserProfile?.idioma || 'Español';
+
+  const resLower = userResidence.trim().toLowerCase();
+  const isLatam = /^(argentina|méxico|mexico|colombia|chile|perú|peru|venezuela|uruguay|paraguay|bolivia|ecuador|costa rica|panamá|panama|república dominicana|republica dominicana|puerto rico|cuba|guatemala|honduras|el salvador|nicaragua|estados unidos|eeuu|usa)\b/i.test(resLower) ||
+    /\b(buenos aires|bogotá|bogota|cdmx|santiago|lima|montevideo|caracas|quito|san josé|medellín|medellin|guadalajara|miami)\b/i.test(resLower);
+
+  const dialectInstruction = isLatam
+    ? `REGISTRO DIALECTAL LATINOAMERICANO (${userResidence}): Puedes usar giros y expresiones cálidas propias de Latinoamérica ("qué lindo", "lindo", "platicar", etc.) adaptadas a la naturalidad de la región.`
+    : `REGISTRO DIALECTAL CASTELLANO DE ESPAÑA (ESTRICTO Y OBLIGATORIO): El usuario reside en España/Europa (${userResidence}). Queda TOTALMENTE PROHIBIDO usar expresiones o giros propios de Latinoamérica (NUNCA digas "qué lindo", "tan lindo", "platicar", "apuntarse" en lugar de apuntar, ni tiempos verbales o vocabulario latinoamericano). Usa un castellano fluido, cálido, natural y propio de España (ej: "qué bien", "qué bonito", "genial", "estupendo", "hablar", "charlar").`;
 
   const userContextInstruction = `
 \n\n[DATOS DE CONTEXTO PERSONAL DEL USUARIO]:
@@ -412,6 +420,7 @@ NOMBRE DEL USUARIO: ${userName} (Dirígete a él de forma cercana y natural llam
 EDAD: ${userAge}
 LUGAR DE RESIDENCIA: ${userResidence}
 IDIOMA PREFERIDO: ${userLang}
+${dialectInstruction}
 
 [INFORMACIÓN DEL ESPACIO Y AGENDA DEL USUARIO]:
 FECHA DE HOY: ${todayStr} (${now.toLocaleDateString('es-ES', { weekday: 'long' })})
