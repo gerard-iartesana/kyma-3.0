@@ -1,6 +1,6 @@
 import React from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin } from 'lucide-react';
+import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin, Download, FileText } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface ItemCardProps {
@@ -114,10 +114,16 @@ export function ItemCard({
   };
 
   const isHighlighted = item.doorId === 'agenda' 
-    ? isTodayEvent() 
+    ? (item.peso === 3 || isTodayEvent()) 
     : item.doorId === 'personas' 
     ? (item.cercania === 'nucleo' || item.peso === 3) 
     : item.peso === 3;
+
+  const isPastAgendaEvent = () => {
+    if (item.doorId !== 'agenda' || !item.eventDate) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return item.eventDate < today;
+  };
 
   // Helper for calculate decay / bar length for personas (Frecuencia de contacto)
   const getFrequencyScore = (freqText?: string): number => {
@@ -308,7 +314,7 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
       onClick={() => onClick(item)}
     >
       {item.origen === 'kyma_sugerido' && (
@@ -403,6 +409,14 @@ export function ItemCard({
           <div className="card-compact-right">
             {item.doorId === 'agenda' && item.eventDate && (
               <div className="agenda-compact-date" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {item.peso === 3 && (
+                  <Star 
+                    size={16} 
+                    color="#ec4899" 
+                    fill="none"
+                    style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
+                  />
+                )}
                 <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.94rem' }}>
                   {formatDate(item.eventDate)}
                 </span>
@@ -424,6 +438,45 @@ export function ItemCard({
         <p className={`card-content ${item.completed ? 'content-completed' : ''}`}>
           {item.content}
         </p>
+      )}
+
+      {(item.fileUrl || item.fileName || item.title.toLowerCase().includes('dni') || item.content.toLowerCase().includes('dni')) && (
+        <div style={{ marginTop: isCompact ? '4px' : '8px', marginBottom: isCompact ? '4px' : '6px' }}>
+          <a 
+            href={item.fileUrl || '#'} 
+            download={item.fileName || `${item.title}.pdf`}
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={(e) => {
+              if (!item.fileUrl) {
+                e.preventDefault();
+                alert(`Documento adjunto: ${item.fileName || item.title}. En un entorno real abriría/descargaría el archivo adjunto.`);
+              } else {
+                e.stopPropagation();
+              }
+            }}
+            className="file-download-btn"
+            title={`Descargar ${item.fileName || item.title}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              background: 'rgba(236, 72, 153, 0.12)',
+              border: '1px solid rgba(236, 72, 153, 0.3)',
+              color: '#f472b6',
+              fontSize: '0.78rem',
+              fontWeight: 500,
+              textDecoration: 'none',
+              width: 'fit-content',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Download size={13} />
+            <span>Descargar {item.fileName || 'documento adjunto'}</span>
+          </a>
+        </div>
       )}
 
       {!isCompact && item.doorId === 'estela' && item.lugar && (
@@ -558,6 +611,16 @@ export function ItemCard({
           border-bottom-left-radius: var(--border-radius-md);
         }
         
+        .card-past-event {
+          opacity: 0.52;
+          filter: grayscale(0.25);
+          transition: all 0.2s ease;
+        }
+        .card-past-event:hover {
+          opacity: 0.88;
+          filter: grayscale(0);
+        }
+
         .card-header {
           display: flex;
           justify-content: space-between;

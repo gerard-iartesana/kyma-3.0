@@ -279,12 +279,17 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       try { recognitionRef.current?.stop(); } catch (err) {}
     }
 
-    let userText = inputText.trim();
+    let rawInput = inputText.trim();
+    let displayUserText = rawInput;
+    let fullTextForDB = rawInput;
+
     if (attachedFile) {
+      displayUserText += (displayUserText ? '\n\n' : '') + `Adjunto: ${attachedFile.name}`;
+      
       if (attachedFile.previewUrl) {
-        userText += (userText ? '\n\n' : '') + `[Adjunto imagen/ticket "${attachedFile.name}": Analiza los datos o texto de esta nota/ticket]`;
+        fullTextForDB = displayUserText + `\n\n[DETALLES ARCHIVO ADJUNTO "${attachedFile.name}" (fileUrl: "${attachedFile.previewUrl}"): Analiza la imagen/documento e incluye fileUrl y fileName en la ficha creada o actualizada]`;
       } else if (attachedFile.content) {
-        userText += (userText ? '\n\n' : '') + `[Contenido del archivo adjunto "${attachedFile.name}":\n${attachedFile.content.slice(0, 4000)}]`;
+        fullTextForDB = displayUserText + `\n\n[DETALLES ARCHIVO ADJUNTO "${attachedFile.name}":\n${attachedFile.content.slice(0, 4000)}]`;
       }
       setAttachedFile(null);
     }
@@ -295,11 +300,11 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
     const ctx = contextItem ? { id: contextItem.id, title: contextItem.title, doorId: contextItem.doorId } : undefined;
     
-    // INSTANT OPTIMISTIC UPDATE (0ms latency for user)
+    // INSTANT OPTIMISTIC UPDATE (0ms latency for user) with clean display text
     const tempId = `temp-${Date.now()}`;
     const optimisticMsg: ChatMessage = {
       id: tempId,
-      text: userText,
+      text: displayUserText,
       sender: 'user',
       timestamp: new Date().toISOString(),
       contextItem: ctx
@@ -313,9 +318,9 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
     }
 
     try {
-      // Background async DB write
-      dbClient.sendMessage(userText, ctx).then(savedMsg => {
-        setMessages(prev => prev.map(m => m.id === tempId ? savedMsg : m));
+      // Background async DB write with full context for LLM extraction
+      dbClient.sendMessage(fullTextForDB, ctx).then(savedMsg => {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...savedMsg, text: displayUserText } : m));
       }).catch(err => console.error('Error enviando mensaje en segundo plano:', err));
 
       const timer = setTimeout(async () => {
@@ -369,7 +374,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           }
 
           if (!kymaText) {
-            kymaText = await generateResponse(userText, contextItem);
+            kymaText = await generateResponse(fullTextForDB, contextItem);
           }
 
           setIsTyping(false);

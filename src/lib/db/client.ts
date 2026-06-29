@@ -20,6 +20,8 @@ export interface KymaItem {
   lugar?: string; // Specific to estela (e.g. "París, Francia")
   emocion?: 1 | 2 | 3 | 4 | 5; // Specific to estela (1: muy triste, 2: triste, 3: calma, 4: alegre, 5: muy alegre)
   recurrencia?: 'none' | 'semanal' | 'mensual' | 'anual' | 'primer_lunes_mes' | 'ultimo_viernes_mes' | string; // Specific to agenda
+  fileUrl?: string;
+  fileName?: string;
 }
 
 export interface ChatMessage {
@@ -304,6 +306,9 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
     item.emocion = (typeof datos.emocion === 'number' ? datos.emocion : 4) as 1 | 2 | 3 | 4 | 5;
   }
 
+  if (datos.file_url) item.fileUrl = datos.file_url;
+  if (datos.file_name) item.fileName = datos.file_name;
+
   return item;
 }
 
@@ -343,6 +348,8 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   if (item.dateStr !== undefined) datos.dateStr = item.dateStr;
   if (item.lugar !== undefined) datos.lugar = item.lugar;
   if (item.emocion !== undefined) datos.emocion = item.emocion;
+  if (item.fileUrl !== undefined) datos.file_url = item.fileUrl;
+  if (item.fileName !== undefined) datos.file_name = item.fileName;
   
   if (Object.keys(datos).length > 0) {
     dbItem.datos = datos;

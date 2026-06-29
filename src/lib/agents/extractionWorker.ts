@@ -176,6 +176,8 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "year": 2018 (número de 4 dígitos, solo si es estela),
     "dateStr": "14 de Mayo" o "Verano" (solo si es estela),
     "lugar": "París, Francia" (solo si es estela),
+    "fileUrl": "URL o base64 si el usuario adjuntó un archivo/imagen o null",
+    "fileName": "Nombre del archivo adjunto si lo hay o null",
     "tags": ["#Cine", "#CineDeTerror", "#Deporte", "#Ocio"]
   },
   "reasoning": "Breve justificación interna"
@@ -299,6 +301,17 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     const rawTags = [...(result.extractedData.tags || []), doorId];
     const initialTags = formatTagList(rawTags);
 
+    let extractedFileUrl = result.extractedData.fileUrl;
+    let extractedFileName = result.extractedData.fileName;
+    if (!extractedFileUrl && userMessage.includes('fileUrl: "')) {
+      const matchUrl = userMessage.match(/fileUrl:\s*"([^"]+)"/);
+      if (matchUrl) extractedFileUrl = matchUrl[1];
+    }
+    if (!extractedFileName && userMessage.includes('Adjunto: ')) {
+      const matchName = userMessage.match(/Adjunto:\s*([^\n\r\]]+)/);
+      if (matchName) extractedFileName = matchName[1].trim();
+    }
+
     const newItem = await dbClient.createItem({
       doorId,
       title: finalTitle,
@@ -315,6 +328,8 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       dateStr: result.extractedData.dateStr,
       lugar: result.extractedData.lugar,
       emocion: extractedEmocion || (doorId === 'estela' ? 4 : undefined),
+      fileUrl: extractedFileUrl,
+      fileName: extractedFileName,
       origen
     }, userId, sbClient);
 

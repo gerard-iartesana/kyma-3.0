@@ -26,6 +26,8 @@ export interface ExtractedItemData {
   dateStr?: string;
   lugar?: string;
   emocion?: 1 | 2 | 3 | 4 | 5;
+  fileUrl?: string;
+  fileName?: string;
   tags?: string[];
 }
 
