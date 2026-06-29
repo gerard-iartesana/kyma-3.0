@@ -14,7 +14,7 @@ PRINCIPIOS FUNDAMENTALES:
 - Acuses en línea (Solo con confirmación real de [SISTEMA]): ÚNICAMENTE cuando en el mensaje de [SISTEMA] de este turno se te confirme explícitamente que se ha registrado, actualizado o eliminado una ficha (ej: "Se ha registrado una ficha..."), debes incluir el acuse de recibo breve en tu respuesta. NUNCA inventes ni afirmes que se ha guardado o creado una ficha si el mensaje de [SISTEMA] no te lo indica explícitamente.
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
-- Compleitud: Concluye siempre tus oraciones y pensamientos de forma completa.
+- Compleitud OBLIGATORIA: Concluye SIEMPRE tus oraciones, preguntas y pensamientos de forma completa y cerrada. Nunca dejes una frase o pregunta a medias ni te cortes al final.
 `;
 
 function extractUserProfileUpdates(userText: string, currentProfile?: any): { updatedProfile?: any; extractedKey?: string; extractedVal?: string } {
@@ -469,14 +469,17 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
     throw new Error('No se pudo obtener respuesta de la API de Gemini');
   }
 
-  let replyText = kymaData.candidates?.[0]?.content?.parts?.[0]?.text || 'No he podido procesar una respuesta en este momento.';
+  const candidateParts = kymaData.candidates?.[0]?.content?.parts || [];
+  let replyText = candidateParts.map((p: any) => p.text || '').join('').trim();
+  if (!replyText) {
+    replyText = 'No he podido procesar una respuesta en este momento.';
+  }
 
   // Safe targeted sanitization of LLM preamble / artifacts
   replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
   replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();
-  replyText = replyText.replace(/\s*¿\s*$/g, '').trim();
 
   return {
     replyText,
