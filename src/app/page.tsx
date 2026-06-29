@@ -94,7 +94,7 @@ export default function Home() {
 
   // Dashboard sort tab state ('novedades' | 'destacados')
   const [dashboardSort, setDashboardSort] = useState<'novedades' | 'destacados'>('novedades');
-  const [dashboardExpanded, setDashboardExpanded] = useState(false);
+  const [dashboardExpanded, setDashboardExpanded] = useState(true);
 
   // Quick-creation forms states
   const [showAddForm, setShowAddForm] = useState(false);
@@ -860,25 +860,25 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* VIEW TOGGLE CONTROL: SIMPLIFICADA VS EXPANDIDA */}
-              <div className="view-mode-selector radio-group" style={{ display: 'inline-flex', padding: '4px', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>
-                <button
-                  className={`radio-label ${!dashboardExpanded ? 'active' : ''}`}
-                  onClick={() => setDashboardExpanded(false)}
-                  style={{ border: 'none', padding: '5px 14px', borderRadius: '16px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '5px' }}
-                >
-                  <Icons.Grid size={13} />
-                  <span>Vista simplificada</span>
-                </button>
-                <button
-                  className={`radio-label ${dashboardExpanded ? 'active' : ''}`}
-                  onClick={() => setDashboardExpanded(true)}
-                  style={{ border: 'none', padding: '5px 14px', borderRadius: '16px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '5px' }}
-                >
-                  <Icons.Maximize2 size={13} />
-                  <span>Vista expandida</span>
-                </button>
-              </div>
+              {/* VIEW TOGGLE CONTROL: BOTÓN CIRCULAR CON FLECHAS */}
+              <button 
+                className={`btn btn-secondary ${!dashboardExpanded ? 'active' : ''}`}
+                onClick={() => setDashboardExpanded(!dashboardExpanded)}
+                title={dashboardExpanded ? "Simplificar vista de tarjetas" : "Ver vista detallada"}
+                style={{ 
+                  width: '38px', 
+                  height: '38px', 
+                  padding: 0, 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  background: !dashboardExpanded ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
+                  borderColor: !dashboardExpanded ? 'var(--accent-purple)' : 'var(--border-subtle)',
+                  color: !dashboardExpanded ? '#ffffff' : 'var(--text-secondary)'
+                }}
+              >
+                {dashboardExpanded ? <Icons.Minimize2 size={16} /> : <Icons.Maximize2 size={16} />}
+              </button>
             </div>
 
             {/* RESPONSIVE MODULAR DASHBOARD GRID (2 to 3 columns) */}
