@@ -752,22 +752,28 @@ export const dbClient = {
     return mapDbToKymaItem(updatedDbItem, finalTags);
   },
 
-  async deleteItem(id: string, overrideUserId?: string, customClient?: any): Promise<void> {
+  async deleteItem(id: string, cachedItem?: KymaItem, overrideUserId?: string, customClient?: any): Promise<void> {
     const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
     
-    // Fetch item before deleting to save it in trash recovery stack
+    // Save item in trash recovery stack
     try {
-      const { data: dbRow } = await sb
-        .from('elementos')
-        .select('*, elementos_etiquetas(etiquetas(nombre))')
-        .eq('user_id', userId)
-        .eq('id', id)
-        .single();
-        
-      if (dbRow) {
-        const tagNames = (dbRow.elementos_etiquetas || []).map((ee: any) => ee.etiquetas?.nombre).filter(Boolean);
-        const itemToTrash = mapDbToKymaItem(dbRow, tagNames);
+      let itemToTrash = cachedItem;
+      if (!itemToTrash) {
+        const { data: dbRow } = await sb
+          .from('elementos')
+          .select('*, elementos_etiquetas(etiquetas(nombre))')
+          .eq('user_id', userId)
+          .eq('id', id)
+          .maybeSingle();
+          
+        if (dbRow) {
+          const tagNames = (dbRow.elementos_etiquetas || []).map((ee: any) => ee.etiquetas?.nombre).filter(Boolean);
+          itemToTrash = mapDbToKymaItem(dbRow, tagNames);
+        }
+      }
+
+      if (itemToTrash) {
         let currentTrash: KymaItem[] = [];
         if (typeof window !== 'undefined') {
           try {
@@ -775,8 +781,8 @@ export const dbClient = {
             if (saved) currentTrash = JSON.parse(saved);
           } catch (e) {}
         }
+        currentTrash = currentTrash.filter(i => i.id !== itemToTrash!.id);
         currentTrash.unshift(itemToTrash);
-        // Keep up to 10 recently deleted items in trash
         currentTrash = currentTrash.slice(0, 10);
         if (typeof window !== 'undefined') {
           localStorage.setItem('kyma_deleted_trash', JSON.stringify(currentTrash));
@@ -842,7 +848,7 @@ export const dbClient = {
   },
 
   async discardItem(id: string, overrideUserId?: string, customClient?: any): Promise<void> {
-    return this.deleteItem(id, overrideUserId, customClient);
+    return this.deleteItem(id, undefined, overrideUserId, customClient);
   },
 
   // Messages API

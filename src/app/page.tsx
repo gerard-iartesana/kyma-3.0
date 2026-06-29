@@ -203,6 +203,15 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    if (undoToast && undoToast.show) {
+      const timer = setTimeout(() => {
+        setUndoToast(null);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [undoToast]);
+
   const refreshItems = async () => {
     try {
       const dbItems = await dbClient.getItems();
@@ -2235,6 +2244,53 @@ export default function Home() {
             </>
           )}
         </div>
+
+        {/* UNDO DELETED ITEM TOAST (Centered within middle content section) */}
+        {undoToast && undoToast.show && (
+          <div className="undo-toast-wrapper animate-fade-in" style={{
+            position: 'sticky',
+            bottom: '24px',
+            alignSelf: 'center',
+            marginTop: 'auto',
+            zIndex: 999,
+            pointerEvents: 'none'
+          }}>
+            <div style={{
+              pointerEvents: 'auto',
+              background: '#18181b',
+              border: '1px solid var(--accent-purple)',
+              borderRadius: '12px',
+              padding: '10px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
+            }}>
+              <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 500 }}>
+                Ficha "{undoToast.title}" eliminada
+              </span>
+              <button 
+                className="btn btn-primary btn-sm"
+                onClick={async () => {
+                  try {
+                    const restored = await dbClient.restoreLastDeletedItem();
+                    if (restored) {
+                      refreshItems();
+                      setUndoToast(null);
+                      setToastNotification({ show: true, message: `Ficha "${restored.title}" recuperada con éxito`, doorId: restored.doorId as any, item: restored });
+                    }
+                  } catch (e) {
+                    console.error('Error restaurando elemento:', e);
+                  }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '0.82rem', cursor: 'pointer' }}
+              >
+                <Icons.RotateCcw size={14} />
+                Deshacer
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3. COLUMNA CHAT DE KYMA */}
@@ -2267,48 +2323,6 @@ export default function Home() {
           }}
           onAskKyma={(item) => handleAskKyma(item)}
         />
-      )}
-
-      {/* UNDO DELETED ITEM TOAST */}
-      {undoToast && undoToast.show && (
-        <div className="undo-toast animate-fade-in" style={{
-          position: 'fixed',
-          bottom: '85px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 9999,
-          background: '#18181b',
-          border: '1px solid var(--accent-purple)',
-          borderRadius: '12px',
-          padding: '10px 18px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '14px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
-        }}>
-          <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 500 }}>
-            Ficha "{undoToast.title}" eliminada
-          </span>
-          <button 
-            className="btn btn-primary btn-sm"
-            onClick={async () => {
-              try {
-                const restored = await dbClient.restoreLastDeletedItem();
-                if (restored) {
-                  refreshItems();
-                  setUndoToast(null);
-                  setToastNotification({ show: true, message: `Ficha "${restored.title}" recuperada con éxito`, doorId: restored.doorId as any, item: restored });
-                }
-              } catch (e) {
-                console.error('Error restaurando elemento:', e);
-              }
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '0.82rem' }}
-          >
-            <Icons.RotateCcw size={14} />
-            Deshacer
-          </button>
-        </div>
       )}
 
       {/* 7. TOAST NOTIFICATION WINDOW */}

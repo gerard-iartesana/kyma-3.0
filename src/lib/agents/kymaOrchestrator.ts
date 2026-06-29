@@ -410,7 +410,7 @@ Devuelve ÚNICAMENTE un JSON con este formato:
 
           if (parsedMgmt.shouldDelete && parsedMgmt.itemIdToDelete) {
             const itemObj = allUserItems.find(i => i.id === parsedMgmt.itemIdToDelete);
-            await dbClient.deleteItem(parsedMgmt.itemIdToDelete, userId, sbClient);
+            await dbClient.deleteItem(parsedMgmt.itemIdToDelete, itemObj, userId, sbClient);
             deletedItemTitle = parsedMgmt.itemTitleToDelete || itemObj?.title || 'la ficha seleccionada';
             finalAction = 'delete';
           }

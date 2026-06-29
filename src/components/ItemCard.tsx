@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin, Download, FileText, Eye } from 'lucide-react';
+import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin, Download, FileText, Eye, Pencil } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface ItemCardProps {
@@ -26,6 +26,7 @@ export function ItemCard({
   onTagSelect,
   showSectionBadge
 }: ItemCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   // Helper for section title and icon
   const getSectionInfo = (doorId: string) => {
     switch (doorId) {
@@ -329,7 +330,8 @@ export function ItemCard({
   return (
     <div 
       className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
-      onClick={() => onClick(item)}
+      onClick={() => setIsExpanded(!isExpanded)}
+      style={{ cursor: 'pointer' }}
     >
       {item.origen === 'kyma_sugerido' && (
         <div 
@@ -389,12 +391,12 @@ export function ItemCard({
           </span>
         </div>
       )}
-      <div className="card-header">
-        <div className="card-title-group">
+      <div className="card-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+        <div className="card-title-group" style={{ flex: 1, minWidth: 0 }}>
           {item.doorId === 'tareas' && onToggleComplete && (
             <button 
               className="checkbox-btn" 
-              onClick={(e) => onToggleComplete(item, e)}
+              onClick={(e) => { e.stopPropagation(); onToggleComplete(item, e); }}
               aria-label="Toggle Complete"
             >
               {item.completed ? (
@@ -419,37 +421,69 @@ export function ItemCard({
             )}
           </h3>
         </div>
-        {isCompact ? (
-          <div className="card-compact-right">
-            {item.doorId === 'agenda' && item.eventDate && (
-              <div className="agenda-compact-date" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                {item.peso === 3 && (
-                  <Star 
-                    size={16} 
-                    color="#ec4899" 
-                    fill="none"
-                    style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
-                  />
-                )}
-                <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.94rem' }}>
-                  {formatDate(item.eventDate)}
-                </span>
-                {item.eventTime && (
-                  <span style={{ color: '#a1a1aa', fontWeight: 500, fontSize: '0.84rem' }}>
-                    {item.eventTime} h
+        <div className="card-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          {isCompact ? (
+            <div className="card-compact-right">
+              {item.doorId === 'agenda' && item.eventDate && (
+                <div className="agenda-compact-date" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  {item.peso === 3 && (
+                    <Star 
+                      size={16} 
+                      color="#ec4899" 
+                      fill="none"
+                      style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
+                    />
+                  )}
+                  <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.94rem' }}>
+                    {formatDate(item.eventDate)}
                   </span>
-                )}
-              </div>
-            )}
-            {item.doorId !== 'agenda' && renderBadge()}
-          </div>
-        ) : (
-          renderBadge()
-        )}
+                  {item.eventTime && (
+                    <span style={{ color: '#a1a1aa', fontWeight: 500, fontSize: '0.84rem' }}>
+                      {item.eventTime} h
+                    </span>
+                  )}
+                </div>
+              )}
+              {item.doorId !== 'agenda' && renderBadge()}
+            </div>
+          ) : (
+            renderBadge()
+          )}
+          
+          <button 
+            type="button"
+            className="card-edit-btn-simple"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick(item);
+            }}
+            title="Editar ficha"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: '4px',
+              margin: 0,
+              color: '#71717a',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              transition: 'color 0.2s ease'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
+          >
+            <Pencil size={15} />
+          </button>
+        </div>
       </div>
 
-      {!isCompact && (
-        <p className={`card-content ${item.completed ? 'content-completed' : ''}`}>
+      {(!isCompact || isExpanded) && item.content && (
+        <p 
+          className={`card-content ${item.completed ? 'content-completed' : ''}`}
+          style={isExpanded ? { WebkitLineClamp: 'none', display: 'block', overflow: 'visible' } : {}}
+        >
           {item.content}
         </p>
       )}

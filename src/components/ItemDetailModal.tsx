@@ -107,7 +107,7 @@ export function ItemDetailModal({ item, onClose, onSave, onDelete, onAskKyma }: 
     if (confirm('¿Estás seguro de que quieres borrar este elemento? Esta acción no se puede deshacer y Kyma olvidará esta información.')) {
       setIsDeleting(true);
       try {
-        await dbClient.deleteItem(item.id);
+        await dbClient.deleteItem(item.id, item);
         onDelete(item.id);
       } catch (err) {
         console.error(err);
