@@ -308,7 +308,7 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${(item.doorId === 'personas' || item.doorId === 'intereses' || item.doorId === 'reflexiones') ? 'card-pink-highlight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
       onClick={() => onClick(item)}
     >
       {item.origen === 'kyma_sugerido' && (
@@ -544,9 +544,6 @@ export function ItemCard({
           box-shadow: var(--shadow-md);
         }
         .card-high-weight {
-          border-color: rgba(139, 92, 246, 0.2);
-        }
-        .card-high-weight.card-pink-highlight {
           border-color: rgba(236, 72, 153, 0.25);
         }
         .card-high-weight::before {
@@ -556,12 +553,9 @@ export function ItemCard({
           left: 0;
           height: 100%;
           width: 3px;
-          background: var(--accent-gradient);
+          background: linear-gradient(180deg, #ec4899 0%, #a855f7 100%);
           border-top-left-radius: var(--border-radius-md);
           border-bottom-left-radius: var(--border-radius-md);
-        }
-        .card-high-weight.card-pink-highlight::before {
-          background: linear-gradient(180deg, #ec4899 0%, #a855f7 100%);
         }
         
         .card-header {
