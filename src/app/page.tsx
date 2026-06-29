@@ -1637,31 +1637,59 @@ export default function Home() {
       {/* DIVIDER HANDLE */}
       <div className={`chat-divider-bar state-${chatState}`}>
         <div className="divider-line" />
-        <div className="handle-container">
-          {(chatState === 'normal' || chatState === 'hidden') && (
-            <div className="handle-btn-wrapper">
-              <button 
-                type="button"
-                className="handle-btn btn-left" 
-                onClick={() => setChatState(chatState === 'hidden' ? 'normal' : 'expanded')}
-                title={chatState === 'hidden' ? "Mostrar chat" : "Expandir chat a pantalla completa"}
-              >
-                <Icons.ChevronLeft size={14} />
-              </button>
-              {chatState === 'hidden' && (
-                <LogoIcon size={18} className="docked-logo-icon" />
-              )}
-            </div>
-          )}
-          {(chatState === 'normal' || chatState === 'expanded') && (
+        <div 
+          className="handle-container"
+          onClick={chatState === 'hidden' ? () => setChatState('normal') : undefined}
+          style={chatState === 'hidden' ? { cursor: 'pointer' } : undefined}
+          title={chatState === 'hidden' ? "Mostrar chat" : undefined}
+        >
+          {chatState === 'hidden' ? (
             <button 
               type="button"
-              className="handle-btn btn-right" 
-              onClick={() => setChatState(chatState === 'expanded' ? 'normal' : 'hidden')}
-              title={chatState === 'expanded' ? "Restaurar tamaño del chat" : "Ocultar chat"}
+              className="handle-btn-docked" 
+              onClick={() => setChatState('normal')}
+              title="Mostrar chat"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                color: 'inherit',
+                width: '100%',
+                height: '100%'
+              }}
             >
-              <Icons.ChevronRight size={14} />
+              <Icons.ChevronLeft size={14} className="handle-btn-icon" />
+              <LogoIcon size={18} className="docked-logo-icon" />
             </button>
+          ) : (
+            <>
+              {(chatState === 'normal') && (
+                <div className="handle-btn-wrapper">
+                  <button 
+                    type="button"
+                    className="handle-btn btn-left" 
+                    onClick={() => setChatState('expanded')}
+                    title="Expandir chat a pantalla completa"
+                  >
+                    <Icons.ChevronLeft size={14} />
+                  </button>
+                </div>
+              )}
+              {(chatState === 'normal' || chatState === 'expanded') && (
+                <button 
+                  type="button"
+                  className="handle-btn btn-right" 
+                  onClick={() => setChatState(chatState === 'expanded' ? 'normal' : 'hidden')}
+                  title={chatState === 'expanded' ? "Restaurar tamaño del chat" : "Ocultar chat"}
+                >
+                  <Icons.ChevronRight size={14} />
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -162,8 +162,8 @@ ${contextSnippet ? `Contexto adicional: "${contextSnippet}"` : ''}
 REGLAS DE FORMATO Y ENRIQUECIMIENTO (tanto para create como para enrich):
 1. "title": DEBE SER DIRECTO Y CORTO (máximo 3-4 palabras, ej: "Torneo de Pádel", "Día de Playa", "Cita Médica", "David"). NUNCA incluyas personas, lugares ni horas en el título salvo si la puerta es personas donde el título es exclusivamente el nombre de la persona.
 2. "content": REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR ("yo", "mi", "me"). La aplicación funciona como un diario personal del usuario. NUNCA uses la tercera persona ("Le apasiona", "Le encanta", "Su película", "Lo ve cada día"). Escribe en su lugar: "Me apasiona el pádel...", "Me encanta el cine de terror...", "Mi película favorita del género es...", "Es mi hermano. Lo veo cada día...".
-3. "content" PARA AGENDA: OMITE totalmente la fecha y la hora en la redacción del texto del contenido, ya que la fecha y la hora se guardan en sus campos dedicados (eventDate, eventTime). NUNCA repitas ni concatenes frases absurdas.
-4. "tags": Extrae OBLIGATORIAMENTE todas las etiquetas temáticas relevantes con '#', la primera letra en mayúscula y respetando espacios para nombres propios (ej: "#Playa", "#Rafa", "#Son Bou", "#Pádel", "#PadelOne", "#Deporte").
+3. "content" PARA AGENDA: OMITE totalmente la fecha y la hora en la redacción del texto del contenido, ya que la fecha y la hora se guardan en sus campos dedicados (eventDate, eventTime). 
+4. "tags": Extrae etiquetas temáticas genéricas y amplias con '#' (ej: "#Cine", "#Deporte", "#Música", "#Series", "#Literatura", "#Filosofía", "#Tecnología"). IMPORTANTE: NUNCA generes etiquetas con nombres de obras específicas, películas, libros, o nombres propios de autores o personas (ej: NUNCA "#LaCasaDelDragon", "#Nolan", "#King"). Agrupa siempre bajo grandes temas generales.
 
 REGLAS DE SALIDA:
 Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
@@ -183,7 +183,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "year": 2018 (número de 4 dígitos, solo si es estela),
     "dateStr": "14 de Mayo" o "Verano" (solo si es estela),
     "lugar": "París, Francia" (solo si es estela),
-    "tags": ["#Agenda", "#Playa", "#Rafa", "#Son Bou", "#Ocio"]
+    "tags": ["#Cine", "#Series", "#Deporte", "#Ocio"]
   },
   "reasoning": "Breve justificación interna"
 }

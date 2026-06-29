@@ -47,7 +47,8 @@ Extrae o actualiza apuntes en primera persona del singular.`
     guardrails: [
       'Comprueba siempre la lista de intereses existentes del usuario.',
       'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: El texto es un diario personal del usuario. Usa "Me apasiona...", "Me encanta...", "Mi película favorita...". NUNCA uses tercera persona ("Le apasiona", "Le encanta", "Su película").',
-      'Si el tema o gusto expresado ya encaja con un interés existente, enriquécelo (action = "enrich").'
+      'Si el tema o gusto expresado ya encaja con un interés existente, enriquécelo (action = "enrich").',
+      'RESTRICCIÓN STRICTA DE ETIQUETAS (TAGS): Genera etiquetas temáticas genéricas y amplias (ej: "#Cine", "#Televisión", "#Literatura", "#Música", "#Filosofía", "#Videojuegos", "#Tecnología", "#Deporte", "#Arte", "#CienciaFicción", "#Series"). PROHIBIDO generar etiquetas con nombres de obras específicas, películas concretas, libros o nombres de autores/directores (ej: NUNCA crees tags como "#LaCasaDelDragon", "#ChristopherNolan", "#StephenKing", "#DavidDavid"). Las obras concretas y autores van dentro del título o texto de la ficha, NUNCA en las etiquetas.'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Intereses.
 Analiza pasiones y gustos expresados. REDACTA SIEMPRE EL CONTENIDO EN PRIMERA PERSONA DEL SINGULAR ("Me apasiona...", "Me encanta..."). NUNCA uses tercera persona.`

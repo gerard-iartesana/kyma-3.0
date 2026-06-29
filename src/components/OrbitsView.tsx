@@ -341,11 +341,9 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
             title={`${p.title} (${p.cercania === 'nucleo' ? 'Núcleo' : p.cercania === 'cercana' ? 'Cercana' : 'Órbita'}) - Frecuencia: ${getFrequencyLabel(p.frecuencia)}`}
           >
             <div 
-              className={`node-circle node-${p.cercania || 'orbita'} ${p.cercania === 'nucleo' ? 'pulse-glow-node font-serif' : ''}`}
+              className={`node-circle node-${p.cercania || 'orbita'} ${p.cercania === 'nucleo' ? 'pulse-glow-node' : ''}`}
               style={{ opacity: getFrequencyOpacity(p.frecuencia) }}
-            >
-              {getInitials(p.title)}
-            </div>
+            />
             <span className="node-name">{p.title}</span>
           </button>
         ))}
@@ -460,33 +458,31 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
           color: #fff;
           font-weight: 600;
           letter-spacing: 0.02em;
-          line-height: 1;
-          display: inline-block;
-          transform: translateY(-1px);
         }
 
         @keyframes pulseCenter {
           0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-          50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.5; }
+          50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.6; }
         }
 
         /* Person Nodes */
         .person-node {
           position: absolute;
-          z-index: 10;
-          background: transparent;
-          border: none;
-          width: 40px;
-          height: 40px;
+          width: 44px;
+          height: 44px;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
           cursor: pointer;
           left: 50%;
           top: 50%;
-          margin-left: -20px;
-          margin-top: -20px;
+          margin-left: -22px;
+          margin-top: -22px;
           outline: none;
+          background: transparent;
+          border: none;
+          padding: 0;
           animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
         
@@ -502,77 +498,71 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         }
         
         .node-circle {
-          width: 40px;
-          height: 40px;
           border-radius: 50%;
-          background: var(--bg-card);
-          border: 1px solid var(--border-subtle);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: var(--text-primary);
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           flex-shrink: 0;
           position: relative;
         }
 
         .person-node:hover .node-circle {
-          background: var(--bg-card-hover);
-          border-color: var(--border-focus);
-          scale: 1.15;
-          box-shadow: 0 0 12px rgba(252, 252, 253, 0.1);
+          scale: 1.25;
           z-index: 20;
         }
 
         .node-name {
           position: absolute;
-          top: 44px;
+          top: 100%;
+          margin-top: 4px;
           font-size: 0.75rem;
-          color: var(--text-secondary);
-          background: rgba(8, 8, 10, 0.8);
-          padding: 2px 6px;
-          border-radius: 4px;
+          color: var(--text-primary);
           white-space: nowrap;
-          border: 1px solid var(--border-subtle);
-          opacity: 0.8;
-          transition: opacity 0.2s ease;
           pointer-events: none;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+          opacity: 0.85;
+          transition: opacity 0.2s ease;
         }
         
         .person-node:hover .node-name {
           opacity: 1;
-          color: var(--text-primary);
         }
 
-        /* Closeness styling overrides */
+        /* Closeness styling overrides: Solid filled colors & sizes */
         .node-nucleo {
-          border-color: rgba(139, 92, 246, 0.5);
-          color: #d8b4fe !important;
+          width: 30px;
+          height: 30px;
+          background: linear-gradient(135deg, #c084fc, #ec4899);
+          border: none;
+          box-shadow: 0 0 16px rgba(192, 132, 252, 0.6);
         }
         
         .pulse-glow-node::after {
           content: '';
           position: absolute;
-          inset: -3px;
-          border: 1px solid var(--accent-purple);
+          inset: -4px;
+          border: 1px solid #ec4899;
           border-radius: 50%;
-          opacity: 0.3;
+          opacity: 0.4;
           animation: pulseNode 3s infinite ease-in-out;
         }
 
         @keyframes pulseNode {
-          0%, 100% { transform: scale(1); opacity: 0.1; }
-          50% { transform: scale(1.15); opacity: 0.4; }
+          0%, 100% { transform: scale(1); opacity: 0.2; }
+          50% { transform: scale(1.25); opacity: 0.5; }
         }
 
         .node-cercana {
-          border-color: var(--border-focus);
+          width: 20px;
+          height: 20px;
+          background: linear-gradient(135deg, #38bdf8, #818cf8);
+          border: none;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
         }
         .node-orbita {
-          border-color: var(--border-subtle);
-          opacity: 0.85;
+          width: 14px;
+          height: 14px;
+          background: linear-gradient(135deg, #94a3b8, #64748b);
+          border: none;
+          box-shadow: 0 0 8px rgba(148, 163, 184, 0.3);
         }
 
       `}</style>
