@@ -1229,16 +1229,18 @@ export default function Home() {
                       <button 
                         className={`radio-label ${interesesViewMode === 'grid' ? 'active' : ''}`}
                         onClick={() => setInteresesViewMode('grid')}
+                        title="Vista de Lista"
+                        style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                       >
-                        <Icons.Grid size={14} />
-                        <span>Lista</span>
+                        <Icons.Grid size={16} />
                       </button>
                       <button 
                         className={`radio-label ${interesesViewMode === 'orbits' ? 'active' : ''}`}
                         onClick={() => setInteresesViewMode('orbits')}
+                        title="Vista de Universo"
+                        style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                       >
-                        <Icons.Orbit size={14} />
-                        <span>Universo</span>
+                        <Icons.Orbit size={16} />
                       </button>
                     </div>
                   )}
@@ -1248,16 +1250,18 @@ export default function Home() {
                       <button 
                         className={`radio-label ${personasViewMode === 'grid' ? 'active' : ''}`}
                         onClick={() => setPersonasViewMode('grid')}
+                        title="Vista de Lista"
+                        style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                       >
-                        <Icons.Grid size={14} />
-                        <span>Lista</span>
+                        <Icons.Grid size={16} />
                       </button>
                       <button 
                         className={`radio-label ${personasViewMode === 'orbits' ? 'active' : ''}`}
                         onClick={() => setPersonasViewMode('orbits')}
+                        title="Vista de Universo"
+                        style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                       >
-                        <Icons.Orbit size={14} />
-                        <span>Universo</span>
+                        <Icons.Orbit size={16} />
                       </button>
                     </div>
                   )}
@@ -1268,37 +1272,37 @@ export default function Home() {
                         <button 
                           className={`radio-label ${agendaViewMode === 'grid' ? 'active' : ''}`}
                           onClick={() => setAgendaViewMode('grid')}
+                          title="Vista de Lista"
+                          style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                         >
-                          <Icons.Grid size={14} />
-                          <span>Lista</span>
+                          <Icons.Grid size={16} />
                         </button>
                         <button 
                           className={`radio-label ${agendaViewMode === 'calendar' ? 'active' : ''}`}
                           onClick={() => setAgendaViewMode('calendar')}
+                          title="Vista de Calendario"
+                          style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                         >
-                          <Icons.Calendar size={14} />
-                          <span>Calendario</span>
+                          <Icons.Calendar size={16} />
                         </button>
                       </div>
                       <button 
                         className={`btn btn-secondary ${showPastAgendaEvents ? 'active' : ''}`}
                         onClick={() => setShowPastAgendaEvents(!showPastAgendaEvents)}
-                        title={showPastAgendaEvents ? "Mostrando eventos pasados y futuros" : "Mostrar histórico de eventos pasados"}
+                        title={showPastAgendaEvents ? "Mostrando todos los eventos (click para mostrar solo próximos)" : "Mostrar histórico de eventos pasados"}
                         style={{ 
+                          width: '38px', 
                           height: '38px', 
-                          padding: '0 12px', 
+                          padding: 0, 
                           display: 'inline-flex', 
                           alignItems: 'center', 
-                          gap: '6px',
-                          fontSize: '0.82rem',
-                          fontWeight: 500,
+                          justifyContent: 'center',
                           background: showPastAgendaEvents ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
                           borderColor: showPastAgendaEvents ? 'var(--accent-purple)' : 'var(--border-subtle)',
                           color: showPastAgendaEvents ? '#ffffff' : 'var(--text-secondary)'
                         }}
                       >
-                        <Icons.Clock size={15} />
-                        <span>{showPastAgendaEvents ? 'Todos (inc. pasados)' : 'Próximos'}</span>
+                        <Icons.Clock size={16} />
                       </button>
                     </>
                   )}
@@ -1308,16 +1312,18 @@ export default function Home() {
                       <button 
                         className={`radio-label ${estelaViewMode === 'grid' ? 'active' : ''}`}
                         onClick={() => setEstelaViewMode('grid')}
+                        title="Vista de Lista"
+                        style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                       >
-                        <Icons.Grid size={14} />
-                        <span>Lista</span>
+                        <Icons.Grid size={16} />
                       </button>
                       <button 
                         className={`radio-label ${estelaViewMode === 'timeline' ? 'active' : ''}`}
                         onClick={() => setEstelaViewMode('timeline')}
+                        title="Vista de Línea de vida"
+                        style={{ width: '38px', height: '38px', padding: 0, justifyContent: 'center' }}
                       >
-                        <Icons.GitCommit size={14} />
-                        <span>Línea</span>
+                        <Icons.GitCommit size={16} />
                       </button>
                     </div>
                   )}
