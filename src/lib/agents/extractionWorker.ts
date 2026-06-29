@@ -5,6 +5,8 @@ import { DoorId, ExtractionResult } from './types';
 
 function formatTagList(tags: string[]): string[] {
   const map = new Map<string, string>();
+  const ignoredGenericTags = new Set(['intereses', 'interes', 'personas', 'agenda', 'tareas', 'notas', 'reflexiones', 'estela', 'general']);
+
   for (const t of tags) {
     let clean = t.trim().replace(/^#/, '');
     if (!clean) continue;
@@ -13,6 +15,8 @@ function formatTagList(tags: string[]): string[] {
     clean = clean.replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, '$1 $2').replace(/([A-ZÁÉÍÓÚÑ]+)([A-ZÁÉÍÓÚÑ][a-záéíóúñ])/g, '$1 $2');
     
     const key = clean.toLowerCase().replace(/\s+/g, ' ');
+    if (ignoredGenericTags.has(key)) continue;
+
     if (!map.has(key)) {
       const words = clean.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1));
       map.set(key, words.join(' '));
@@ -353,8 +357,8 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
           }
         }
         const rawTags = result.extractedData.tags && result.extractedData.tags.length > 0 
-          ? [...result.extractedData.tags, `#${doorId}`]
-          : [...(existing.tags || []), `#${doorId}`];
+          ? [...result.extractedData.tags]
+          : [...(existing.tags || [])];
         const mergedTags = formatTagList(rawTags);
         
         const targetDoorId = existing.doorId === 'personas' ? 'personas' : doorId;
@@ -382,7 +386,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     // Default to create
     const eventDate = doorId === 'agenda' ? (result.extractedData.eventDate || currentDateStr) : result.extractedData.eventDate;
-    const rawTags = [...(result.extractedData.tags || []), doorId];
+    const rawTags = [...(result.extractedData.tags || [])];
     const initialTags = formatTagList(rawTags);
 
     let extractedFileUrl = result.extractedData.fileUrl;
@@ -401,7 +405,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       title: finalTitle,
       content: result.extractedData.content || userMessage,
       peso: extractedPeso,
-      tags: initialTags.length > 0 ? initialTags : [doorId],
+      tags: initialTags,
       eventDate,
       eventTime: result.extractedData.eventTime,
       recurrencia: result.extractedData.recurrencia,

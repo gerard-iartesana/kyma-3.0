@@ -232,10 +232,15 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
   const nodes: SimNode[] = [];
   const links: SimLink[] = [];
 
-  // 1. Find all unique tags (excluding '#intereses')
+  // 1. Find all unique thematic tags (excluding door names like 'intereses')
   const uniqueTagsMap = new Map<string, KymaItem[]>();
+  const ignoredDoorTags = new Set(['intereses', 'interes', 'personas', 'agenda', 'tareas', 'notas', 'reflexiones', 'estela', 'general']);
+
   interests.forEach(item => {
-    const cleanTags = item.tags.filter(t => t !== '#intereses');
+    const cleanTags = (item.tags || []).filter(t => {
+      const lower = t.trim().toLowerCase().replace(/^#/, '');
+      return !ignoredDoorTags.has(lower);
+    });
     cleanTags.forEach(tag => {
       if (!uniqueTagsMap.has(tag)) {
         uniqueTagsMap.set(tag, []);
