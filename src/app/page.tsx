@@ -3128,14 +3128,18 @@ export default function Home() {
             right: 0 !important;
             top: auto !important;
             height: auto !important;
+            min-height: 0 !important;
             z-index: 95 !important;
-            background: rgba(10, 10, 15, 0.88) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: #09090b !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
           }
-          .chat-pane.mobile-hidden .chat-header,
-          .chat-pane.mobile-hidden .chat-messages {
+          .chat-pane.mobile-hidden .chat-container {
+            height: auto !important;
+            min-height: 0 !important;
+          }
+          .chat-pane.mobile-hidden .messages-area,
+          .chat-pane.mobile-hidden .clear-chat-floating-btn {
             display: none !important;
           }
           .chat-pane.mobile-visible {
