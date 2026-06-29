@@ -37,36 +37,13 @@ function renderFormattedText(text: string) {
 }
 
 function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string; isLatest: boolean; onCharacterTyped?: () => void }) {
-  const [displayedText, setDisplayedText] = useState(isLatest ? '' : text);
-
   useEffect(() => {
-    if (!isLatest) {
-      setDisplayedText(text);
-      return;
-    }
-
-    setDisplayedText('');
-    let index = 0;
-    const speed = 16; // Smooth natural typing speed in ms per character
-
-    const interval = setInterval(() => {
-      index++;
-      setDisplayedText(text.slice(0, index));
-      if (onCharacterTyped) onCharacterTyped();
-      if (index >= text.length) {
-        clearInterval(interval);
-      }
-    }, speed);
-
-    return () => clearInterval(interval);
-  }, [text, isLatest]);
-
-  const isStillTyping = isLatest && displayedText.length < text.length;
+    if (onCharacterTyped) onCharacterTyped();
+  }, [text, onCharacterTyped]);
 
   return (
-    <p className="message-text">
-      {renderFormattedText(displayedText)}
-      {isStillTyping && <span className="typing-cursor" />}
+    <p className="message-text animate-fade-in">
+      {renderFormattedText(text)}
     </p>
   );
 }

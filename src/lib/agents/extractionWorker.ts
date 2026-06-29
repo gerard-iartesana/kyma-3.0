@@ -20,6 +20,7 @@ function formatTagList(tags: string[]): string[] {
 function getFrequencyScore(freqLabel?: string): number | undefined {
   if (!freqLabel) return undefined;
   const l = freqLabel.toLowerCase();
+  if (l.includes('0') || l.includes('cero') || l.includes('ningun') || l.includes('ningún') || l.includes('nulo') || l.includes('sin contacto') || l.includes('no nos hablamos') || l.includes('dejamos de hablar') || l.includes('distanci')) return 0;
   if (l.includes('diario') || l.includes('día') || l.includes('dia')) return 100;
   if (l.includes('semanal') || l.includes('semana')) return 75;
   if (l.includes('mensual') || l.includes('mes')) return 50;

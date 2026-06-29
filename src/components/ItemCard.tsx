@@ -147,12 +147,12 @@ export function ItemCard({
   };
 
   const getFrequencyLabel = (freq?: number): string => {
-    if (freq === undefined) return 'mensual';
-    if (freq >= 88) return 'diario';
-    if (freq >= 63) return 'semanal';
-    if (freq >= 38) return 'mensual';
-    if (freq >= 13) return 'anual';
-    return 'nada';
+    if (freq === undefined) return 'Mensual';
+    if (freq >= 88) return 'Diario';
+    if (freq >= 63) return 'Semanal';
+    if (freq >= 38) return 'Mensual';
+    if (freq >= 13) return 'Anual';
+    return 'Sin contacto (0)';
   };
 
   // Helper for rendering door-specific badges or decorations
