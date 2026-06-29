@@ -206,14 +206,17 @@ Devuelve UNICAMENTE un JSON con este formato:
     if (isQuestion || isManagementIntent) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
-      // Deterministic override for time, tasks, reflexiones vs memories
+      // Deterministic override for time, documents/notes, tasks, reflexiones vs memories
       const timePattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})\b/i;
+      const documentNotePattern = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas|apunta|apuntar)\b/i;
       const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
       const reflectionKeywords = /\b(?:reflexión|reflexion|pensamiento|filosofía|filosofia|principio vital)\b/i;
       const pastYearMatch = userText.match(/\b(19\d\d|20[0-2]\d)\b/);
       const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a/i;
       
-      if (timePattern.test(userText)) {
+      if (documentNotePattern.test(userText)) {
+        triage = { isFicheable: true, category: 'utilidad', doorId: 'notas', confidence: 0.99 };
+      } else if (timePattern.test(userText)) {
         triage = { isFicheable: true, category: 'utilidad', doorId: 'agenda', confidence: 0.98 };
       } else if (reflectionKeywords.test(userText)) {
         triage = { isFicheable: true, category: 'mapa', doorId: 'reflexiones', confidence: 0.98 };

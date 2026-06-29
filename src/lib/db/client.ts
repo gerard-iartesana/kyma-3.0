@@ -276,7 +276,11 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
   let doorId = doorIdMap[dbItem.tipo] || 'notas';
   const currentYear = new Date().getFullYear();
 
-  if (dbItem.tipo === 'evento') {
+  const isDocumentOrNote = /\b(?:dni|documento|adjunto|nota|teléfono|telefono)\b/i.test(dbItem.titulo || '') || /\b(?:dni|documento|adjunto|nota|teléfono|telefono)\b/i.test(dbItem.cuerpo || '');
+
+  if (dbItem.tipo === 'nota' || isDocumentOrNote) {
+    doorId = 'notas';
+  } else if (dbItem.tipo === 'evento') {
     const isPastEstela = datos.is_estela && typeof datos.year === 'number' && datos.year < currentYear;
     if (isPastEstela) {
       doorId = 'estela';
@@ -514,7 +518,8 @@ export const dbClient = {
         return mapped.filter((i: KymaItem) => i.doorId === 'agenda');
       }
       if (doorId === 'estela') {
-        return mapped.filter((i: KymaItem) => i.doorId === 'estela');
+        const currentYear = new Date().getFullYear();
+        return mapped.filter((i: KymaItem) => i.doorId === 'estela' && (!i.year || i.year < currentYear) && !/\b(?:dni|documento|adjunto|nota|partido)\b/i.test(i.title));
       }
 
       return mapped;

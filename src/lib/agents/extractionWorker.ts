@@ -220,24 +220,36 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     const currentYear = now.getFullYear();
 
     if (doorId === 'estela') {
+      const documentOrNoteKeywords = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|para tenerlo a mano|guardar en notas)\b/i;
+      if (documentOrNoteKeywords.test(userMessage)) {
+        console.warn('[Strict Guardrail Block] Rechazado Estela por tratarse de un documento o nota utilitaria.');
+        return { action: 'none' };
+      }
+
       if (!extractedYear) {
-        const yearMatch = userMessage.match(/\b(19\d\d|20[0-2]\d)\b/);
+        const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
         if (yearMatch) {
           extractedYear = parseInt(yearMatch[1]);
         }
       }
 
-      // HARD CODE-LEVEL GUARDRAIL: Estela de vida is strictly for HISTORICAL PAST YEARS (< currentYear)
+      const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|año|ano|19\d\d|20[0-1]\d|202[0-5])\b/i;
+      const hasExplicitPastYear = extractedYear && extractedYear < currentYear;
+      const isHistoricalMemory = historicalKeywords.test(userMessage);
+
+      if (!hasExplicitPastYear && !isHistoricalMemory) {
+        console.warn('[Strict Guardrail Block] Rechazado Estela por no contener año pasado explícito ni marcas históricas del pasado.');
+        return { action: 'none' };
+      }
+
       if (extractedYear && extractedYear >= currentYear) {
         console.warn(`[Strict Guardrail Block] Rechazado Estela para el año ${extractedYear} (debe ser estricto pasado < ${currentYear}).`);
         return { action: 'none' };
       }
 
       const timeOrCurrentPattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}|hoy|mañana|esta tarde|esta mañana|esta noche|próximo|proximo)\b/i;
-      const historicalKeywords = /falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|año|ano|19\d\d|20[0-2]\d/i;
-
-      if (timeOrCurrentPattern.test(userMessage) || (timeOrCurrentPattern.test(contextSnippet || '') && !historicalKeywords.test(userMessage))) {
-        console.warn('[Strict Guardrail Block] Rechazado Estela por ser evento actual/futuro o tener hora.');
+      if (timeOrCurrentPattern.test(userMessage)) {
+        console.warn('[Strict Guardrail Block] Rechazado Estela por contener indicación horaria o de tiempo presente/futuro.');
         return { action: 'none' };
       }
     }
