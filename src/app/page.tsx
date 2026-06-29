@@ -27,20 +27,52 @@ export default function Home() {
     edad: string;
     lugarResidencia: string;
     idioma: string;
+    autoApprove: boolean;
   }>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('kyma_user_profile');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
+        try {
+          const parsed = JSON.parse(saved);
+          return {
+            nombre: parsed.nombre || '',
+            edad: parsed.edad || '',
+            lugarResidencia: parsed.lugarResidencia || '',
+            idioma: parsed.idioma || 'Español',
+            autoApprove: parsed.autoApprove ?? false
+          };
+        } catch (e) {}
       }
     }
     return {
       nombre: '',
       edad: '',
       lugarResidencia: '',
-      idioma: 'Español'
+      idioma: 'Español',
+      autoApprove: false
     };
   });
+
+  const [trustLogs, setTrustLogs] = useState<Array<{ timestamp: string; action: 'confirm' | 'discard' }>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('kyma_trust_logs');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
+    }
+    return [];
+  });
+
+  const recordTrustAction = (action: 'confirm' | 'discard') => {
+    const newLog = { timestamp: new Date().toISOString(), action };
+    setTrustLogs(prev => {
+      const next = [...prev, newLog];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kyma_trust_logs', JSON.stringify(next));
+      }
+      return next;
+    });
+  };
 
   const handleUpdateUserProfile = (updates: Partial<typeof userProfile>) => {
     setUserProfile(prev => {
@@ -173,6 +205,17 @@ export default function Home() {
       console.error('Error loading items from Supabase:', e);
     }
   };
+
+  useEffect(() => {
+    if (userProfile.autoApprove && items.length > 0) {
+      const tentativeItems = items.filter(i => i.origen === 'kyma_sugerido');
+      if (tentativeItems.length > 0) {
+        Promise.all(tentativeItems.map(item => dbClient.confirmItem(item.id)))
+          .then(() => refreshItems())
+          .catch(err => console.error('Error auto-approving items:', err));
+      }
+    }
+  }, [items, userProfile.autoApprove]);
 
   const handleItemAddedOrModified = async (item?: KymaItem, action?: string) => {
     await refreshItems();
@@ -312,6 +355,7 @@ export default function Home() {
 
   const handleConfirmItem = async (item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    recordTrustAction('confirm');
     try {
       await dbClient.confirmItem(item.id);
       refreshItems();
@@ -322,6 +366,7 @@ export default function Home() {
 
   const handleDiscardItem = async (item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    recordTrustAction('discard');
     try {
       await dbClient.discardItem(item.id);
       refreshItems();
@@ -1515,6 +1560,61 @@ export default function Home() {
                         </select>
                       </div>
                     </div>
+                  </div>
+
+                  {/* CONFIANZA EN KYMA PANEL */}
+                  <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px' }}>
+                      <Icons.Award size={20} className="text-purple" />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Confianza en Kyma</h3>
+                    </div>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                      Métrica de precisión calculada a partir de tus confirmaciones y descartes de fichas sugeridas durante el último mes.
+                    </p>
+
+                    {(() => {
+                      const now = Date.now();
+                      const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+                      const recentLogs = trustLogs.filter(l => (now - new Date(l.timestamp).getTime()) <= oneMonthMs);
+                      const confirms = recentLogs.filter(l => l.action === 'confirm').length;
+                      const discards = recentLogs.filter(l => l.action === 'discard').length;
+                      const total = confirms + discards;
+                      const percentage = total > 0 ? Math.round((confirms / total) * 100) : 100;
+
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '4px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Nivel de Confianza</span>
+                              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-purple-light, #c084fc)' }}>{percentage}%</span>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Fichas Confirmadas (Último mes)</span>
+                              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#10b981' }}>{confirms}</span>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Fichas Descartadas</span>
+                              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#ef4444' }}>{discards}</span>
+                            </div>
+                          </div>
+
+                          {/* AUTO-APPROVAL TOGGLE SWITCH */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', background: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '12px', padding: '14px 18px', marginTop: '4px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#ffffff', display: 'block' }}>Aprobar sugerencias automáticamente</span>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Si se activa, Kyma guardará las sugerencias directamente como confirmadas sin solicitar validación previa.</span>
+                            </div>
+                            <button 
+                              className={`btn ${userProfile.autoApprove ? 'btn-primary' : 'btn-secondary'}`}
+                              onClick={() => handleUpdateUserProfile({ autoApprove: !userProfile.autoApprove })}
+                              style={{ padding: '8px 16px', fontSize: '0.82rem', fontWeight: 600 }}
+                            >
+                              {userProfile.autoApprove ? 'Activado (Confianza ciega)' : 'Desactivado (Validación manual)'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
