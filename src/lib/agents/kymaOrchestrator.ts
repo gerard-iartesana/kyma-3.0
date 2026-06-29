@@ -234,8 +234,27 @@ Devuelve UNICAMENTE un JSON con este formato:
   const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
   const doorsToExtract: DoorId[] = [];
 
+  // Detector de confirmaciones cortas del usuario a propuestas previas de Kyma (ej: "ok", "sí", "vale", "adelante")
+  const isShortConfirmation = /^(?:ok|sí|si|vale|perfecto|adelante|de acuerdo|claro|por supuesto|hazlo|créala|creala)\b/i.test(userText.trim());
+  const lastKymaMsg = [...messages].reverse().find(m => m.sender === 'kyma')?.text || '';
+  
+  let syntheticProposalPrompt = '';
+  if (isShortConfirmation && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|ficha en Vínculos|ficha para ella|ficha para él)/i.test(lastKymaMsg)) {
+    let targetDoor: DoorId = 'personas';
+    if (/interés|intereses|gusto|pasión|hobby/i.test(lastKymaMsg)) targetDoor = 'intereses';
+    else if (/nota|apunte|documento/i.test(lastKymaMsg)) targetDoor = 'notas';
+    else if (/cita|reunión|evento|agenda/i.test(lastKymaMsg)) targetDoor = 'agenda';
+
+    if (!doorsToExtract.includes(targetDoor)) {
+      doorsToExtract.push(targetDoor);
+    }
+    syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando expresamente la propuesta de Kyma: "${lastKymaMsg}". Extrae y crea la ficha prometida.`;
+  }
+
   if (triage.isFicheable && triage.confidence >= 0.55 && triage.doorId) {
-    doorsToExtract.push(triage.doorId);
+    if (!doorsToExtract.includes(triage.doorId)) {
+      doorsToExtract.push(triage.doorId);
+    }
   }
 
   // Secondary deterministic detectors for parallel intents in a single turn
@@ -266,9 +285,10 @@ Devuelve UNICAMENTE un JSON con este formato:
 
   for (const dId of doorsToExtract) {
     try {
+      const promptToUse = syntheticProposalPrompt ? `${userText} (${syntheticProposalPrompt})` : userText;
       const res = await executeExtractionWorker(
         dId,
-        userText,
+        promptToUse,
         userId,
         accessToken,
         `Historial inmediato: ${recentMsgsSnippet}`
@@ -486,8 +506,16 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
   replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();
 
-  // Trim dangling incomplete transition clauses at the end of the response (e.g. "Por cierto", "Además,")
-  replyText = replyText.replace(/(?:\n\n|\s+)(?:por cierto|además|ademas|y|también|tambien|en cuanto a)\s*,?\s*$/gi, '').trim();
+  // Trim dangling incomplete transition clauses at the end of the response (e.g. "Por", "Por cierto", "Además,")
+  replyText = replyText.replace(/(?:\n\n|\s+)(?:por\s+cierto|por|además|ademas|y|también|tambien|en\s+cuanto\s+a|sobre)\s*,?\s*$/gi, '').trim();
+
+  // Robust Sentence Completeness Slicer: Ensure text ends on proper closing punctuation (. ? ! " ) )
+  if (replyText && !/[.?!")}\u201D\u2019]$/.test(replyText)) {
+    const lastPunct = Math.max(replyText.lastIndexOf('.'), replyText.lastIndexOf('?'), replyText.lastIndexOf('!'));
+    if (lastPunct > 0 && lastPunct > replyText.length - 120) {
+      replyText = replyText.slice(0, lastPunct + 1).trim();
+    }
+  }
 
   return {
     replyText,
