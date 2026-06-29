@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { KymaItem, dbClient } from '../lib/db/client';
-import { X, Trash2, Save, Calendar, CheckSquare, Download } from 'lucide-react';
+import { X, Trash2, Save, Calendar, CheckSquare, Download, Heart } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface ItemDetailModalProps {
@@ -309,7 +309,9 @@ ${content}
           {item.doorId === 'personas' && (
             <div className="form-row">
               <div className="form-group flex-1">
-                <label className="form-label">Cercanía Afectiva</label>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Heart size={15} color="#ec4899" fill="#ec4899" /> Cercanía afectiva
+                </label>
                 <div className="radio-group">
                   {(['orbita', 'cercana', 'nucleo'] as const).map((level) => (
                     <label 
@@ -321,7 +323,10 @@ ${content}
                         name="cercania" 
                         value={level} 
                         checked={cercania === level} 
-                        onChange={() => setCercania(level)}
+                        onChange={() => {
+                          setCercania(level);
+                          setPeso(level === 'nucleo' ? 3 : level === 'cercana' ? 2 : 1);
+                        }}
                       />
                       <span className="capitalize">{level === 'nucleo' ? 'Núcleo' : level === 'cercana' ? 'Cercana' : 'Órbita'}</span>
                     </label>
@@ -421,27 +426,29 @@ ${content}
             </>
           )}
 
-          {/* COMMON FIELDS: RELEVANCE / WEIGHT & TAGS */}
-          <div className="form-group">
-            <label className="form-label">{pesoConfig.label}</label>
-            <div className="radio-group">
-              {pesoConfig.options.map((opt) => (
-                <label 
-                  key={opt.val} 
-                  className={`radio-label ${peso === opt.val ? 'active' : ''}`}
-                >
-                  <input 
-                    type="radio" 
-                    name="peso" 
-                    value={opt.val} 
-                    checked={peso === opt.val} 
-                    onChange={() => setPeso(opt.val as 1 | 2 | 3)}
-                  />
-                  <span>{opt.text}</span>
-                </label>
-              ))}
+          {/* COMMON FIELDS: RELEVANCE / WEIGHT & TAGS (Skip for personas) */}
+          {item.doorId !== 'personas' && (
+            <div className="form-group">
+              <label className="form-label">{pesoConfig.label}</label>
+              <div className="radio-group">
+                {pesoConfig.options.map((opt) => (
+                  <label 
+                    key={opt.val} 
+                    className={`radio-label ${peso === opt.val ? 'active' : ''}`}
+                  >
+                    <input 
+                      type="radio" 
+                      name="peso" 
+                      value={opt.val} 
+                      checked={peso === opt.val} 
+                      onChange={() => setPeso(opt.val as 1 | 2 | 3)}
+                    />
+                    <span>{opt.text}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="form-group">
             <label className="form-label">Etiquetas (separadas por comas)</label>

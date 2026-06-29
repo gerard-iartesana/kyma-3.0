@@ -96,8 +96,9 @@ export default function Home() {
   const [mobileTab, setMobileTab] = useState<'chat' | 'panel'>('panel');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // View mode for Personas ('orbits' | 'grid')
+  // View mode & Sort mode for Personas ('orbits' | 'grid') and ('recientes' | 'cercania')
   const [personasViewMode, setPersonasViewMode] = useState<'orbits' | 'grid'>('grid');
+  const [personasSortMode, setPersonasSortMode] = useState<'recientes' | 'cercania'>('recientes');
 
   // View mode for Agenda ('calendar' | 'grid')
   const [agendaViewMode, setAgendaViewMode] = useState<'calendar' | 'grid'>('grid');
@@ -449,6 +450,19 @@ export default function Home() {
             const dateA = a.eventDate ? `${a.eventDate}T${a.eventTime || '00:00'}` : '9999-99-99';
             const dateB = b.eventDate ? `${b.eventDate}T${b.eventTime || '00:00'}` : '9999-99-99';
             return dateA.localeCompare(dateB);
+          }
+          if (selectedDoorId === 'personas') {
+            if (personasSortMode === 'cercania') {
+              const cercaniaOrder: Record<string, number> = { nucleo: 3, cercana: 2, orbita: 1 };
+              const valA = a.cercania ? (cercaniaOrder[a.cercania] || 1) : (a.peso || 1);
+              const valB = b.cercania ? (cercaniaOrder[b.cercania] || 1) : (b.peso || 1);
+              if (valA !== valB) {
+                return valB - valA;
+              }
+            }
+            const timeA = new Date((a as any).updatedAt || a.createdAt || 0).getTime();
+            const timeB = new Date((b as any).updatedAt || b.createdAt || 0).getTime();
+            return timeB - timeA;
           }
           if (selectedDoorId === 'tareas' || selectedDoorId === 'notas') {
             const isFeaturedA = a.peso === 3 ? 1 : 0;
@@ -1281,6 +1295,28 @@ export default function Home() {
                       }}
                     >
                       {estelaSortAsc ? <Icons.ArrowUp size={16} /> : <Icons.ArrowDown size={16} />}
+                    </button>
+                  )}
+
+                  {/* Sorting button for Personas (Cercanía afectiva vs Recientes) */}
+                  {selectedDoorId === 'personas' && !isVelado && personasViewMode === 'grid' && (
+                    <button 
+                      className={`btn btn-secondary ${personasSortMode === 'cercania' ? 'active' : ''}`}
+                      onClick={() => setPersonasSortMode(personasSortMode === 'cercania' ? 'recientes' : 'cercania')}
+                      title={personasSortMode === 'cercania' ? 'Ordenado por cercanía afectiva (Núcleo > Cercana > Órbita)' : 'Ordenar por cercanía afectiva'}
+                      style={{ 
+                        width: '38px', 
+                        height: '38px', 
+                        padding: 0, 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: personasSortMode === 'cercania' ? 'rgba(236, 72, 153, 0.2)' : 'var(--bg-tertiary)',
+                        borderColor: personasSortMode === 'cercania' ? '#ec4899' : 'var(--border-subtle)',
+                        color: personasSortMode === 'cercania' ? '#ec4899' : 'var(--text-secondary)'
+                      }}
+                    >
+                      <Icons.Heart size={16} fill={personasSortMode === 'cercania' ? '#ec4899' : 'none'} />
                     </button>
                   )}
 
