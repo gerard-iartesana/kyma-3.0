@@ -58,10 +58,20 @@ export function ItemCard({
   };
 
   // Helper to format dates
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const parts = dateString.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        return `${day} ${monthNames[monthIndex] || ''}`;
+      }
+      return dateString;
+    } catch {
+      return dateString;
+    }
   };
 
   // Helper to check if item is scheduled for today
@@ -80,8 +90,6 @@ export function ItemCard({
       
     return itemDateStr === todayString;
   };
-
-  const isHighlighted = item.doorId === 'agenda' ? isTodayEvent() : item.peso === 3;
 
   const getEmotionColor = (emocion?: number): string => {
     switch (emocion) {
@@ -105,20 +113,40 @@ export function ItemCard({
     }
   };
 
-  const getFrequencyLabel = (freq: number) => {
-    if (freq >= 100) return 'diario';
-    if (freq >= 75) return 'semanal';
-    if (freq >= 50) return 'mensual';
-    if (freq >= 25) return 'anual';
-    return 'nada';
+  const isHighlighted = item.doorId === 'agenda' 
+    ? isTodayEvent() 
+    : item.doorId === 'personas' 
+    ? (item.cercania === 'nucleo' || item.peso === 3) 
+    : item.peso === 3;
+
+  // Helper for calculate decay / bar length for personas (Frecuencia de contacto)
+  const getFrequencyScore = (freqText?: string): number => {
+    if (!freqText) return 50;
+    const lower = freqText.toLowerCase();
+    if (lower.includes('diari')) return 100;
+    if (lower.includes('semanal')) return 75;
+    if (lower.includes('mensual')) return 50;
+    if (lower.includes('trimestral')) return 25;
+    if (lower.includes('anual')) return 10;
+    return 50;
   };
 
-  const getFrequencyOpacity = (freq: number) => {
-    if (freq >= 100) return 1.0;
-    if (freq >= 75) return 0.8;
-    if (freq >= 50) return 0.6;
+  const getFrequencyOpacity = (score?: number) => {
+    const freq = score !== undefined ? score : 50;
+    if (freq >= 75) return 1.0;
+    if (freq >= 50) return 0.7;
     if (freq >= 25) return 0.4;
+    if (freq >= 10) return 0.25;
     return 0.15;
+  };
+
+  const getFrequencyLabel = (freq?: number): string => {
+    if (freq === undefined) return 'mensual';
+    if (freq >= 88) return 'diario';
+    if (freq >= 63) return 'semanal';
+    if (freq >= 38) return 'mensual';
+    if (freq >= 13) return 'anual';
+    return 'nada';
   };
 
   // Helper for rendering door-specific badges or decorations
@@ -137,19 +165,19 @@ export function ItemCard({
         return item.peso === 3 ? (
           <Heart 
             size={16} 
-            color="var(--accent-purple)" 
+            color="#ec4899" 
             fill="none"
-            style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }} 
+            style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
           />
         ) : null;
       case 'personas':
-        if (item.cercania === 'nucleo') {
+        if (item.cercania === 'nucleo' || item.peso === 3) {
           return (
             <Heart 
               size={16} 
-              color="var(--accent-purple)" 
+              color="#ec4899" 
               fill="none"
-              style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }} 
+              style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
             />
           );
         } else if (item.cercania === 'cercana') {
@@ -165,39 +193,49 @@ export function ItemCard({
         return null;
       case 'agenda':
         return (
-          <div className="agenda-badge-box" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.4)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '8px',
-            padding: '6px 12px',
-            gap: '2px',
-            minWidth: '74px',
-            flexShrink: 0
-          }}>
-            <span style={{
-              fontSize: '0.92rem',
-              fontWeight: 700,
-              color: '#ffffff',
-              textTransform: 'uppercase',
-              letterSpacing: '0.02em',
-              whiteSpace: 'nowrap'
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            {item.peso === 3 && (
+              <Star 
+                size={16} 
+                color="#fcd34d" 
+                fill="none"
+                style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.45))', flexShrink: 0 }} 
+              />
+            )}
+            <div className="agenda-badge-box" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              gap: '2px',
+              minWidth: '74px',
+              flexShrink: 0
             }}>
-              {formatDate(item.eventDate)}
-            </span>
-            {item.eventTime && (
               <span style={{
-                fontSize: '0.80rem',
-                color: '#a1a1aa',
-                fontWeight: 500,
+                fontSize: '0.92rem',
+                fontWeight: 700,
+                color: '#ffffff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.02em',
                 whiteSpace: 'nowrap'
               }}>
-                {item.eventTime} h
+                {formatDate(item.eventDate)}
               </span>
-            )}
+              {item.eventTime && (
+                <span style={{
+                  fontSize: '0.80rem',
+                  color: '#a1a1aa',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap'
+                }}>
+                  {item.eventTime} h
+                </span>
+              )}
+            </div>
           </div>
         );
       case 'estela':
@@ -261,7 +299,7 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${(item.doorId === 'personas' || item.doorId === 'intereses') ? 'card-pink-highlight' : ''} ${isCompact ? 'card-compact' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''}`}
       onClick={() => onClick(item)}
     >
       {item.origen === 'kyma_sugerido' && (
@@ -499,6 +537,9 @@ export function ItemCard({
         .card-high-weight {
           border-color: rgba(139, 92, 246, 0.2);
         }
+        .card-high-weight.card-pink-highlight {
+          border-color: rgba(236, 72, 153, 0.25);
+        }
         .card-high-weight::before {
           content: '';
           position: absolute;
@@ -509,6 +550,9 @@ export function ItemCard({
           background: var(--accent-gradient);
           border-top-left-radius: var(--border-radius-md);
           border-bottom-left-radius: var(--border-radius-md);
+        }
+        .card-high-weight.card-pink-highlight::before {
+          background: linear-gradient(180deg, #ec4899 0%, #a855f7 100%);
         }
         
         .card-header {

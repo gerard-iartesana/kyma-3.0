@@ -244,12 +244,10 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
     });
   });
 
-  // 2. Build Tag Nodes (Hubs) - faint background, borderless
+  // 2. Build Tag Nodes (Hubs) - neutral grey colors
   uniqueTagsMap.forEach((itemsWithTag, tag) => {
-    const cat = getCategoryForTag(tag);
-    const colors = cat ? cat.colors : ['#a1a1aa', '#71717a', 'rgba(161, 161, 170, 0.12)'];
-    // Tag radius is proportional to the number of cards that mention it
-    const tagRadius = 26 + itemsWithTag.length * 8; // 1 card = 34px, 3 cards = 50px
+    const colors = ['#a1a1aa', '#71717a', 'rgba(161, 161, 170, 0.12)'];
+    const tagRadius = 26 + itemsWithTag.length * 8;
 
     nodes.push({
       id: `tag-${tag}`,
@@ -266,25 +264,21 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
     });
   });
 
-  // 3. Build Card Nodes (Satellites) - solid 100% color
+  // 3. Build Card Nodes (Satellites) - Pasión = #ec4899, Otros = Púrpura
   interests.forEach(item => {
-    let firstCatColors = ['#6b7280', '#4b5563', 'rgba(107, 114, 128, 0.12)'];
-    const cleanTags = item.tags.filter(t => t !== '#intereses');
-    for (const tag of cleanTags) {
-      const cat = getCategoryForTag(tag);
-      if (cat) {
-        firstCatColors = cat.colors;
-        break;
-      }
-    }
-    const cardRadius = 24 + item.peso * 6; // peso 1 = 30px, peso 2 = 36px, peso 3 = 42px
+    const isPasion = item.peso === 3;
+    const cardColors = isPasion 
+      ? ['#ec4899', '#db2777', 'rgba(236, 72, 153, 0.25)']
+      : ['#a855f7', '#8b5cf6', 'rgba(168, 85, 247, 0.25)'];
+      
+    const cardRadius = 24 + item.peso * 6;
 
     nodes.push({
       id: `card-${item.id}`,
       type: 'card',
       title: item.title,
       radius: cardRadius,
-      colors: firstCatColors,
+      colors: cardColors,
       item,
       x: 0,
       y: 0,

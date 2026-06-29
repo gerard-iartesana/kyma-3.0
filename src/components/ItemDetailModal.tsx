@@ -341,8 +341,7 @@ ${content}
                     { val: 100, label: 'Diario' },
                     { val: 75, label: 'Semanal' },
                     { val: 50, label: 'Mensual' },
-                    { val: 25, label: 'Trimestral' },
-                    { val: 0, label: 'Anual' }
+                    { val: 10, label: 'Anual' }
                   ].map((fOption) => (
                     <label 
                       key={fOption.val} 
