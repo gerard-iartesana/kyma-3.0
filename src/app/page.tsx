@@ -2130,6 +2130,7 @@ export default function Home() {
           overflow: hidden !important;
           flex: 1 !important;
           min-height: 0 !important;
+          padding: 16px 24px 0 24px !important;
         }
         
         .mobile-header {

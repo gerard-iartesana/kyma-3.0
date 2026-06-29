@@ -383,7 +383,7 @@ export function EstelaHorizontalTimelineView({
           height: 100%;
           min-height: 0;
           background: transparent;
-          overflow: hidden;
+          overflow: visible;
           user-select: none;
           touch-action: none;
         }
