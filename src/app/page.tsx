@@ -3205,6 +3205,10 @@ export default function Home() {
           }
           .door-title {
             font-size: 2.1rem !important;
+            color: var(--text-secondary, #a1a1aa) !important;
+          }
+          .home-section-block h2 {
+            color: var(--text-muted, #8a8a93) !important;
           }
         }
       `}</style>

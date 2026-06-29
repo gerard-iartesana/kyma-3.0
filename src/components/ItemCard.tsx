@@ -272,8 +272,8 @@ export function ItemCard({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(139, 92, 246, 0.08)',
-            border: '1px solid rgba(139, 92, 246, 0.25)',
+            background: 'rgba(139, 92, 246, 0.12)',
+            border: 'none',
             borderRadius: '8px',
             padding: '6px 10px',
             marginBottom: '10px',
@@ -281,7 +281,7 @@ export function ItemCard({
           }}
         >
           <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <LogoIcon size={13} /> Propuesta de Kyma
+            <LogoIcon size={13} /> Propuesta
           </span>
           <div style={{ display: 'flex', gap: '6px' }}>
             {onConfirmItem && (
@@ -734,8 +734,8 @@ export function ItemCard({
           width: 100%;
         }
         .card-compact .card-title {
-          font-size: 1.06rem;
-          font-weight: 500;
+          font-size: 1.18rem;
+          font-weight: 600;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
