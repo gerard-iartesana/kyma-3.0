@@ -234,25 +234,48 @@ Devuelve UNICAMENTE un JSON con este formato:
   const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
   const doorsToExtract: DoorId[] = [];
 
-  // Detector de confirmaciones cortas del usuario a propuestas previas de Kyma (ej: "ok", "sí", "vale", "adelante")
-  const isShortConfirmation = /^(?:ok|sí|si|vale|perfecto|adelante|de acuerdo|claro|por supuesto|hazlo|créala|creala)\b/i.test(userText.trim());
-  const recentKymaMsgs = [...messages].reverse().filter(m => m.sender === 'kyma').slice(0, 3).map(m => m.text).join(' ');
-  
+  // Detector inteligente de confirmaciones a propuestas previas de Kyma (interpretando la acción exacta propuesta)
+  const isShortConfirmation = /^(?:ok|sí|si|vale|perfecto|adelante|de acuerdo|claro|por supuesto|hazlo|créala|creala|modifícala|modificala|actualízala|actualizala)\b/i.test(userText.trim());
+  const lastKymaMsgObj = [...messages].reverse().find(m => m.sender === 'kyma');
+  const lastKymaMsg = lastKymaMsgObj?.text || '';
+
   let syntheticProposalPrompt = '';
-  if (isShortConfirmation && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|vínculos|vinculos|hermana|hermano|amigo|amiga)/i.test(recentKymaMsgs)) {
+  if (isShortConfirmation && lastKymaMsg && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|vínculos|vinculos|modificar|actualizar|añadir|detalles|hermana|hermano|amigo|amiga)/i.test(lastKymaMsg)) {
+    // 1. Determinar la acción exacta propuesta por Kyma en su mensaje
+    let proposedAction: 'create' | 'enrich' | 'delete' = 'create';
+    if (/(?:modificar|añadir a la ficha|actualizar|añadir este detalle|completar la ficha|editar|cambiar)/i.test(lastKymaMsg)) {
+      proposedAction = 'enrich';
+    } else if (/(?:eliminar|borrar|quitar|cancelar)/i.test(lastKymaMsg)) {
+      proposedAction = 'delete';
+    } else if (/(?:abrirle una ficha|crear una ficha|abrir una ficha|nueva ficha|registra|apuntado|anotar|guardar una ficha)/i.test(lastKymaMsg)) {
+      proposedAction = 'create';
+    }
+
+    // 2. Determinar la puerta de destino
     let targetDoor: DoorId = 'personas';
-    if (/interés|intereses|gusto|pasión|hobby/i.test(recentKymaMsgs)) targetDoor = 'intereses';
-    else if (/nota|apunte|documento/i.test(recentKymaMsgs) && !/hermana|hermano|amigo|amiga|pareja/i.test(recentKymaMsgs)) targetDoor = 'notas';
-    else if (/cita|reunión|evento|agenda/i.test(recentKymaMsgs)) targetDoor = 'agenda';
+    if (/vínculo|vinculo|personas|hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|compañero|compañera/i.test(lastKymaMsg)) {
+      targetDoor = 'personas';
+    } else if (/interés|intereses|gusto|pasión|hobby/i.test(lastKymaMsg)) {
+      targetDoor = 'intereses';
+    } else if (/nota|apunte|documento|dni/i.test(lastKymaMsg) && !/hermana|hermano|amigo|amiga|pareja/i.test(lastKymaMsg)) {
+      targetDoor = 'notas';
+    } else if (/cita|reunión|evento|agenda|partido/i.test(lastKymaMsg)) {
+      targetDoor = 'agenda';
+    } else if (/tarea|pendiente|recado/i.test(lastKymaMsg)) {
+      targetDoor = 'tareas';
+    }
 
     if (!doorsToExtract.includes(targetDoor)) {
       doorsToExtract.push(targetDoor);
     }
 
-    const proposedNameMatch = recentKymaMsgs.match(/(?:hermana|hermano|amigo|amiga|pareja|sobre|para)\s+([A-ZÁÉÍÓÚa-záéíóúñ]+)/i);
-    const proposedName = proposedNameMatch ? proposedNameMatch[1] : '';
-
-    syntheticProposalPrompt = `OBLIGATORIO: El usuario ha dicho "${userText}" confirmando la propuesta. DEBES ESTABLECER action = "create" Y CREAR UNA NUEVA FICHA OBLIGATORIAMENTE en la puerta "${targetDoor}" ${proposedName ? `titulada "${proposedName}"` : ''}. Redacta el contenido en primera persona del singular.`;
+    if (proposedAction === 'create') {
+      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma: "${lastKymaMsg}". DEBES CREAR UNA NUEVA FICHA (action = "create") en la puerta "${targetDoor}". Redacta el contenido en primera persona del singular.`;
+    } else if (proposedAction === 'enrich') {
+      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma: "${lastKymaMsg}". DEBES MODIFICAR/ENRIQUECER LA FICHA EXISTENTE (action = "enrich") en la puerta "${targetDoor}".`;
+    } else {
+      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma respecto a la puerta "${targetDoor}".`;
+    }
   }
 
   if (triage.isFicheable && triage.confidence >= 0.55 && triage.doorId) {
