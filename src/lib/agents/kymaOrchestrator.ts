@@ -168,9 +168,9 @@ ${recentMsgs}
 FRASE ACTUAL DEL USUARIO: "${userText}"
 
 REGLAS ESPECÍFICAS DE TRIAGE:
-1. CITAS Y EVENTOS CON HORA O FECHA EXPLÍCITA ("a las 10:00", "a las 17:30", "a las 5", peluquería, médico, cena): Clasifícalas OBLIGATORIAMENTE en la puerta "agenda" (Categoría: utilidad). Cualquier mención con hora fija o fecha determinada pertenece a "agenda".
+1. CITAS Y EVENTOS CON HORA O FECHA ACTUAL O FUTURA ("a las 10:00", "a las 17:30", "hoy a las 5", peluquería, médico, cena, partido): Clasifícalas OBLIGATORIAMENTE en la puerta "agenda" (Categoría: utilidad). NUNCA en "estela".
 2. ACCIONES PENDIENTES COTIDIANAS SIN HORA ("tengo que comprar...", "debo...", "hacer la compra", "enviar correo"): Clasifícalas en la puerta "tareas" (Categoría: utilidad). NUNCA en "estela".
-3. ESTELA DE VIDA / HITOS HISTÓRICOS: Reserva la puerta "estela" ÚNICAMENTE para acontecimientos vitales trascendentales del pasado o momentos cruciales de la historia personal del usuario (nacimientos, fallecimientos, graduaciones, bodas, grandes viajes, hitos profesionales o vivencias históricas). NUNCA clasifiques tareas cotidianas, recados o citas en "estela". En caso de la mínima duda entre tarea cotidiana e hito histórico, elige OBLIGATORIAMENTE "tareas" o "notas".
+3. ESTELA DE VIDA / HITOS HISTÓRICOS DEL PASADO: Reserva la puerta "estela" ÚNICAMENTE para acontecimientos vitales trascendentales del PASADO (años anteriores, recuerdos de la infancia/juventud, viajes pasados o eventos vividos en años anteriores como 2010, 2018). QUEDA TOTALMENTE PROHIBIDO clasificar eventos de hoy, eventos futuros o citas en "estela".
 4. REGLA DE CONTINUIDAD: Si la frase del usuario complementa o aclara un dato recién tratado en el historial inmediato, clasifícalo en la misma puerta siempre que sea coherente con su naturaleza.
 
 Devuelve UNICAMENTE un JSON con este formato:
@@ -256,7 +256,7 @@ Devuelve UNICAMENTE un JSON con este formato:
     doorsToExtract.push('reflexiones');
   }
 
-  const personMatch = userText.match(/(?:amigo|amiga|hermano|hermana|padre|madre|pareja|novio|novia|tío|tía|primo|prima|compañero|compañera|con) ([A-ZÁÉÍÓÚ][a-záéíóú]+)/i);
+  const personMatch = /(?:amigo|amiga|hermano|hermana|padre|madre|pareja|novio|novia|tío|tía|tio|tia|primo|prima|compañero|compañera|compañero de|compañera de|con mi|con un|con una|con el|con la|jugaré con|jugaré con mi|quedado con|quedé con|hablé con)\s+([a-záéíóúñ]+)/i.test(userText);
   if (personMatch && !doorsToExtract.includes('personas')) {
     doorsToExtract.push('personas');
   }
