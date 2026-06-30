@@ -407,7 +407,13 @@ Devuelve UNICAMENTE un JSON con este formato:
   let deletedItemTitle = '';
   let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
 
-  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|muévelo|muevelo|pásalo|pasalo|muévela|muevela|cámbiala a|cambiala a|muévela a|muevela a|pásala a|pasala a|cambia|cambiar|modifica|modificar|renombra|renombrar|edita|editar|título|titulo|corrige|corregir)\b/i.test(userText);
+  const isManagementRequested = (
+    /\b(?:eliminar|elimina|borrar|borra|cancelar|cancela|quitar|quita)\s+(?:la\s+)?(?:ficha|tarjeta|nota|hito|tarea|evento|vínculo|vinculo|relación|relacion)\b/i.test(userText) ||
+    /\b(?:muévelo|muevelo|pásalo|pasalo|muévela|muevela|pásala|pasala|cámbiala|cambiala|mover|pasa|pasar|cambia|cambiar|corrige|corregir)\s+(?:la\s+)?(?:ficha|tarjeta|nota|hito|tarea|evento|vínculo|vinculo|relación|relacion)?\s*a\s+(?:estela|notas|tareas|agenda|intereses|vínculos|vinculos|reflexiones|personas)\b/i.test(userText) ||
+    /\b(?:cambiar|cambia|editar|edita|modificar|modifica)\s+(?:el\s+)?(?:título|titulo|nombre|cuerpo|contenido|texto)\b/i.test(userText) ||
+    /\b(?:debería ser|deberia ser|tendría que ser|tendria que ser|era un|era una|me lo ha puesto como|lo ha guardado como|ha creado como|clasificado como)\s+(?:un\s+|una\s+)?(?:hito|estela|nota|tarea|evento|vínculo|vinculo|reflexión|reflexion)s?\b/i.test(userText) ||
+    /\b(?:corregir|corrige|modificar|modifica)\s+(?:este|esta|ese|esa|el|la)?\s*(?:hito|evento|nota|tarea|vínculo|vinculo|ficha|tarjeta)\b/i.test(userText)
+  );
 
   if (isManagementRequested && allUserItems.length > 0) {
     const mgmtPrompt = `
@@ -504,7 +510,7 @@ Devuelve ÚNICAMENTE un JSON con este formato:
               emocion: parsedMgmt.emocion || (parsedMgmt.targetDoorId === 'estela' ? 4 : undefined),
               cercania: parsedMgmt.cercania || (parsedMgmt.targetDoorId === 'personas' ? 'orbita' : undefined),
               frecuencia: itemCalculatedFreq !== undefined ? itemCalculatedFreq : (parsedMgmt.targetDoorId === 'personas' ? 50 : undefined),
-              origen: 'kyma_confirmado'
+              origen: 'kyma_sugerido'
             }, userId, sbClient);
 
             allExtractedResults.unshift({ item: newItem, action: 'create', doorId: parsedMgmt.targetDoorId });
