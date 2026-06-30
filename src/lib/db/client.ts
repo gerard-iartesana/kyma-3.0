@@ -30,6 +30,7 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   isNew?: boolean;
+  clientKey?: string;
   contextItem?: {
     id: string;
     title: string;

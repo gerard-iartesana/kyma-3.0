@@ -403,6 +403,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           const tempKymaId = `kyma-${Date.now()}`;
           const optimisticKymaMsg: ChatMessage = {
             id: tempKymaId,
+            clientKey: tempKymaId,
             sender: 'kyma',
             text: kymaText,
             timestamp: new Date().toISOString(),
@@ -418,7 +419,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
           // Background async DB write for Kyma message
           dbClient.receiveKymaMessage(kymaText).then(savedKymaMsg => {
-            setMessages(prev => prev.map(m => m.id === tempKymaId ? { ...savedKymaMsg, isNew: true } : m));
+            setMessages(prev => prev.map(m => m.id === tempKymaId ? { ...savedKymaMsg, clientKey: tempKymaId, isNew: true } : m));
           }).catch(err => console.error('Error guardando mensaje de Kyma en segundo plano:', err));
         } catch (err) {
           clearTimeout(safetyTimer);
@@ -504,7 +505,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         {messages.map((msg, idx) => {
           const isLatestKyma = msg.sender === 'kyma' && idx === messages.length - 1 && Boolean((msg as any).isNew);
           return (
-            <div key={msg.id} className={`message-wrapper ${msg.sender === 'user' ? 'wrapper-user' : 'wrapper-kyma'}`}>
+            <div key={msg.clientKey || msg.id} className={`message-wrapper ${msg.sender === 'user' ? 'wrapper-user' : 'wrapper-kyma'}`}>
               <div className={`message-bubble ${msg.sender === 'user' ? 'bubble-user' : 'bubble-kyma'}`}>
                 {msg.contextItem && (
                   <div className="bubble-context-ref">
