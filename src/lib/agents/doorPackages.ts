@@ -82,10 +82,10 @@ Extrae pensamientos profundos, aprendizajes o títulos de reflexión indicados p
     doorId: 'estela',
     category: 'mapa',
     guardrails: [
-      'RESERVADO EXCLUSIVAMENTE A HITOS HISTÓRICOS Y MOMENTOS CRUCIALES DEL PASADO: Captura únicamente acontecimientos históricos, recuerdos trascendentales del pasado, graduaciones, nacimientos, fallecimientos, bodas o grandes viajes que hayan marcado la trayectoria vital del usuario en el pasado (años o épocas pasadas).',
+      'RESERVADO EXCLUSIVAMENTE A HITOS HISTÓRICOS Y MOMENTOS CRUCIALES DEL PASADO: Captura únicamente acontecimientos significativos de la trayectoria del usuario, recuerdos trascendentales del pasado, graduaciones, nacimientos, fallecimientos, bodas, grandes viajes, cambios o pérdidas de empleo/trabajo, hitos profesionales o políticos, y eventos que hayan marcado su trayectoria vital en el pasado (años o épocas pasadas).',
       'PROHIBIDO PARA EVENTOS ACTUALES O FUTUROS CON FECHA U HORA: Estela de vida es EXCLUSIVAMENTE para recuerdos del PASADO. NUNCA crees fichas en Estela de vida para eventos de hoy, eventos futuros, citas o partidos a jugar hoy o próximamente (ej: "hoy a las 17:30", "mañana a las 10:00"). Cualquier evento de hoy o futuro pertenece OBLIGATORIAMENTE a Agenda. Si el mensaje contiene una hora o fecha actual/futura, establece action = "none" en Estela.',
       'PROHIBIDO PARA TAREAS O RECADOS COTIDIANOS: NUNCA crees fichas en Estela de vida para tareas pendientes, compras o recados cotidianos (ej: "comprar entradas", "hacer la compra", "llamar por teléfono"). En caso de la mínima duda, asigna action = "none".',
-      'TÍTULOS PRECISOS Y SIGNIFICATIVOS: El título debe describir exactamente el acontecimiento específico (ej: "Fallecimiento de mi padre", "Graduación en Diseño", "Viaje a Roma", "Nacimiento de mi hija"). NUNCA uses títulos genéricos ni vacíos como "Recuerdo especial", "Hito" o "Evento".',
+      'TÍTULOS PRECISOS Y SIGNIFICATIVOS: El título debe describir exactamente el acontecimiento específico (ej: "Fallecimiento de mi padre", "Graduación en Diseño", "Viaje a Roma", "Nacimiento de mi hija", "Elecciones de 2023"). NUNCA uses títulos genéricos ni vacíos como "Recuerdo especial", "Hito" o "Evento".',
       'AÑO Y FECHA: Extrae siempre el año mencionado (ej. 2018) en "year" y la época o día específico ("Verano", "14 de Mayo", "Junio") en "dateStr".',
       'LUGAR EXPLICITO: Si se menciona un lugar o ciudad (ej. "Japón", "Madrid", "París"), extraelo en "lugar".',
       'TONO EMOCIONAL (emocion): Determina el sentimiento del recuerdo en una escala de 1 a 5 (1: Muy triste / doloroso, 2: Triste, 3: Calma / neutro, 4: Alegre, 5: Muy alegre / euforia / victoria).',
@@ -93,6 +93,6 @@ Extrae pensamientos profundos, aprendizajes o títulos de reflexión indicados p
       'REDACCIÓN OBLIGATORIA EN PRIMERA PERSONA DEL SINGULAR: "Viajé a...", "Me gradué...", "Nació mi..."'
     ],
     systemInstruction: `Eres el trabajador de extracción para la puerta Estela de vida.
-Extrae exclusivamente recuerdos e hitos históricos trascendentales del PASADO. NUNCA extraigas eventos de hoy, citas futuras ni tareas cotidianas como hitos. Si no es un acontecimiento histórico vital del pasado, establece action = "none".`
+Extrae exclusivamente recuerdos, hitos profesionales/personales y acontecimientos históricos trascendentales del PASADO (como graduaciones, bodas, nacimientos, fallecimientos, grandes viajes, pérdidas o cambios de trabajo/elecciones, etc.). NUNCA extraigas eventos de hoy, citas futuras ni tareas cotidianas como hitos. Si no es un acontecimiento histórico o profesional vital del pasado, establece action = "none".`
   }
 };
