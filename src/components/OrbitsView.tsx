@@ -236,9 +236,16 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         const vx = Math.cos(baseAngle) * blastForce;
         const vy = Math.sin(baseAngle) * blastForce;
 
+        const closeness = p.cercania || 'orbita';
+        const freq = typeof p.frecuencia === 'number' ? p.frecuencia : 50;
+
         let nodeRadius = radius;
-        if ((p.cercania === 'orbita' || !p.cercania) && p.frecuencia === 0) {
-          nodeRadius = 295;
+        if (closeness === 'nucleo') {
+          nodeRadius = 90 - (freq / 100) * 30; // [60, 90]
+        } else if (closeness === 'cercana') {
+          nodeRadius = 175 - (freq / 100) * 50; // [125, 175]
+        } else {
+          nodeRadius = 295 - (freq / 100) * 90; // [205, 295]
         }
 
         simNodes.push({
@@ -252,7 +259,7 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
           angle: baseAngle,
           angularSpeed: speed,
           initials: getInitials(p.title),
-          closeness: p.cercania || 'orbita'
+          closeness
         });
       });
     };
@@ -327,32 +334,66 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         <div className="orbit-ring ring-orbita-lejana" />
 
         {/* Person Nodes */}
-        {people.map((p) => (
-          <button
-            key={p.id}
-            ref={(el) => {
-              if (el) domElementsRef.current.set(p.id, el);
-              else domElementsRef.current.delete(p.id);
-            }}
-            className="person-node"
-            style={{ transform: `translate(0px, 0px)` }}
-            onClick={(e) => {
-              if (draggedRef.current) {
-                e.preventDefault();
-                e.stopPropagation();
-                return;
-              }
-              onPersonClick(p);
-            }}
-            title={`${p.title} (${p.cercania === 'nucleo' ? 'Núcleo' : p.cercania === 'cercana' ? 'Cercana' : 'Órbita'}) - Frecuencia: ${getFrequencyLabel(p.frecuencia)}`}
-          >
-            <div 
-              className={`node-circle node-${p.cercania || 'orbita'} ${p.cercania === 'nucleo' ? 'pulse-glow-node' : ''} ${((p.cercania === 'orbita' || !p.cercania) && p.frecuencia === 0) ? 'node-orbita-lejana' : ''}`}
-              style={{ opacity: getFrequencyOpacity(p.frecuencia) }}
-            />
-            <span className="node-name">{p.title}</span>
-          </button>
-        ))}
+        {people.map((p) => {
+          const closeness = p.cercania || 'orbita';
+          const freq = typeof p.frecuencia === 'number' ? p.frecuencia : 50;
+          
+          let size = 14;
+          let glowColor = 'rgba(148, 163, 184, 0.3)';
+          let gradient = 'linear-gradient(135deg, #94a3b8, #64748b)';
+          
+          if (closeness === 'nucleo') {
+            size = 24 + (freq / 100) * 12;
+            glowColor = `rgba(192, 132, 252, ${0.3 + (freq / 100) * 0.4})`;
+            gradient = 'linear-gradient(135deg, #c084fc, #ec4899)';
+          } else if (closeness === 'cercana') {
+            size = 16 + (freq / 100) * 8;
+            glowColor = `rgba(56, 189, 248, ${0.2 + (freq / 100) * 0.3})`;
+            gradient = 'linear-gradient(135deg, #38bdf8, #818cf8)';
+          } else {
+            size = 10 + (freq / 100) * 6;
+            glowColor = `rgba(148, 163, 184, ${0.1 + (freq / 100) * 0.3})`;
+            gradient = freq === 0 
+              ? 'linear-gradient(135deg, #475569, #334155)'
+              : 'linear-gradient(135deg, #94a3b8, #64748b)';
+          }
+
+          const isLejana = closeness === 'orbita' && freq === 0;
+
+          return (
+            <button
+              key={p.id}
+              ref={(el) => {
+                if (el) domElementsRef.current.set(p.id, el);
+                else domElementsRef.current.delete(p.id);
+              }}
+              className="person-node"
+              style={{ transform: `translate(0px, 0px)` }}
+              onClick={(e) => {
+                if (draggedRef.current) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+                onPersonClick(p);
+              }}
+              title={`${p.title} (${closeness === 'nucleo' ? 'Núcleo' : closeness === 'cercana' ? 'Cercana' : 'Órbita'}) - Frecuencia: ${getFrequencyLabel(p.frecuencia)}`}
+            >
+              <div 
+                className={`node-circle node-${closeness} ${closeness === 'nucleo' ? 'pulse-glow-node' : ''} ${isLejana ? 'node-orbita-lejana' : ''}`}
+                style={{ 
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  background: gradient,
+                  boxShadow: `0 0 ${size * 0.6}px ${glowColor}`,
+                  opacity: getFrequencyOpacity(p.frecuencia),
+                  border: 'none'
+                }}
+              />
+              <span className="node-name">{p.title}</span>
+            </button>
+          );
+        })}
       </div>
 
       <style jsx>{`
