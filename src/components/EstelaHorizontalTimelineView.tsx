@@ -338,7 +338,10 @@ export function EstelaHorizontalTimelineView({
               style={{
                 left: '0px',
                 width: `${totalWidth}px`,
-                right: 'auto'
+                right: 'auto',
+                background: sortAsc
+                  ? 'linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(168, 85, 247, 0.45) 60%, rgba(236, 72, 153, 1) 100%)'
+                  : 'linear-gradient(270deg, rgba(139, 92, 246, 0.04) 0%, rgba(168, 85, 247, 0.45) 60%, rgba(236, 72, 153, 1) 100%)'
               }}
             />
 
@@ -543,7 +546,6 @@ export function EstelaHorizontalTimelineView({
           position: absolute;
           top: 50%;
           height: 4px;
-          background: linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(168, 85, 247, 0.45) 60%, rgba(236, 72, 153, 1) 100%);
           transform: translateY(-50%);
           z-index: 1;
           box-shadow: 0 0 16px rgba(236, 72, 153, 0.6);
