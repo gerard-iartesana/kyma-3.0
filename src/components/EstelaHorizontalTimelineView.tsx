@@ -130,15 +130,24 @@ export function EstelaHorizontalTimelineView({
     });
   }, [itemsWithTime, startVal, sortAsc, PX_PER_YEAR]);
 
-  const currentYearX = React.useMemo(() => {
-    const yearDiff = sortAsc ? (currentYear - startVal) : (startVal - currentYear);
+  const currentDayVal = React.useMemo(() => {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const endOfYear = new Date(now.getFullYear() + 1, 0, 1);
+    const msInYear = endOfYear.getTime() - startOfYear.getTime();
+    const msPassed = now.getTime() - startOfYear.getTime();
+    return now.getFullYear() + (msPassed / msInYear);
+  }, []);
+
+  const currentDayX = React.useMemo(() => {
+    const yearDiff = sortAsc ? (currentDayVal - startVal) : (startVal - currentDayVal);
     return 50 + yearDiff * PX_PER_YEAR;
-  }, [startVal, currentYear, sortAsc, PX_PER_YEAR]);
+  }, [startVal, currentDayVal, sortAsc, PX_PER_YEAR]);
 
   const totalWidth = React.useMemo(() => {
-    const maxX = itemPositions.reduce((max, p) => Math.max(max, p.x), currentYearX);
+    const maxX = itemPositions.reduce((max, p) => Math.max(max, p.x), currentDayX);
     return maxX + 150; // Extra 150px padding at the end of the timeline
-  }, [itemPositions, currentYearX]);
+  }, [itemPositions, currentDayX]);
 
   const calendarYears = React.useMemo(() => {
     const range: number[] = [];
@@ -336,8 +345,8 @@ export function EstelaHorizontalTimelineView({
             <div 
               className="horizontal-axis-line" 
               style={{
-                left: '0px',
-                width: `${totalWidth}px`,
+                left: sortAsc ? '0px' : `${currentDayX}px`,
+                width: sortAsc ? `${currentDayX}px` : `${totalWidth - currentDayX}px`,
                 right: 'auto',
                 background: sortAsc
                   ? 'linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(168, 85, 247, 0.45) 60%, rgba(236, 72, 153, 1) 100%)'
@@ -478,7 +487,7 @@ export function EstelaHorizontalTimelineView({
                 className="timeline-node-column current-year-cutoff-col"
                 style={{
                   position: 'absolute',
-                  left: `${currentYearX}px`,
+                  left: `${currentDayX}px`,
                   top: '50%',
                   transform: 'translate(-50%, -50%)',
                   zIndex: 6
@@ -487,14 +496,14 @@ export function EstelaHorizontalTimelineView({
                 <div 
                   className="current-year-cutoff-dot"
                   style={{
-                    width: '16px',
-                    height: '16px',
+                    width: '12px',
+                    height: '12px',
                     borderRadius: '50%',
-                    background: '#ec4899',
-                    boxShadow: '0 0 16px #ec4899, 0 0 6px #ffffff',
-                    border: '2px solid #ffffff'
+                    background: '#ffffff',
+                    boxShadow: '0 0 12px #ffffff, 0 0 4px #ec4899',
+                    border: '2px solid #ec4899'
                   }}
-                  title={`Año actual (${currentYear})`}
+                  title={`Día actual (${new Date().toLocaleDateString('es-ES')})`}
                 />
               </div>
             </div>

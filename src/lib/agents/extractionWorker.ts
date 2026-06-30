@@ -245,7 +245,98 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       return { action: 'none' };
     }
 
-    if (result.action === 'none' || !result.extractedData) {
+    if (result.action === 'none') {
+      return { action: 'none' };
+    }
+
+    // Support multiple items extraction (array) - Early Exit
+    if (result.action === 'create' && result.extractedItems && result.extractedItems.length > 0) {
+      const createdItems: KymaItem[] = [];
+      const origen = 'kyma_sugerido';
+      
+      let extractedFileUrl: string | undefined = undefined;
+      let extractedFileName: string | undefined = undefined;
+      if (userMessage.includes('fileUrl: "')) {
+        const matchUrl = userMessage.match(/fileUrl:\s*"([^"]+)"/);
+        if (matchUrl) extractedFileUrl = matchUrl[1];
+      }
+      if (userMessage.includes('Adjunto: ')) {
+        const matchName = userMessage.match(/Adjunto:\s*([^\n\r\]]+)/);
+        if (matchName) extractedFileName = matchName[1].trim();
+      }
+
+      for (const itemData of result.extractedItems) {
+        let itemCalculatedFreq = getFrequencyScore(itemData.frecuenciaContacto) ?? itemData.frecuencia;
+        if (doorId === 'personas') {
+          const isExplicitNoContact = /\b(?:contacto 0|contacto cero|sin contacto|no nos hablamos|no me hablo|dejamos de hablar|cero contacto|contacto nulo|ningún contacto|ningun contacto)\b/i.test(userMessage) || 
+            /\b(?:cero|ninguno|no nos hablamos|sin contacto)\b/i.test(itemData.frecuenciaContacto || '');
+          if (isExplicitNoContact) {
+            itemCalculatedFreq = 0;
+          }
+        }
+        
+        let itemExtractedYear = itemData.year;
+        if (doorId === 'estela' && !itemExtractedYear) {
+          const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
+          if (yearMatch) {
+            itemExtractedYear = parseInt(yearMatch[1]);
+          }
+        }
+
+        let itemExtractedEmocion = itemData.emocion;
+        if (doorId === 'estela') {
+          if (/importante|hito|crucial|mundial|marcó|marco|momento|inolvidable/i.test(userMessage)) {
+            // keep default
+          }
+          if (/más triste|mas triste|golpe durísimo|golpe durisimo|terrible|fallecimiento|muerte|murió|murio|pérdida|perdida|doloroso|separé|separó|separo|separación|separacion|divorcio|exmujer|exmarido/i.test(userMessage)) {
+            itemExtractedEmocion = 1;
+          } else if (/(?:triste|pena|dolor|lloré de pena|mudanza|dejé|deje|perro|trabajo|vida allí|vida alli)/i.test(userMessage) && !itemExtractedEmocion) {
+            itemExtractedEmocion = 2;
+          }
+        }
+
+        let itemExtractedPeso = itemData.peso || 1;
+        if (doorId === 'intereses' && !itemData.peso) {
+          itemExtractedPeso = 2;
+        }
+
+        let itemTitle = itemData.title || 'Nueva ficha';
+        if (doorId === 'estela') {
+          itemTitle = deriveEstelaTitle(userMessage, itemData.title);
+        }
+
+        const itemEventDate = doorId === 'agenda' ? (itemData.eventDate || currentDateStr) : itemData.eventDate;
+        const itemRawTags = [...(itemData.tags || [])];
+        const itemInitialTags = formatTagList(itemRawTags, itemTitle);
+
+        const createdItem = await dbClient.createItem({
+          doorId,
+          title: itemTitle,
+          content: itemData.content || userMessage,
+          peso: itemExtractedPeso,
+          tags: itemInitialTags,
+          eventDate: itemEventDate,
+          eventTime: itemData.eventTime,
+          recurrencia: itemData.recurrencia,
+          completed: itemData.completed,
+          cercania: itemData.cercania || (doorId === 'personas' ? 'orbita' : undefined),
+          frecuencia: itemCalculatedFreq !== undefined ? itemCalculatedFreq : (doorId === 'personas' ? 50 : undefined),
+          year: itemExtractedYear,
+          dateStr: itemData.dateStr,
+          lugar: itemData.lugar,
+          emocion: itemExtractedEmocion || (doorId === 'estela' ? 4 : undefined),
+          fileUrl: extractedFileUrl,
+          fileName: extractedFileName,
+          origen
+        }, userId, sbClient);
+
+        createdItems.push(createdItem);
+      }
+
+      return { items: createdItems, item: createdItems[0], action: 'create' };
+    }
+
+    if (!result.extractedData) {
       return { action: 'none' };
     }
 
@@ -435,80 +526,6 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     if (!extractedFileName && userMessage.includes('Adjunto: ')) {
       const matchName = userMessage.match(/Adjunto:\s*([^\n\r\]]+)/);
       if (matchName) extractedFileName = matchName[1].trim();
-    }
-
-    // Support multiple items extraction (array)
-    if (result.action === 'create' && result.extractedItems && result.extractedItems.length > 0) {
-      const createdItems: KymaItem[] = [];
-      for (const itemData of result.extractedItems) {
-        let itemCalculatedFreq = getFrequencyScore(itemData.frecuenciaContacto) ?? itemData.frecuencia;
-        if (doorId === 'personas') {
-          const isExplicitNoContact = /\b(?:contacto 0|contacto cero|sin contacto|no nos hablamos|no me hablo|dejamos de hablar|cero contacto|contacto nulo|ningún contacto|ningun contacto)\b/i.test(userMessage) || 
-            /\b(?:cero|ninguno|no nos hablamos|sin contacto)\b/i.test(itemData.frecuenciaContacto || '');
-          if (isExplicitNoContact) {
-            itemCalculatedFreq = 0;
-          }
-        }
-        
-        let itemExtractedYear = itemData.year;
-        if (doorId === 'estela' && !itemExtractedYear) {
-          const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
-          if (yearMatch) {
-            itemExtractedYear = parseInt(yearMatch[1]);
-          }
-        }
-
-        let itemExtractedEmocion = itemData.emocion;
-        if (doorId === 'estela') {
-          if (/importante|hito|crucial|mundial|marcó|marco|momento|inolvidable/i.test(userMessage)) {
-            // keep default or gemini's value
-          }
-          if (/más triste|mas triste|golpe durísimo|golpe durisimo|terrible|fallecimiento|muerte|murió|murio|pérdida|perdida|doloroso|separé|separó|separo|separación|separacion|divorcio|exmujer|exmarido/i.test(userMessage)) {
-            itemExtractedEmocion = 1;
-          } else if (/(?:triste|pena|dolor|lloré de pena|mudanza|dejé|deje|perro|trabajo|vida allí|vida alli)/i.test(userMessage) && !itemExtractedEmocion) {
-            itemExtractedEmocion = 2;
-          }
-        }
-
-        let itemExtractedPeso = itemData.peso || 1;
-        if (doorId === 'intereses' && !itemData.peso) {
-          itemExtractedPeso = 2;
-        }
-
-        let itemTitle = itemData.title || 'Nueva ficha';
-        if (doorId === 'estela') {
-          itemTitle = deriveEstelaTitle(userMessage, itemData.title);
-        }
-
-        const itemEventDate = doorId === 'agenda' ? (itemData.eventDate || currentDateStr) : itemData.eventDate;
-        const itemRawTags = [...(itemData.tags || [])];
-        const itemInitialTags = formatTagList(itemRawTags, itemTitle);
-
-        const createdItem = await dbClient.createItem({
-          doorId,
-          title: itemTitle,
-          content: itemData.content || userMessage,
-          peso: itemExtractedPeso,
-          tags: itemInitialTags,
-          eventDate: itemEventDate,
-          eventTime: itemData.eventTime,
-          recurrencia: itemData.recurrencia,
-          completed: itemData.completed,
-          cercania: itemData.cercania || (doorId === 'personas' ? 'orbita' : undefined),
-          frecuencia: itemCalculatedFreq !== undefined ? itemCalculatedFreq : (doorId === 'personas' ? 50 : undefined),
-          year: itemExtractedYear,
-          dateStr: itemData.dateStr,
-          lugar: itemData.lugar,
-          emocion: itemExtractedEmocion || (doorId === 'estela' ? 4 : undefined),
-          fileUrl: extractedFileUrl,
-          fileName: extractedFileName,
-          origen
-        }, userId, sbClient);
-
-        createdItems.push(createdItem);
-      }
-
-      return { items: createdItems, item: createdItems[0], action: 'create' };
     }
 
     // Default to single create
