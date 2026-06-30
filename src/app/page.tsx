@@ -114,7 +114,7 @@ export default function Home() {
   const [estelaViewMode, setEstelaViewMode] = useState<'grid' | 'timeline'>('grid');
 
   // Sort direction for Estela de vida
-  const [estelaSortAsc, setEstelaSortAsc] = useState(false);
+  const [estelaSortAsc, setEstelaSortAsc] = useState(true);
 
   // Timeline scale for Estela de vida (60 = Compact, 120 = Medium, 200 = Spacious)
   const [estelaTimelineScale, setEstelaTimelineScale] = useState<number>(120);
@@ -1432,7 +1432,7 @@ export default function Home() {
                       <button 
                         className="btn btn-secondary"
                         onClick={() => setEstelaSortAsc(!estelaSortAsc)}
-                        title={estelaSortAsc ? "Ordenar: Más antiguos primero" : "Ordenar: Más recientes primero"}
+                        title={estelaSortAsc ? "Ordenar: Más recientes primero" : "Ordenar: Más antiguos primero"}
                         style={{ 
                           width: '38px', 
                           height: '38px', 
