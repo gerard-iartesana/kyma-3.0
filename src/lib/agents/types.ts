@@ -36,6 +36,7 @@ export interface ExtractionResult {
   action: 'create' | 'enrich' | 'none';
   targetItemId?: string;
   extractedData?: ExtractedItemData;
+  extractedItems?: ExtractedItemData[];
   reasoning?: string;
 }
 

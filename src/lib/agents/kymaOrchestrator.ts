@@ -281,22 +281,40 @@ Devuelve UNICAMENTE un JSON con este formato:
       targetDoor = 'reflexiones';
     }
 
-    // Check if there is an existing tentative item in targetDoor
-    let tentativeItem: KymaItem | undefined;
+    // Check if there are existing tentative items in targetDoor
+    let confirmedAny = false;
     if (allUserItems.length > 0) {
-      tentativeItem = allUserItems
-        .filter(i => i.doorId === targetDoor && i.origen === 'kyma_sugerido')
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+      const nowTime = Date.now();
+      const recentTentativeItems = allUserItems
+        .filter(i => i.doorId === targetDoor && i.origen === 'kyma_sugerido' && (nowTime - new Date(i.createdAt).getTime()) < 60000);
+      
+      if (recentTentativeItems.length > 0) {
+        for (const item of recentTentativeItems) {
+          try {
+            const confirmed = await dbClient.confirmItem(item.id, userId, sbClient);
+            allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: targetDoor });
+            confirmedAny = true;
+          } catch (err) {
+            console.error('Error confirming tentative item:', err);
+          }
+        }
+      } else {
+        const latestTentative = allUserItems
+          .filter(i => i.doorId === targetDoor && i.origen === 'kyma_sugerido')
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        if (latestTentative) {
+          try {
+            const confirmed = await dbClient.confirmItem(latestTentative.id, userId, sbClient);
+            allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: targetDoor });
+            confirmedAny = true;
+          } catch (err) {
+            console.error('Error confirming latest tentative item:', err);
+          }
+        }
+      }
     }
 
-    if (tentativeItem) {
-      try {
-        const confirmed = await dbClient.confirmItem(tentativeItem.id, userId, sbClient);
-        allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: targetDoor });
-      } catch (err) {
-        console.error('Error confirming tentative item:', err);
-      }
-    } else {
+    if (!confirmedAny) {
       if (!doorsToExtract.includes(targetDoor)) {
         doorsToExtract.push(targetDoor);
       }
@@ -364,7 +382,11 @@ Devuelve UNICAMENTE un JSON con este formato:
         accessToken,
         `Historial inmediato: ${recentMsgsSnippet}`
       );
-      if (res.item && res.action !== 'none') {
+      if (res.items && res.items.length > 0) {
+        for (const item of res.items) {
+          allExtractedResults.push({ item, action: res.action, doorId: dId });
+        }
+      } else if (res.item && res.action !== 'none') {
         allExtractedResults.push({ item: res.item, action: res.action, doorId: dId });
       }
     } catch (err) {
