@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
 import { KymaItem } from '../lib/db/client';
 import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { ItemCard } from './ItemCard';
 
 interface CalendarViewProps {
   items: KymaItem[];
   onItemClick: (item: KymaItem) => void;
+  onAskKyma: (item: KymaItem, e?: React.MouseEvent) => void;
+  onConfirmItem?: (item: KymaItem, e: React.MouseEvent) => void;
+  onDiscardItem?: (item: KymaItem, e: React.MouseEvent) => void;
+  onTagSelect?: (tag: string) => void;
 }
 
-export function CalendarView({ items, onItemClick }: CalendarViewProps) {
+export function CalendarView({ 
+  items, 
+  onItemClick,
+  onAskKyma,
+  onConfirmItem,
+  onDiscardItem,
+  onTagSelect
+}: CalendarViewProps) {
   // We initialize the calendar with the current date (Junio 2026 for demo consistency, or fallback to system date)
   const [currentDate, setCurrentDate] = useState(() => {
     return new Date(2026, 5, 26); // 5 represents June (0-indexed)
@@ -203,7 +215,7 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
 
       {selectedDayModal && (
         <div className="modal-backdrop" onClick={() => setSelectedDayModal(null)}>
-          <div className="modal-content calendar-day-events-modal animate-fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+          <div className="modal-content calendar-day-events-modal animate-fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CalendarIcon size={18} color="var(--accent-purple)" />
@@ -216,32 +228,20 @@ export function CalendarView({ items, onItemClick }: CalendarViewProps) {
               </button>
             </div>
 
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '60vh', overflowY: 'auto' }}>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto' }}>
               {selectedDayModal.events.map((evt) => (
-                <div 
-                  key={evt.id} 
-                  className="card card-compact"
-                  style={{ cursor: 'pointer', background: 'rgba(252, 252, 253, 0.04)', borderColor: 'rgba(252, 252, 253, 0.1)' }}
-                  onClick={() => {
-                    onItemClick(evt);
+                <ItemCard
+                  key={evt.id}
+                  item={evt}
+                  onClick={(clickedItem) => {
+                    onItemClick(clickedItem);
                     setSelectedDayModal(null);
                   }}
-                >
-                  <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 600, color: '#ffffff' }}>{evt.title}</h4>
-                    {evt.eventTime && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.82rem', color: 'var(--accent-purple-light)', background: 'rgba(168, 85, 247, 0.12)', padding: '2px 8px', borderRadius: '6px' }}>
-                        <Clock size={12} />
-                        {evt.eventTime} h
-                      </span>
-                    )}
-                  </div>
-                  {evt.content && (
-                    <p style={{ margin: '6px 0 0 0', fontSize: '0.84rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {evt.content}
-                    </p>
-                  )}
-                </div>
+                  onAskKyma={onAskKyma}
+                  onConfirmItem={onConfirmItem}
+                  onDiscardItem={onDiscardItem}
+                  onTagSelect={onTagSelect}
+                />
               ))}
             </div>
           </div>

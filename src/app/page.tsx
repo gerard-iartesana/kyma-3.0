@@ -2229,6 +2229,10 @@ export default function Home() {
                 <CalendarView 
                   items={filteredItems}
                   onItemClick={(item) => handleSelectItem(item)}
+                  onAskKyma={(item, e) => handleAskKyma(item, e)}
+                  onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                  onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                  onTagSelect={(tag) => setSelectedTag(tag)}
                 />
               ) : selectedDoorId === 'estela' && estelaViewMode === 'timeline' ? (
                 <EstelaHorizontalTimelineView
