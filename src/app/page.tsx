@@ -1048,8 +1048,26 @@ export default function Home() {
 
                 // 1. Agenda: Próximos eventos
                 const agendaItems = items
-                  .filter(i => i.doorId === 'agenda' && i.eventDate && i.eventDate >= new Date().toISOString().split('T')[0])
-                  .sort((a, b) => new Date(a.eventDate || 0).getTime() - new Date(b.eventDate || 0).getTime());
+                  .filter(i => {
+                    if (i.doorId !== 'agenda' || !i.eventDate) return false;
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const localTodayStr = `${year}-${month}-${day}`;
+                    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    
+                    if (i.eventDate < localTodayStr) return false;
+                    if (i.eventDate === localTodayStr && i.eventTime) {
+                      return i.eventTime >= currentTimeStr;
+                    }
+                    return true;
+                  })
+                  .sort((a, b) => {
+                    const dateCompare = (a.eventDate || '').localeCompare(b.eventDate || '');
+                    if (dateCompare !== 0) return dateCompare;
+                    return (a.eventTime || '').localeCompare(b.eventTime || '');
+                  });
                 
                 // 2. Tareas urgentes (solo si hay alguna marcada con peso === 3)
                 const urgentTaskItems = items
