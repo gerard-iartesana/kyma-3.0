@@ -355,7 +355,13 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
                   onUserProfileUpdated(data.updatedProfile);
                 }
               }
-              if (data.createdItem || data.action === 'create' || data.action === 'enrich' || data.action === 'delete') {
+              if (data.createdItems && data.createdItems.length > 0) {
+                pendingItemCallback = () => {
+                  data.createdItems.forEach((item: KymaItem) => {
+                    onItemAddedOrModified(item, item.origen === 'kyma_sugerido' ? 'create' : 'enrich');
+                  });
+                };
+              } else if (data.createdItem || data.action === 'create' || data.action === 'enrich' || data.action === 'delete') {
                 pendingItemCallback = () => onItemAddedOrModified(data.createdItem, data.action);
               }
             } else {
