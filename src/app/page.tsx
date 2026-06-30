@@ -1415,7 +1415,7 @@ export default function Home() {
                   )}
 
                   {selectedDoorId === 'estela' && !isVelado && (
-                    estelaViewMode === 'grid' ? (
+                    <>
                       <button 
                         className="btn btn-secondary"
                         onClick={() => setEstelaSortAsc(!estelaSortAsc)}
@@ -1434,36 +1434,39 @@ export default function Home() {
                       >
                         {estelaSortAsc ? <Icons.ArrowUp size={16} /> : <Icons.ArrowDown size={16} />}
                       </button>
-                    ) : (
-                      <button 
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          setEstelaTimelineScale(prev => {
-                            if (prev === 60) return 120;
-                            if (prev === 120) return 200;
-                            return 60;
-                          });
-                        }}
-                        title={
-                          estelaTimelineScale === 60 ? "Escala: Compacta (junta las fechas) - Clic para Mediana" :
-                          estelaTimelineScale === 120 ? "Escala: Mediana - Clic para Amplia" :
-                          "Escala: Amplia (separa las fechas) - Clic para Compacta"
-                        }
-                        style={{ 
-                          width: '38px', 
-                          height: '38px', 
-                          padding: 0, 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          background: 'var(--bg-tertiary)',
-                          borderColor: 'var(--border-subtle)',
-                          color: estelaTimelineScale !== 120 ? '#ec4899' : 'var(--text-secondary)'
-                        }}
-                      >
-                        <Icons.Ruler size={16} />
-                      </button>
-                    )
+
+                      {estelaViewMode === 'timeline' && (
+                        <button 
+                          className="btn btn-secondary animate-fade-in"
+                          onClick={() => {
+                            setEstelaTimelineScale(prev => {
+                              if (prev === 60) return 120;
+                              if (prev === 120) return 200;
+                              return 60;
+                            });
+                          }}
+                          title={
+                            estelaTimelineScale === 60 ? "Escala: Compacta (junta las fechas) - Clic para Mediana" :
+                            estelaTimelineScale === 120 ? "Escala: Mediana - Clic para Amplia" :
+                            "Escala: Amplia (separa las fechas) - Clic para Compacta"
+                          }
+                          style={{ 
+                            width: '38px', 
+                            height: '38px', 
+                            padding: 0, 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            background: 'var(--bg-tertiary)',
+                            borderColor: 'var(--border-subtle)',
+                            color: estelaTimelineScale !== 120 ? '#ec4899' : 'var(--text-secondary)',
+                            marginLeft: '8px'
+                          }}
+                        >
+                          <Icons.Ruler size={16} />
+                        </button>
+                      )}
+                    </>
                   )}
 
                   {/* Sorting button for Personas (Cercanía afectiva vs Recientes) */}
