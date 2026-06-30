@@ -470,32 +470,34 @@ export function ItemCard({
             renderBadge()
           )}
           
-          <button 
-            type="button"
-            className="card-edit-btn-simple"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick(item);
-            }}
-            title="Editar ficha"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              padding: '4px',
-              margin: 0,
-              color: '#71717a',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '4px',
-              transition: 'color 0.2s ease'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
-          >
-            <Pencil size={15} />
-          </button>
+          {isCompact && (
+            <button 
+              type="button"
+              className="card-edit-btn-simple"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick(item);
+              }}
+              title="Editar ficha"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px',
+                margin: 0,
+                color: '#71717a',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '4px',
+                transition: 'color 0.2s ease'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
+            >
+              <Pencil size={15} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -639,6 +641,17 @@ export function ItemCard({
             >
               <LogoIcon size={13} className="kyma-btn-icon" />
               <span>{item.doorId === 'estela' ? 'Recordar' : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? 'Consultar' : 'Explorar'}</span>
+            </button>
+            <button 
+              className="card-action-grey-btn btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick(item);
+              }}
+              title="Editar ficha"
+            >
+              <Pencil size={13} className="action-grey-icon" />
+              <span>Editar</span>
             </button>
           </div>
         </div>
