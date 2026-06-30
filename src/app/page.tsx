@@ -356,7 +356,14 @@ export default function Home() {
   const handleToggleComplete = async (item: KymaItem, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await dbClient.updateItem(item.id, { completed: !item.completed });
+      const nextCompleted = !item.completed;
+      const nextEstado = nextCompleted ? 'archivado' : 'activo';
+      const todayStr = nextCompleted ? new Date().toISOString().split('T')[0] : undefined;
+      await dbClient.updateItem(item.id, { 
+        completed: nextCompleted, 
+        estado: nextEstado,
+        fechaEjecucion: todayStr
+      });
       await refreshItems();
     } catch (err) {
       console.error(err);
@@ -465,7 +472,11 @@ export default function Home() {
   };
 
   const baseDoorItems = selectedDoorId
-    ? (selectedDoorId === 'agenda' ? expandRecurringAgendaItems(items.filter(item => item.doorId === 'agenda')) : items.filter(item => item.doorId === selectedDoorId))
+    ? (selectedDoorId === 'agenda' 
+        ? expandRecurringAgendaItems(items.filter(item => item.doorId === 'agenda')) 
+        : selectedDoorId === 'tareas'
+          ? items.filter(item => item.doorId === 'tareas' && !item.completed && item.estado !== 'archivado')
+          : items.filter(item => item.doorId === selectedDoorId))
     : [];
 
   let filteredItems = selectedDoorId 
@@ -863,7 +874,9 @@ export default function Home() {
                       ? (showPastAgendaEvents 
                           ? items.filter(i => i.doorId === 'agenda').length 
                           : items.filter(i => i.doorId === 'agenda' && (!i.eventDate || i.eventDate >= new Date().toISOString().split('T')[0])).length)
-                      : items.filter(i => i.doorId === door.id).length}
+                      : door.id === 'tareas'
+                        ? items.filter(i => i.doorId === 'tareas' && !i.completed && i.estado !== 'archivado').length
+                        : items.filter(i => i.doorId === door.id).length}
                   </span>
                   
                   {isLocked && (

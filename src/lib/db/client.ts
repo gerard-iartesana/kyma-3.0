@@ -11,6 +11,8 @@ export interface KymaItem {
   peso: 1 | 2 | 3; // 1: Normal/Orbita/Curiosidad, 2: Destacado/Cercana, 3: Urgente/Nucleo/Pasion/Hito Vital
   origen?: 'manual' | 'kyma_sugerido' | 'kyma_confirmado';
   completed?: boolean; // Specific to tareas
+  estado?: 'activo' | 'archivado';
+  fechaEjecucion?: string; // Date when task was completed
   eventDate?: string; // Specific to agenda
   eventTime?: string; // Specific to agenda (HH:MM)
   cercania?: 'nucleo' | 'cercana' | 'orbita'; // Specific to personas
@@ -307,10 +309,14 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
     tags: tagNames || [],
     peso: (dbItem.peso || 1) as 1 | 2 | 3,
     origen: dbItem.origen || 'manual',
+    estado: dbItem.estado || 'activo',
   };
 
   if (doorId === 'tareas') {
     item.completed = !!datos.hecha;
+    if (datos.fecha_ejecucion) {
+      item.fechaEjecucion = datos.fecha_ejecucion;
+    }
   } else if (doorId === 'agenda') {
     item.eventDate = datos.fecha || '';
     item.eventTime = datos.hora || '';
@@ -339,6 +345,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   if (item.content !== undefined) dbItem.cuerpo = item.content;
   if (item.peso !== undefined) dbItem.peso = item.peso;
   if (item.origen !== undefined) dbItem.origen = item.origen;
+  if (item.estado !== undefined) dbItem.estado = item.estado;
   
   if (item.doorId !== undefined) {
     const tipoMap: Record<KymaItem['doorId'], string> = {
@@ -358,6 +365,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
     datos.is_estela = true;
   }
   if (item.completed !== undefined) datos.hecha = item.completed;
+  if (item.fechaEjecucion !== undefined) datos.fecha_ejecucion = item.fechaEjecucion;
   if (item.eventDate !== undefined) datos.fecha = item.eventDate;
   if (item.eventTime !== undefined) datos.hora = item.eventTime;
   if (item.recurrencia !== undefined) datos.recurrencia = item.recurrencia;
