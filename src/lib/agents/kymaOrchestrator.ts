@@ -203,7 +203,7 @@ Devuelve UNICAMENTE un JSON con este formato:
     // Question / query check & management intent check
     const isQuestion = /^\s*¿|\?|^\s*(?:qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir)\b/i.test(userText.trim());
     const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
-    const isCorrection = /\b(?:corrige|corregir|borra|elimina|no ha|no he|has guardado|has puesto|has creado|debía ser|debería ser|deberia ser|era un|era una|como nota|como hito|en notas|en estela|en vínculos|en vinculos)\b/i.test(userText);
+    const isCorrection = /\b(?:corrige|corregir|borra|elimina|no ha|no he|has guardado|has puesto|has creado|debía ser|debería ser|deberia ser|era un(?:a)?\s+(?:nota|hito|tarea|evento|vínculo|vinculo|reflexión|reflexion)|como nota|como hito|en notas|en estela|en vínculos|en vinculos)\b/i.test(userText);
 
     if ((isQuestion || isManagementIntent) && !isCorrection) {
       triage = { isFicheable: false, confidence: 0 };
