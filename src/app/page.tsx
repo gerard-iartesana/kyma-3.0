@@ -356,7 +356,7 @@ export default function Home() {
     }
   };
 
-  const handleSelectDoor = (doorId: string | null) => {
+  const handleSelectDoor = (doorId: string | null, targetTab: 'panel' | 'chat' = 'panel') => {
     setSelectedDoorId(doorId);
     setSelectedTag(null); // Reset tag filter
     setShowAddForm(false);
@@ -367,7 +367,7 @@ export default function Home() {
     setNewPeso(1);
     setNewCercania('orbita');
     setMobileMenuOpen(false);
-    setMobileTab('panel');
+    setMobileTab(targetTab);
   };
 
   // Quick Item Addition
@@ -889,10 +889,7 @@ export default function Home() {
       <header className="mobile-header">
         <div 
           className="mobile-header-brand" 
-          onClick={() => {
-            handleSelectDoor(null);
-            setMobileTab('chat');
-          }}
+          onClick={() => handleSelectDoor(null, 'chat')}
           title="Ir al chat con Kyma"
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
