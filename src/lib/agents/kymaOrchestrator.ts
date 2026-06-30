@@ -201,7 +201,7 @@ Devuelve UNICAMENTE un JSON con este formato:
     }
 
     // Question / query check & management intent check
-    const isQuestion = /^\s*¿|\?|qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir/i.test(userText.trim());
+    const isQuestion = /^\s*¿|\?|^\s*(?:qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir)\b/i.test(userText.trim());
     const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
     
     if (isQuestion || isManagementIntent) {
@@ -244,14 +244,14 @@ Devuelve UNICAMENTE un JSON con este formato:
   const lastKymaMsg = lastKymaMsgObj?.text || '';
 
   let syntheticProposalPrompt = '';
-  if (isShortConfirmation && lastKymaMsg && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|vínculos|vinculos|modificar|actualizar|añadir|detalles|hermana|hermano|amigo|amiga)/i.test(lastKymaMsg)) {
+  if (isShortConfirmation && lastKymaMsg && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|vínculos|vinculos|modificar|actualizar|añadir|detalles|hermana|hermano|amigo|amiga|estela|recuerdo|hito|reflexión|reflexion)/i.test(lastKymaMsg)) {
     // 1. Determinar la acción exacta propuesta por Kyma en su mensaje
     let proposedAction: 'create' | 'enrich' | 'delete' = 'create';
     if (/(?:modificar|añadir a la ficha|actualizar|añadir este detalle|completar la ficha|editar|cambiar)/i.test(lastKymaMsg)) {
       proposedAction = 'enrich';
     } else if (/(?:eliminar|borrar|quitar|cancelar)/i.test(lastKymaMsg)) {
       proposedAction = 'delete';
-    } else if (/(?:abrirle una ficha|crear una ficha|abrir una ficha|nueva ficha|registra|apuntado|anotar|guardar una ficha)/i.test(lastKymaMsg)) {
+    } else if (/(?:abrirle una ficha|crear una ficha|abrir una ficha|nueva ficha|registra|apuntado|anotar|guardar una ficha|guarde|guardar)/i.test(lastKymaMsg)) {
       proposedAction = 'create';
     }
 
@@ -267,6 +267,10 @@ Devuelve UNICAMENTE un JSON con este formato:
       targetDoor = 'agenda';
     } else if (/tarea|pendiente|recado/i.test(lastKymaMsg)) {
       targetDoor = 'tareas';
+    } else if (/estela|recuerdo|hito|infancia|juventud/i.test(lastKymaMsg)) {
+      targetDoor = 'estela';
+    } else if (/reflexión|reflexion|pensamiento|aprendizaje/i.test(lastKymaMsg)) {
+      targetDoor = 'reflexiones';
     }
 
     if (!doorsToExtract.includes(targetDoor)) {
