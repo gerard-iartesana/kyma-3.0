@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Star, Sparkles, MapPin } from 'lucide-react';
+import { Star, Sparkles, MapPin, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface EstelaHorizontalTimelineViewProps {
   items: KymaItem[];
@@ -195,7 +195,7 @@ export function EstelaHorizontalTimelineView({
         const currentDist = getTouchDist(e.touches);
         if (initialPinchDistRef.current > 0) {
           const scaleFactor = currentDist / initialPinchDistRef.current;
-          const minScale = 0.35;
+          const minScale = 0.1;
           const maxScale = 3.0;
           const next = initialScaleRef.current * scaleFactor;
           const clamped = Math.min(maxScale, Math.max(minScale, next));
@@ -237,7 +237,7 @@ export function EstelaHorizontalTimelineView({
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    setScale(prev => Math.min(Math.max(prev * zoomFactor, 0.35), 3.0));
+    setScale(prev => Math.min(Math.max(prev * zoomFactor, 0.1), 3.0));
   };
 
   // Mouse drag handlers for panning
@@ -480,7 +480,77 @@ export function EstelaHorizontalTimelineView({
         </div>
       </div>
 
+      {/* Floating Zoom and Scale Controls */}
+      <div className="timeline-zoom-controls">
+        <button 
+          type="button"
+          onClick={() => setScale(prev => Math.min(prev * 1.2, 3.0))} 
+          title="Acercar (Ver más detallado)"
+        >
+          <ZoomIn size={16} />
+        </button>
+        <button 
+          type="button"
+          onClick={() => setScale(prev => Math.max(prev * 0.8, 0.1))} 
+          title="Alejar (Juntar más las fechas)"
+        >
+          <ZoomOut size={16} />
+        </button>
+        <button 
+          type="button"
+          onClick={() => {
+            setScale(1);
+            setPan({ x: 0, y: 0 });
+          }} 
+          title="Restablecer escala y centrar"
+        >
+          <RotateCcw size={15} />
+        </button>
+      </div>
+
       <style jsx>{`
+        .timeline-zoom-controls {
+          position: absolute;
+          bottom: 20px;
+          right: 20px;
+          display: flex;
+          gap: 6px;
+          z-index: 40;
+          background: rgba(18, 18, 24, 0.8);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 5px;
+          border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .timeline-zoom-controls button {
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          color: #a1a1aa;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .timeline-zoom-controls button:hover {
+          background: rgba(139, 92, 246, 0.25);
+          border-color: rgba(139, 92, 246, 0.45);
+          color: #ffffff;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+        }
+
+        .timeline-zoom-controls button:active {
+          transform: translateY(0);
+        }
+
         .interactive-timeline-viewport {
           position: relative;
           width: 100%;
