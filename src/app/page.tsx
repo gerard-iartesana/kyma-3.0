@@ -147,6 +147,7 @@ export default function Home() {
   const [newCercania, setNewCercania] = useState<'nucleo' | 'cercana' | 'orbita'>('orbita');
   const [newRecurrencia, setNewRecurrencia] = useState<'none' | 'semanal' | 'mensual' | 'anual'>('none');
   const [showPastAgendaEvents, setShowPastAgendaEvents] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   // Toast Notification state
   const [toastNotification, setToastNotification] = useState<{
@@ -155,6 +156,31 @@ export default function Home() {
     doorId: string;
     item?: KymaItem;
   } | null>(null);
+
+  // Dynamic time and visibility synchronization to keep calendar/agenda items up-to-date
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date());
+    };
+
+    const interval = setInterval(updateTime, 30000); // 30 seconds
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateTime();
+        refreshItems();
+      }
+    };
+
+    window.addEventListener('focus', updateTime);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', updateTime);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Load database state and session on mount, and sync offline queue
   useEffect(() => {
@@ -1066,12 +1092,11 @@ export default function Home() {
                 const agendaItems = expandRecurringAgendaItems(items.filter(i => i.doorId === 'agenda'))
                   .filter(i => {
                     if (!i.eventDate) return false;
-                    const now = new Date();
-                    const year = now.getFullYear();
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const day = String(now.getDate()).padStart(2, '0');
+                    const year = currentTime.getFullYear();
+                    const month = String(currentTime.getMonth() + 1).padStart(2, '0');
+                    const day = String(currentTime.getDate()).padStart(2, '0');
                     const localTodayStr = `${year}-${month}-${day}`;
-                    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    const currentTimeStr = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
                     
                     if (i.eventDate < localTodayStr) return false;
                     if (i.eventDate === localTodayStr && i.eventTime) {
