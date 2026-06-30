@@ -1063,9 +1063,9 @@ export default function Home() {
                 };
 
                 // 1. Agenda: Próximos eventos
-                const agendaItems = items
+                const agendaItems = expandRecurringAgendaItems(items.filter(i => i.doorId === 'agenda'))
                   .filter(i => {
-                    if (i.doorId !== 'agenda' || !i.eventDate) return false;
+                    if (!i.eventDate) return false;
                     const now = new Date();
                     const year = now.getFullYear();
                     const month = String(now.getMonth() + 1).padStart(2, '0');
