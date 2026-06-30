@@ -117,7 +117,7 @@ export default function Home() {
   const [estelaSortAsc, setEstelaSortAsc] = useState(true);
 
   // Timeline scale for Estela de vida (60 = Compact, 120 = Medium, 200 = Spacious)
-  const [estelaTimelineScale, setEstelaTimelineScale] = useState<number>(120);
+  const [estelaTimelineScale, setEstelaTimelineScale] = useState<number>(60);
 
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -1532,7 +1532,7 @@ export default function Home() {
                             justifyContent: 'center',
                             background: 'var(--bg-tertiary)',
                             borderColor: 'var(--border-subtle)',
-                            color: estelaTimelineScale !== 120 ? '#ec4899' : 'var(--text-secondary)',
+                            color: estelaTimelineScale !== 60 ? '#ec4899' : 'var(--text-secondary)',
                             marginLeft: '8px'
                           }}
                         >
