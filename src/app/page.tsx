@@ -148,6 +148,7 @@ export default function Home() {
   const [newRecurrencia, setNewRecurrencia] = useState<'none' | 'semanal' | 'mensual' | 'anual'>('none');
   const [showPastAgendaEvents, setShowPastAgendaEvents] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   // Toast Notification state
   const [toastNotification, setToastNotification] = useState<{
@@ -191,19 +192,46 @@ export default function Home() {
 
   useEffect(() => {
     // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        const config = await dbClient.getUserConfig();
+        if (config) {
+          if (config.perfil) {
+            setUserProfile(config.perfil);
+            localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+          }
+          if (config.logs) {
+            setTrustLogs(config.logs);
+            localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
+          }
+        }
+        setConfigLoaded(true);
+      }
       refreshItems();
       setLoadingSession(false);
     });
 
     // 2. Set auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        const config = await dbClient.getUserConfig();
+        if (config) {
+          if (config.perfil) {
+            setUserProfile(config.perfil);
+            localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+          }
+          if (config.logs) {
+            setTrustLogs(config.logs);
+            localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
+          }
+        }
+        setConfigLoaded(true);
         refreshItems();
       } else {
         setItems([]);
+        setConfigLoaded(false);
       }
       setLoadingSession(false);
     });
@@ -231,6 +259,13 @@ export default function Home() {
       clearTimeout(timer);
     };
   }, []);
+
+  // Synchronize profile and trust logs to Supabase whenever they change
+  useEffect(() => {
+    if (user && configLoaded) {
+      dbClient.saveUserConfig(userProfile, trustLogs);
+    }
+  }, [userProfile, trustLogs, user, configLoaded]);
 
   useEffect(() => {
     if (undoToast && undoToast.show) {

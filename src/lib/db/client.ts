@@ -514,7 +514,12 @@ export const dbClient = {
         return this.getCachedItems(doorId);
       }
       
-      const mapped = (data || []).map((dbItem: any) => {
+      const filteredData = (data || []).filter((dbItem: any) => {
+        const datos = dbItem.datos || {};
+        return dbItem.titulo !== 'kyma_system_user_configuration' && !datos.is_system_config;
+      });
+
+      const mapped = filteredData.map((dbItem: any) => {
         const tagNames = (dbItem.elemento_tags || [])
           .map((et: any) => et.tags?.nombre)
           .filter(Boolean);
@@ -1007,6 +1012,82 @@ export const dbClient = {
       if (created && tags) {
         await this.syncElementTags(created.id, userId, tags);
       }
+    }
+  },
+
+  async getUserConfig(): Promise<{ perfil?: any; logs?: any } | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('elementos')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('tipo', 'nota')
+        .eq('titulo', 'kyma_system_user_configuration');
+      
+      if (error) {
+        console.error('Error fetching user config:', error);
+        return null;
+      }
+      
+      if (data && data.length > 0) {
+        const datos = data[0].datos || {};
+        return {
+          perfil: datos.perfil,
+          logs: datos.logs
+        };
+      }
+      return null;
+    } catch (e) {
+      console.warn('Failed to get user config:', e);
+      return null;
+    }
+  },
+
+  async saveUserConfig(perfil: any, logs: any): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: existing, error: fetchError } = await supabase
+        .from('elementos')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('tipo', 'nota')
+        .eq('titulo', 'kyma_system_user_configuration');
+
+      const datos = {
+        is_system_config: true,
+        perfil,
+        logs
+      };
+
+      if (existing && existing.length > 0) {
+        const { error: updateError } = await supabase
+          .from('elementos')
+          .update({
+            datos,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing[0].id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('elementos')
+          .insert({
+            user_id: user.id,
+            tipo: 'nota',
+            titulo: 'kyma_system_user_configuration',
+            datos,
+            peso: 1,
+            origen: 'manual'
+          });
+        if (insertError) throw insertError;
+      }
+    } catch (e) {
+      console.error('Failed to save user config:', e);
     }
   },
 
