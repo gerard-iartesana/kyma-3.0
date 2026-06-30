@@ -205,6 +205,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "year": 2018 (número de 4 dígitos, solo si es estela),
     "dateStr": "14 de Mayo" o "Verano" (solo si es estela),
     "lugar": "París, Francia" (solo si es estela),
+    "emocion": 1 | 2 | 3 | 4 | 5 (solo si es estela: 1: Muy triste/doloroso/pérdida/fallecimiento, 2: Triste/pena/melancolía/fin de relación/distanciamiento, 3: Calma/neutro, 4: Alegre, 5: Muy alegre),
     "fileUrl": "URL o base64 si el usuario adjuntó un archivo/imagen o null",
     "fileName": "Nombre del archivo adjunto si lo hay o null",
     "tags": ["#Cine", "#CineDeTerror", "#Deporte", "#Ocio"]
@@ -334,10 +335,10 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       if (/importante|hito|crucial|mundial|marcó|marco|momento|inolvidable/i.test(userMessage)) {
         extractedPeso = 3;
       }
-      if (/más triste|mas triste|golpe durísimo|golpe durisimo|terrible|fallecimiento|muerte|desgracia|pérdida|perdida|doloroso/i.test(userMessage)) {
+      if (/más triste|mas triste|golpe durísimo|golpe durisimo|terrible|fallecimiento|muerte|desgracia|pérdida|perdida|doloroso|separé|separó|separo|separación|separacion|divorcio|exmujer|exmarido/i.test(userMessage)) {
         extractedEmocion = 1;
         extractedPeso = 3;
-      } else if (/triste|pena|dolor|lloré de pena/i.test(userMessage) && !extractedEmocion) {
+      } else if (/(?:triste|pena|dolor|lloré de pena|mudanza|dejé|deje|perro|trabajo|vida allí|vida alli)/i.test(userMessage) && !extractedEmocion) {
         extractedEmocion = 2;
       } else if (/calma|paz|tranquilidad|tranquilo/i.test(userMessage) && !extractedEmocion) {
         extractedEmocion = 3;

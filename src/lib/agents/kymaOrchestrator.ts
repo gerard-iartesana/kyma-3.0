@@ -338,9 +338,20 @@ Devuelve UNICAMENTE un JSON con este formato:
     doorsToExtract.push('reflexiones');
   }
 
-  const personMatch = /(?:amigo|amiga|hermano|hermana|padre|madre|pareja|novio|novia|tío|tía|tio|tia|primo|prima|compañero|compañera|compañero de|compañera de|con mi|con un|con una|con el|con la|jugaré con|jugaré con mi|quedado con|quedé con|hablé con)\s+([a-záéíóúñ]+)/i.test(userText);
+  const personMatch = /(?:amigo|amiga|hermano|hermana|padre|madre|pareja|expareja|ex-pareja|exmujer|ex-mujer|exmarido|ex-marido|novio|novia|tío|tía|tio|tia|primo|prima|compañero|compañera|compañero de|compañera de|con mi|con un|con una|con el|con la|jugaré con|jugaré con mi|quedado con|quedé con|hablé con)\s+([a-záéíóúñ]+)/i.test(userText);
   if (personMatch && !doorsToExtract.includes('personas')) {
     doorsToExtract.push('personas');
+  }
+
+  const pastYearMatch = userText.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
+  const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a|separé|separó|separo|separación|separacion|mudanza/i;
+  if ((pastYearMatch || memoryKeywords.test(userText)) && !doorsToExtract.includes('estela')) {
+    doorsToExtract.push('estela');
+  }
+
+  const noteKeywords = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas|apunta|apuntar)\b/i;
+  if (noteKeywords.test(userText) && !doorsToExtract.includes('notas')) {
+    doorsToExtract.push('notas');
   }
 
   for (const dId of doorsToExtract) {
