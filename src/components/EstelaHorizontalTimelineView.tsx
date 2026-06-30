@@ -42,75 +42,99 @@ const getEmotionYOffset = (emocion: number = 4): number => {
   }
 };
 
+const getMonthIndex = (monthStr?: string): number => {
+  if (!monthStr) return 5;
+  const m = monthStr.toLowerCase();
+  if (m.includes('ene')) return 0;
+  if (m.includes('feb')) return 1;
+  if (m.includes('mar')) return 2;
+  if (m.includes('abr')) return 3;
+  if (m.includes('may')) return 4;
+  if (m.includes('jun')) return 5;
+  if (m.includes('jul')) return 6;
+  if (m.includes('ago')) return 7;
+  if (m.includes('sep')) return 8;
+  if (m.includes('oct')) return 9;
+  if (m.includes('nov')) return 10;
+  if (m.includes('dic')) return 11;
+  return 5;
+};
+
 export function EstelaHorizontalTimelineView({ 
   items, 
   sortAsc = false, 
   onItemClick 
 }: EstelaHorizontalTimelineViewProps) {
   const estelaItems = items.filter(i => i.doorId === 'estela');
+  const currentYear = new Date().getFullYear();
 
-  // Sort items chronologically by year / date
-  const sortedItems = React.useMemo(() => {
-    return [...estelaItems].sort((a, b) => {
-      const yearA = a.year || (a.eventDate ? parseInt(a.eventDate.split('-')[0]) : 0);
-      const yearB = b.year || (b.eventDate ? parseInt(b.eventDate.split('-')[0]) : 0);
-      if (yearA !== yearB) {
-        return yearA - yearB;
+  // Helper to extract year and a precise fractional month
+  const itemsWithTime = React.useMemo(() => {
+    const processed = estelaItems.map(item => {
+      let year = item.year;
+      if (!year && item.eventDate) {
+        const y = parseInt(item.eventDate.split('-')[0]);
+        if (!isNaN(y)) year = y;
       }
-      return a.createdAt.localeCompare(b.createdAt);
+      if (!year) year = new Date().getFullYear();
+
+      let month = 5; // default June (middle of the year)
+      if (item.eventDate) {
+        const m = parseInt(item.eventDate.split('-')[1]);
+        if (!isNaN(m)) month = m - 1;
+      } else if (item.dateStr) {
+        month = getMonthIndex(item.dateStr);
+      }
+      
+      const timeVal = year + (month / 12);
+      return { item, year, month, timeVal };
+    });
+
+    // Sort chronologically by fractional year
+    processed.sort((a, b) => a.timeVal - b.timeVal);
+
+    // Add index offset for duplicate/close times to prevent visual stack overlapping
+    const timeValCounts: Record<number, number> = {};
+    return processed.map(it => {
+      const currentCount = timeValCounts[it.timeVal] || 0;
+      timeValCounts[it.timeVal] = currentCount + 1;
+      return { ...it, offsetIndex: currentCount };
     });
   }, [estelaItems]);
 
-  // Calculate proportional X positions based on exact calendar year difference
+  const minTimeVal = React.useMemo(() => {
+    if (itemsWithTime.length === 0) return new Date().getFullYear() - 5;
+    return Math.floor(itemsWithTime[0].timeVal);
+  }, [itemsWithTime]);
+
+  const PX_PER_YEAR = 150; // Each year is exactly 150px wide
+
   const itemPositions = React.useMemo(() => {
-    if (sortedItems.length === 0) return [];
-
-    const itemsWithYear = sortedItems.map(item => {
-      let parsedYear = item.year;
-      if (!parsedYear && item.eventDate) {
-        const y = parseInt(item.eventDate.split('-')[0]);
-        if (!isNaN(y)) parsedYear = y;
-      }
-      if (!parsedYear) parsedYear = new Date().getFullYear();
-      return { item, year: parsedYear };
+    return itemsWithTime.map(it => {
+      // 50px padding to start, items proportional to timeVal, duplicate items offset by 0.05 year (18 days)
+      const rawX = (it.timeVal + (it.offsetIndex * 0.05) - minTimeVal) * PX_PER_YEAR;
+      const x = 50 + rawX;
+      return { item: it.item, year: it.year, x, timeVal: it.timeVal };
     });
+  }, [itemsWithTime, minTimeVal]);
 
-    const PX_PER_YEAR = 35; // 35 pixels per calendar year
-    const MIN_GAP = 120;    // minimum pixels between adjacent nodes to prevent visual collisions
+  const currentYearX = React.useMemo(() => {
+    return 50 + (currentYear - minTimeVal) * PX_PER_YEAR;
+  }, [minTimeVal, currentYear]);
 
-    const positions: { item: KymaItem; year: number; x: number }[] = [];
-    let currentX = 0;
+  const totalWidth = React.useMemo(() => {
+    const maxX = itemPositions.reduce((max, p) => Math.max(max, p.x), currentYearX);
+    return maxX + 150; // Extra 150px padding at the end of the timeline
+  }, [itemPositions, currentYearX]);
 
-    for (let i = 0; i < itemsWithYear.length; i++) {
-      if (i === 0) {
-        positions.push({ item: itemsWithYear[0].item, year: itemsWithYear[0].year, x: 0 });
-      } else {
-        const prev = positions[i - 1];
-        const currYear = itemsWithYear[i].year;
-        const yearDiff = Math.abs(currYear - prev.year);
-        const calculatedDist = Math.max(yearDiff * PX_PER_YEAR, MIN_GAP);
-        currentX += calculatedDist;
-        positions.push({ item: itemsWithYear[i].item, year: currYear, x: currentX });
-      }
+  const calendarYears = React.useMemo(() => {
+    const range: number[] = [];
+    const minYear = minTimeVal;
+    for (let y = minYear; y <= currentYear; y++) {
+      range.push(y);
     }
-
-    return positions;
-  }, [sortedItems]);
-
-  const currentYear = new Date().getFullYear();
-  const { currentYearX, graphWidth } = React.useMemo(() => {
-    if (itemPositions.length === 0) return { currentYearX: 0, graphWidth: 0 };
-    const lastPos = itemPositions[itemPositions.length - 1];
-    let endX = lastPos.x;
-    if (lastPos.year < currentYear) {
-      const yearDiff = currentYear - lastPos.year;
-      const dist = Math.max(yearDiff * 35, 120);
-      endX = lastPos.x + dist;
-    }
-    return { currentYearX: endX, graphWidth: Math.max(endX, lastPos.x) };
-  }, [itemPositions, currentYear]);
-
-  const totalWidth = graphWidth;
+    return range;
+  }, [minTimeVal, currentYear]);
 
   // Pan & Zoom State
   const [scale, setScale] = useState(1);
@@ -294,11 +318,53 @@ export function EstelaHorizontalTimelineView({
             <div 
               className="horizontal-axis-line" 
               style={{
-                left: '-80px',
+                left: '0px',
                 width: `${currentYearX + 80}px`,
                 right: 'auto'
               }}
             />
+
+            {/* Proportional Year Reference Ticks and Labels along the Axis */}
+            <div className="timeline-axis-ticks-container" style={{ position: 'absolute', top: '50%', left: '0px', width: '100%', height: '0px', pointerEvents: 'none' }}>
+              {calendarYears.map(year => {
+                const yearX = 50 + (year - minTimeVal) * PX_PER_YEAR;
+                const isCurrentYear = year === currentYear;
+                return (
+                  <div 
+                    key={year}
+                    className="axis-year-reference"
+                    style={{
+                      position: 'absolute',
+                      left: `${yearX}px`,
+                      top: '12px',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '3px'
+                    }}
+                  >
+                    <div 
+                      className="axis-tick" 
+                      style={{ 
+                        height: isCurrentYear ? '8px' : '6px',
+                        background: isCurrentYear ? '#ec4899' : 'rgba(255, 255, 255, 0.25)',
+                        width: isCurrentYear ? '2px' : '1px'
+                      }} 
+                    />
+                    <span 
+                      className="axis-year-text"
+                      style={{
+                        color: isCurrentYear ? '#ec4899' : '#71717a',
+                        fontWeight: isCurrentYear ? 700 : 500
+                      }}
+                    >
+                      {year}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Nodes Sequence along axis */}
             <div className="timeline-nodes-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -349,7 +415,7 @@ export function EstelaHorizontalTimelineView({
                       >
                         {/* Tooltip on Hover */}
                         {hoveredItem?.id === item.id && (
-                          <div className={`node-tooltip glass-panel ${isAbove ? 'tooltip-above' : 'tooltip-below'}`}>
+                           <div className={`node-tooltip glass-panel ${isAbove ? 'tooltip-above' : 'tooltip-below'}`}>
                             <div className="tooltip-header">
                               <span className="tooltip-title">{item.title}</span>
                               {isMilestone && <Star size={12} color="#c084fc" fill="#c084fc" />}
@@ -381,12 +447,6 @@ export function EstelaHorizontalTimelineView({
                         }}
                       />
                     </div>
-
-                    {/* Subtle Year Marker under Center Axis Line */}
-                    <div className="axis-year-reference">
-                      <div className="axis-tick" />
-                      <span className="axis-year-text">{displayYear}</span>
-                    </div>
                   </div>
                 );
               })}
@@ -414,10 +474,6 @@ export function EstelaHorizontalTimelineView({
                   }}
                   title={`Año actual (${currentYear})`}
                 />
-                <div className="axis-year-reference" style={{ marginTop: '16px' }}>
-                  <div className="axis-tick" style={{ background: '#ec4899' }} />
-                  <span className="axis-year-text" style={{ color: '#ec4899', fontWeight: 700 }}>{currentYear}</span>
-                </div>
               </div>
             </div>
           </div>
