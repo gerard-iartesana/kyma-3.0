@@ -203,31 +203,34 @@ Devuelve UNICAMENTE un JSON con este formato:
     // Question / query check & management intent check
     const isQuestion = /^\s*¿|\?|^\s*(?:qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir)\b/i.test(userText.trim());
     const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
-    
-    if (isQuestion || isManagementIntent) {
+    const isCorrection = /\b(?:corrige|corregir|borra|elimina|no ha|no he|has guardado|has puesto|has creado|debía ser|debería ser|deberia ser|era un|era una|como nota|como hito|en notas|en estela|en vínculos|en vinculos)\b/i.test(userText);
+
+    if ((isQuestion || isManagementIntent) && !isCorrection) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
       // Deterministic override for time, documents/notes, person frequency, tasks, reflexiones vs memories
       const timePattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})\b/i;
-      const documentNotePattern = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas|apunta|apuntar)\b/i;
+      const documentNotePattern = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas)\b/i;
       const personFrequencyPattern = /\b(?:hablo|hablo poco|hablo mucho|veo|veo poco|veo mucho|contacto|contacto es|frecuencia|una vez al año|una vez al mes|una vez a la semana|diario|diariamente|casi nunca)\b/i;
       const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
       const reflectionKeywords = /\b(?:reflexión|reflexion|pensamiento|filosofía|filosofia|principio vital)\b/i;
       const pastYearMatch = userText.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
       const memoryKeywords = /acordaba|acuerdo|recuerdo de la infancia|mi graduación|mi boda|nacimiento de|fallecimiento|cuando viajé a/i;
       
-      if (personFrequencyPattern.test(userText)) {
-        triage = { isFicheable: true, category: 'mapa', doorId: 'personas', confidence: 0.99 };
-      } else if (documentNotePattern.test(userText)) {
-        triage = { isFicheable: true, category: 'utilidad', doorId: 'notas', confidence: 0.99 };
-      } else if (timePattern.test(userText)) {
-        triage = { isFicheable: true, category: 'utilidad', doorId: 'agenda', confidence: 0.98 };
-      } else if (reflectionKeywords.test(userText)) {
-        triage = { isFicheable: true, category: 'mapa', doorId: 'reflexiones', confidence: 0.98 };
-      } else if (pendingTaskPattern.test(userText)) {
-        triage = { isFicheable: true, category: 'utilidad', doorId: 'tareas', confidence: 0.95 };
-      } else if (pastYearMatch || memoryKeywords.test(userText)) {
-        triage = { isFicheable: true, category: 'mapa', doorId: 'estela', confidence: 0.95 };
+      if (!isCorrection) {
+        if (personFrequencyPattern.test(userText)) {
+          triage = { isFicheable: true, category: 'mapa', doorId: 'personas', confidence: 0.99 };
+        } else if (documentNotePattern.test(userText)) {
+          triage = { isFicheable: true, category: 'utilidad', doorId: 'notas', confidence: 0.99 };
+        } else if (timePattern.test(userText)) {
+          triage = { isFicheable: true, category: 'utilidad', doorId: 'agenda', confidence: 0.98 };
+        } else if (reflectionKeywords.test(userText)) {
+          triage = { isFicheable: true, category: 'mapa', doorId: 'reflexiones', confidence: 0.98 };
+        } else if (pendingTaskPattern.test(userText)) {
+          triage = { isFicheable: true, category: 'utilidad', doorId: 'tareas', confidence: 0.95 };
+        } else if (pastYearMatch || memoryKeywords.test(userText)) {
+          triage = { isFicheable: true, category: 'mapa', doorId: 'estela', confidence: 0.95 };
+        }
       }
     }
   }
@@ -404,14 +407,14 @@ Devuelve UNICAMENTE un JSON con este formato:
   let deletedItemTitle = '';
   let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
 
-  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|muévelo|muevelo|pásalo|pasalo|muévela|muevela|cámbiala a|cambiala a|muévela a|muevela a|pásala a|pasala a|cambia|cambiar|modifica|modificar|renombra|renombrar|edita|editar|título|titulo)\b/i.test(userText);
+  const isManagementRequested = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|muévelo|muevelo|pásalo|pasalo|muévela|muevela|cámbiala a|cambiala a|muévela a|muevela a|pásala a|pasala a|cambia|cambiar|modifica|modificar|renombra|renombrar|edita|editar|título|titulo|corrige|corregir)\b/i.test(userText);
 
   if (isManagementRequested && allUserItems.length > 0) {
     const mgmtPrompt = `
 Analiza la siguiente frase del usuario dentro del historial reciente. Determina si el usuario solicita:
 1. ELIMINAR / BORRAR una ficha existente.
 2. MOVER / CORREGIR la clasificación de una ficha existente de una puerta a otra.
-3. CAMBIAR O EDITAR EL TÍTULO o CONTENIDO de una ficha existente (por ejemplo: "cambia el título de entrenamiento de pádel y pon entreno de pádel" o "pon de título X").
+3. CAMBIAR O EDITAR EL TÍTULO o CONTENIDO de una ficha existente.
 
 FICHAS ACTUALES DEL USUARIO:
 ${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.title, content: i.content, eventDate: i.eventDate })), null, 2)}
@@ -422,7 +425,7 @@ REGLAS DE SALIDA E INVIOLABILIDAD:
 1. REGLA SAGRADA PARA PERSONAS (VÍNCULOS): Las fichas en la puerta "personas" (vínculos) NUNCA SE MOVERÁN NI REUBICARÁN a otra puerta.
 2. Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false, "shouldUpdateTitle": false.
 3. Si el usuario pide explícitamente mover una ficha de otra puerta: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": true, "targetDoorId": "<puerta>", "newTitle": "<titulo>", "shouldUpdateTitle": false.
-4. Si el usuario pide CAMBIAR EL TÍTULO o EDITAR una ficha existente: "shouldDelete": false, "shouldCreateNew": false, "shouldUpdateTitle": true, "targetItemIdToUpdate": "<id de la ficha a modificar>", "newUpdatedTitle": "<nuevo título exacto e ideal usando economía del lenguaje, ej: Entreno de pádel>".
+4. Si el usuario pide CAMBIAR EL TÍTULO o EDITAR una ficha existente: "shouldDelete": false, "shouldCreateNew": false, "shouldUpdateTitle": true, "targetItemIdToUpdate": "<id de la ficha a modificar>", "newUpdatedTitle": "<nuevo título exacto e ideal>".
 
 Devuelve ÚNICAMENTE un JSON con este formato:
 {
@@ -433,6 +436,10 @@ Devuelve ÚNICAMENTE un JSON con este formato:
   "targetDoorId": "agenda" | "tareas" | "notas" | "intereses" | "personas" | "reflexiones" | "estela" | null,
   "newTitle": "Título corto o null",
   "newContent": "Contenido o null",
+  "year": number or null (año de 4 dígitos, ej: 2023, si targetDoorId es estela),
+  "emocion": number or null (1 a 5, si targetDoorId es estela),
+  "cercania": "nucleo" | "cercana" | "orbita" | null (si targetDoorId es personas),
+  "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" | null (si targetDoorId es personas),
   "shouldUpdateTitle": boolean,
   "targetItemIdToUpdate": "ID exacto de la ficha a cambiar título o null",
   "newUpdatedTitle": "Nuevo título exacto para la ficha o null"
@@ -473,12 +480,31 @@ Devuelve ÚNICAMENTE un JSON con este formato:
           }
 
           if (parsedMgmt.shouldCreateNew && parsedMgmt.targetDoorId && parsedMgmt.newTitle) {
+            const itemCalculatedFreq = parsedMgmt.frecuenciaContacto === 'diario' ? 100 : 
+              parsedMgmt.frecuenciaContacto === 'semanal' ? 75 : 
+              parsedMgmt.frecuenciaContacto === 'mensual' ? 50 : 
+              parsedMgmt.frecuenciaContacto === 'anual' ? 25 : 
+              parsedMgmt.frecuenciaContacto === 'ninguno' ? 0 : undefined;
+            
+            let itemYear = parsedMgmt.year;
+            if (parsedMgmt.targetDoorId === 'estela' && !itemYear) {
+              const yearMatch = userText.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
+              if (yearMatch) {
+                itemYear = parseInt(yearMatch[1]);
+              }
+            }
+
             const newItem = await dbClient.createItem({
               doorId: parsedMgmt.targetDoorId,
               title: parsedMgmt.newTitle,
               content: parsedMgmt.newContent || userText,
               tags: [`#${parsedMgmt.targetDoorId}`, '#general'],
-              peso: 2
+              peso: 2,
+              year: itemYear || undefined,
+              emocion: parsedMgmt.emocion || (parsedMgmt.targetDoorId === 'estela' ? 4 : undefined),
+              cercania: parsedMgmt.cercania || (parsedMgmt.targetDoorId === 'personas' ? 'orbita' : undefined),
+              frecuencia: itemCalculatedFreq !== undefined ? itemCalculatedFreq : (parsedMgmt.targetDoorId === 'personas' ? 50 : undefined),
+              origen: 'kyma_confirmado'
             }, userId, sbClient);
 
             allExtractedResults.unshift({ item: newItem, action: 'create', doorId: parsedMgmt.targetDoorId });
