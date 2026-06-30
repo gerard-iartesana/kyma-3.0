@@ -620,7 +620,8 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   };
 
   const isShortMsg = userText.trim().split(/\s+/).length <= 2;
-  const enableGrounding = !isShortConfirmation && !isShortMsg;
+  const isFicheableOrMgmt = triage.isFicheable || isManagementRequested;
+  const enableGrounding = !isShortConfirmation && !isShortMsg && !isFicheableOrMgmt;
 
   const kymaData = await callGeminiWithFallback(apiKey, {
     contents,
