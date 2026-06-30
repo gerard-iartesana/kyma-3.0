@@ -278,10 +278,10 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     }
 
     if (doorId === 'estela') {
-      // PROHIBICIÓN ABSOLUTA: Las personas/vínculos NUNCA se crean en Estela de vida
-      const personKeywords = /\b(?:hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|sobrina|sobrino|compañero|compañera|vicenta|marta|alejandro|david)\b/i;
+      // PROHIBICIÓN ABSOLUTA: Las personas/vínculos como tal NUNCA se crean en Estela de vida
+      const personKeywords = /\b(?:hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|sobrina|sobrino|compañero|compañera|hijo|hija|tío|tía|jefe|jefa|socio|socia)\b/i;
       const isPersonIntent = personKeywords.test(userMessage) || personKeywords.test(finalTitle) || result.extractedData.cercania !== undefined || result.extractedData.frecuenciaContacto !== undefined;
-      const memoryKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|distanciamiento|me dejé de hablar|nos dejamos de hablar)\b/i;
+      const memoryKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|distanciamiento|me dejé de hablar|nos dejamos de hablar|adopt|adopc|perro|gato|mascota|viaje|viajé|mudanza|mudé)\b/i;
 
       // Si se trata de la persona como tal (o cambio de frecuencia) y no de un evento/hito del pasado explícito, rechazar Estela
       if (isPersonIntent && !memoryKeywords.test(userMessage)) {
