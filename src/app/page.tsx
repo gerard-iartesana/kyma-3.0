@@ -854,7 +854,10 @@ export default function Home() {
       <header className="mobile-header">
         <div 
           className="mobile-header-brand" 
-          onClick={() => handleSelectDoor(null)}
+          onClick={() => {
+            handleSelectDoor(null);
+            setMobileTab('chat');
+          }}
           title="Ir al chat con Kyma"
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
