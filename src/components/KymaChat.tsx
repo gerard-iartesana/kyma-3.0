@@ -37,13 +37,35 @@ function renderFormattedText(text: string) {
 }
 
 function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string; isLatest: boolean; onCharacterTyped?: () => void }) {
+  const [displayedText, setDisplayedText] = useState(isLatest ? '' : text);
+
   useEffect(() => {
-    if (onCharacterTyped) onCharacterTyped();
-  }, [text, onCharacterTyped]);
+    if (!isLatest) {
+      setDisplayedText(text);
+      return;
+    }
+
+    setDisplayedText('');
+    let index = 0;
+    const interval = setInterval(() => {
+      setDisplayedText((prev) => {
+        const next = text.slice(0, index + 1);
+        if (next === text) {
+          clearInterval(interval);
+        }
+        index++;
+        return next;
+      });
+      if (onCharacterTyped) onCharacterTyped();
+    }, 12);
+
+    return () => clearInterval(interval);
+  }, [text, isLatest]);
 
   return (
-    <p className="message-text animate-fade-in">
-      {renderFormattedText(text)}
+    <p className="message-text">
+      {renderFormattedText(displayedText)}
+      {isLatest && displayedText !== text && <span className="typing-cursor" />}
     </p>
   );
 }

@@ -565,9 +565,17 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
     parts: [{ text: KYMA_CONSTITUTION + userContextInstruction + extraInstruction }]
   };
 
+  const isShortMsg = userText.trim().split(/\s+/).length <= 2;
+  const enableGrounding = !isShortConfirmation && !isShortMsg;
+
   const kymaData = await callGeminiWithFallback(apiKey, {
     contents,
     systemInstruction,
+    ...(enableGrounding ? {
+      tools: [
+        { googleSearch: {} }
+      ]
+    } : {}),
     generationConfig: {
       maxOutputTokens: 1200,
       temperature: 0.7
