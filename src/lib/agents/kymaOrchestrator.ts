@@ -593,7 +593,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
-  replyText = replyText.replace(/(?:Fits perfectly|One\/two short paragraphs\?|Yes, two short paragraphs|No "" or tags\?|None|Spanish \(Spain\) dialect[^\n]*|\b[A-Z][a-z]+\s*\([A-Za-z]+\)\s*dialect[^\n]*|\b[a-z]{1,3}"\.\s*No\s*"[^"]*")[^\n]*/gi, '');
+  replyText = replyText.replace(/(?:Fits perfectly|One\/two short paragraphs\?|Yes, two short paragraphs|No "" or tags\?|None|Spanish \(Spain\) dialect[^\n]*|\b(?:Spanish|Castellano|Castilian|Español|Espanol)\s*\([A-Za-z]+\)\s*dialect[^\n]*|\b[a-z]{1,3}"\.\s*No\s*"[^"]*")[^\n]*/gi, '');
   replyText = replyText.replace(/(?:\n|^)\s*(?:"[A-Za-zÁÉÍÓÚa-záéíóúñ]+"\s*,?\s*){2,}[^\n]*/gi, '');
   replyText = replyText.replace(/(?:\n|^)\s*[A-Za-zÁÉÍÓÚa-záéíóúñ\s]+" & [A-Za-zÁÉÍÓÚa-záéíóúñ\s]+"[^\n]*/gi, '');
   replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();

@@ -203,7 +203,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
     "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" (solo si es personas, usa 'ninguno' si no hay contacto o el contacto es cero),
     "year": 2018 (número de 4 dígitos, solo si es estela),
-    "dateStr": "14 de Mayo" o "Verano" (solo si es estela),
+    "dateStr": "14 de Mayo" o "Verano" (solo si es estela. DEBE SER MUY CORTO, máximo día y mes o un solo mes. NUNCA pongas rangos, ni dos meses, ni textos largos como 'Octubre y Noviembre' o 'Finales de año' ya que rompe la interfaz),
     "lugar": "París, Francia" (solo si es estela),
     "emocion": 1 | 2 | 3 | 4 | 5 (solo si es estela: 1: Muy triste/doloroso/pérdida/fallecimiento, 2: Triste/pena/melancolía/fin de relación/distanciamiento, 3: Calma/neutro, 4: Alegre, 5: Muy alegre),
     "fileUrl": "URL o base64 si el usuario adjuntó un archivo/imagen o null",

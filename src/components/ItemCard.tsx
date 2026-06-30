@@ -300,7 +300,27 @@ export function ItemCard({
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap'
                 }}>
-                  {item.dateStr ? item.dateStr : (item.eventDate ? formatDate(item.eventDate) : '')}
+                  {(() => {
+                    if (!item.dateStr) return item.eventDate ? formatDate(item.eventDate) : '';
+                    let str = item.dateStr.trim();
+                    // Si el dateStr es igual al año (ej: "2010"), no mostramos nada para evitar duplicidades
+                    if (item.year && str === item.year.toString()) {
+                      return '';
+                    }
+                    // Si contiene " y ", " a " o un guión "-", cortamos por el primer elemento
+                    const splitters = [/\s+y\s+/i, /\s+a\s+/i, /\s*-\s*/];
+                    for (const splitter of splitters) {
+                      if (splitter.test(str)) {
+                        str = str.split(splitter)[0].trim();
+                        break;
+                      }
+                    }
+                    // Si aun es muy largo (> 12 chars), lo truncamos para no romper el layout
+                    if (str.length > 12) {
+                      str = str.substring(0, 12) + '...';
+                    }
+                    return str;
+                  })()}
                 </span>
               )}
             </div>
