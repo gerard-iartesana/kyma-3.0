@@ -236,6 +236,11 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         const vx = Math.cos(baseAngle) * blastForce;
         const vy = Math.sin(baseAngle) * blastForce;
 
+        let nodeRadius = radius;
+        if ((p.cercania === 'orbita' || !p.cercania) && p.frecuencia === 0) {
+          nodeRadius = 295;
+        }
+
         simNodes.push({
           id: p.id,
           item: p,
@@ -243,7 +248,7 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
           cy: Math.sin(startAngle) * startDist,
           vx,
           vy,
-          radius,
+          radius: nodeRadius,
           angle: baseAngle,
           angularSpeed: speed,
           initials: getInitials(p.title),
@@ -319,6 +324,7 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         <div className="orbit-ring ring-nucleo" />
         <div className="orbit-ring ring-cercana" />
         <div className="orbit-ring ring-orbita" />
+        <div className="orbit-ring ring-orbita-lejana" />
 
         {/* Person Nodes */}
         {people.map((p) => (
@@ -341,7 +347,7 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
             title={`${p.title} (${p.cercania === 'nucleo' ? 'Núcleo' : p.cercania === 'cercana' ? 'Cercana' : 'Órbita'}) - Frecuencia: ${getFrequencyLabel(p.frecuencia)}`}
           >
             <div 
-              className={`node-circle node-${p.cercania || 'orbita'} ${p.cercania === 'nucleo' ? 'pulse-glow-node' : ''}`}
+              className={`node-circle node-${p.cercania || 'orbita'} ${p.cercania === 'nucleo' ? 'pulse-glow-node' : ''} ${((p.cercania === 'orbita' || !p.cercania) && p.frecuencia === 0) ? 'node-orbita-lejana' : ''}`}
               style={{ opacity: getFrequencyOpacity(p.frecuencia) }}
             />
             <span className="node-name">{p.title}</span>
@@ -410,6 +416,11 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
           width: 450px;
           height: 450px;
           border-color: rgba(252, 252, 253, 0.05);
+        }
+        .ring-orbita-lejana {
+          width: 590px;
+          height: 590px;
+          border-color: rgba(252, 252, 253, 0.02);
         }
 
         .ring-label {
@@ -563,6 +574,18 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
           background: linear-gradient(135deg, #94a3b8, #64748b);
           border: none;
           box-shadow: 0 0 8px rgba(148, 163, 184, 0.3);
+        }
+        .node-orbita-lejana {
+          width: 10px !important;
+          height: 10px !important;
+          background: linear-gradient(135deg, #475569, #334155) !important;
+          box-shadow: 0 0 4px rgba(71, 85, 105, 0.2) !important;
+        }
+        .person-node:has(.node-orbita-lejana) .node-name {
+          opacity: 0.5;
+        }
+        .person-node:hover:has(.node-orbita-lejana) .node-name {
+          opacity: 1;
         }
 
       `}</style>
