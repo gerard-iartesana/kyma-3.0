@@ -648,6 +648,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   }
 
   // Safe targeted sanitization of LLM preamble / artifacts & internal system tags
+  replyText = replyText.replace(/^(?:wait,\s*)?let\s+me\s+make\s+sure\s+it\s+is\s+complete\.?\s*/i, '');
   replyText = replyText.replace(/\[SISTEMA\]:?/gi, '');
   replyText = replyText.replace(/\[DATOS[^\]]*\]/gi, '');
   replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');

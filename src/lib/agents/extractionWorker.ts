@@ -299,10 +299,12 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/) || (contextSnippet && contextSnippet.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/));
         if (yearMatch) {
           extractedYear = parseInt(yearMatch[1]);
+        } else {
+          extractedYear = currentYear;
         }
       }
 
-      const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|19\d\d|20[0-1]\d|202[0-5])\b/i;
+      const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|trabajo|empleo|proyecto|elecciones|consell|gerard|jefe|empresa|socio|19\d\d|20[0-1]\d|202[0-5])\b/i;
       const hasExplicitPastYear = extractedYear && extractedYear < currentYear;
       const isHistoricalMemory = historicalKeywords.test(userMessage);
 
@@ -311,9 +313,21 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         return { action: 'none' };
       }
 
-      if (extractedYear && extractedYear >= currentYear) {
-        console.warn(`[Strict Guardrail Block] Rechazado Estela para el año ${extractedYear} (debe ser estricto pasado < ${currentYear}).`);
+      if (extractedYear && extractedYear > currentYear) {
+        console.warn(`[Strict Guardrail Block] Rechazado Estela para el año futuro ${extractedYear}.`);
         return { action: 'none' };
+      }
+
+      if (extractedYear === currentYear && result.extractedData.eventDate) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localTodayStr = `${year}-${month}-${day}`;
+        if (result.extractedData.eventDate >= localTodayStr) {
+          console.warn('[Strict Guardrail Block] Rechazado Estela por tratarse de un evento de hoy o futuro en el año actual.');
+          return { action: 'none' };
+        }
       }
 
       const timeOrCurrentPattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}|hoy|mañana|esta tarde|esta mañana|esta noche|próximo|proximo)\b/i;
