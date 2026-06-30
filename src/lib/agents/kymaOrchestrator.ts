@@ -154,6 +154,7 @@ export async function processKymaTurn(
 
   // Step 1: Triage with recent conversation context
   let triage: TriageResult = { isFicheable: false, confidence: 0 };
+  const isCorrection = /\b(?:corrige|corregir|borra|elimina|no ha|no he|has guardado|has puesto|has creado|debía ser|debería ser|deberia ser|era un(?:a)?\s+(?:nota|hito|tarea|evento|vínculo|vinculo|reflexión|reflexion)|como nota|como hito|en notas|en estela|en vínculos|en vinculos)\b/i.test(userText);
 
   if (userText.trim().length > 3) {
     const recentMsgs = messages.slice(-5).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join('\n');
@@ -203,7 +204,6 @@ Devuelve UNICAMENTE un JSON con este formato:
     // Question / query check & management intent check
     const isQuestion = /^\s*¿|\?|^\s*(?:qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir)\b/i.test(userText.trim());
     const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
-    const isCorrection = /\b(?:corrige|corregir|borra|elimina|no ha|no he|has guardado|has puesto|has creado|debía ser|debería ser|deberia ser|era un(?:a)?\s+(?:nota|hito|tarea|evento|vínculo|vinculo|reflexión|reflexion)|como nota|como hito|en notas|en estela|en vínculos|en vinculos)\b/i.test(userText);
 
     if ((isQuestion || isManagementIntent) && !isCorrection) {
       triage = { isFicheable: false, confidence: 0 };
@@ -407,7 +407,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   let deletedItemTitle = '';
   let relocatedItemInfo: { oldDoorId?: string; targetDoorId?: string; title?: string } = {};
 
-  const isManagementRequested = (
+  const isManagementRequested = isCorrection || (
     /\b(?:eliminar|elimina|borrar|borra|cancelar|cancela|quitar|quita)\s+(?:la\s+)?(?:ficha|tarjeta|nota|hito|tarea|evento|vínculo|vinculo|relación|relacion)\b/i.test(userText) ||
     /\b(?:muévelo|muevelo|pásalo|pasalo|muévela|muevela|pásala|pasala|cámbiala|cambiala|mover|pasa|pasar|cambia|cambiar|corrige|corregir)\s+(?:la\s+)?(?:ficha|tarjeta|nota|hito|tarea|evento|vínculo|vinculo|relación|relacion)?\s*a\s+(?:estela|notas|tareas|agenda|intereses|vínculos|vinculos|reflexiones|personas)\b/i.test(userText) ||
     /\b(?:cambiar|cambia|editar|edita|modificar|modifica)\s+(?:el\s+)?(?:título|titulo|nombre|cuerpo|contenido|texto)\b/i.test(userText) ||
@@ -415,12 +415,16 @@ Devuelve UNICAMENTE un JSON con este formato:
     /\b(?:corregir|corrige|modificar|modifica)\s+(?:este|esta|ese|esa|el|la)?\s*(?:hito|evento|nota|tarea|vínculo|vinculo|ficha|tarjeta)\b/i.test(userText)
   );
 
-  if (isManagementRequested && allUserItems.length > 0) {
+  if (isManagementRequested) {
     const mgmtPrompt = `
-Analiza la siguiente frase del usuario dentro del historial reciente. Determina si el usuario solicita:
+Analiza la frase del usuario y el historial reciente de mensajes para determinar si el usuario solicita:
 1. ELIMINAR / BORRAR una ficha existente.
 2. MOVER / CORREGIR la clasificación de una ficha existente de una puerta a otra.
 3. CAMBIAR O EDITAR EL TÍTULO o CONTENIDO de una ficha existente.
+4. CREAR una nueva ficha que Kyma omitió, no guardó o debería haber creado a partir del historial reciente (ej: "no has añadido la ficha del viaje", "apunta también eso").
+
+HISTORIAL RECIENTE DE MENSAJES (de abajo hacia arriba, los últimos mensajes):
+${recentMsgsSnippet}
 
 FICHAS ACTUALES DEL USUARIO:
 ${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.title, content: i.content, eventDate: i.eventDate })), null, 2)}
@@ -430,8 +434,9 @@ FRASE DEL USUARIO: "${userText}"
 REGLAS DE SALIDA E INVIOLABILIDAD:
 1. REGLA SAGRADA PARA PERSONAS (VÍNCULOS): Las fichas en la puerta "personas" (vínculos) NUNCA SE MOVERÁN NI REUBICARÁN a otra puerta.
 2. Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false, "shouldUpdateTitle": false.
-3. Si el usuario pide explícitamente mover una ficha de otra puerta: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": true, "targetDoorId": "<puerta>", "newTitle": "<titulo>", "shouldUpdateTitle": false.
+3. Si el usuario pide explícitamente mover una ficha de otra puerta o reubicarla: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": true, "targetDoorId": "<puerta>", "newTitle": "<titulo>", "shouldUpdateTitle": false.
 4. Si el usuario pide CAMBIAR EL TÍTULO o EDITAR una ficha existente: "shouldDelete": false, "shouldCreateNew": false, "shouldUpdateTitle": true, "targetItemIdToUpdate": "<id de la ficha a modificar>", "newUpdatedTitle": "<nuevo título exacto e ideal>".
+5. Si el usuario indica que no se ha creado/guardado o que falta añadir una ficha basada en el historial de mensajes: "shouldDelete": false, "shouldCreateNew": true, "targetDoorId": "<puerta de destino>", "newTitle": "<título adecuado para la ficha>", "newContent": "<contenido redactado en primera persona singular>", "year": <año si es estela o null>, "emocion": <emoción de 1 a 5 si es estela o null>, "shouldUpdateTitle": false.
 
 Devuelve ÚNICAMENTE un JSON con este formato:
 {
