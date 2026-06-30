@@ -116,6 +116,9 @@ export default function Home() {
   // Sort direction for Estela de vida
   const [estelaSortAsc, setEstelaSortAsc] = useState(false);
 
+  // Timeline scale for Estela de vida (60 = Compact, 120 = Medium, 200 = Spacious)
+  const [estelaTimelineScale, setEstelaTimelineScale] = useState<number>(120);
+
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [undoToast, setUndoToast] = useState<{ show: boolean; title?: string } | null>(null);
@@ -1412,24 +1415,55 @@ export default function Home() {
                   )}
 
                   {selectedDoorId === 'estela' && !isVelado && (
-                    <button 
-                      className="btn btn-secondary"
-                      onClick={() => setEstelaSortAsc(!estelaSortAsc)}
-                      title={estelaSortAsc ? "Ordenar: Más antiguos primero" : "Ordenar: Más recientes primero"}
-                      style={{ 
-                        width: '38px', 
-                        height: '38px', 
-                        padding: 0, 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        background: 'var(--bg-tertiary)',
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--text-secondary)'
-                      }}
-                    >
-                      {estelaSortAsc ? <Icons.ArrowUp size={16} /> : <Icons.ArrowDown size={16} />}
-                    </button>
+                    estelaViewMode === 'grid' ? (
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={() => setEstelaSortAsc(!estelaSortAsc)}
+                        title={estelaSortAsc ? "Ordenar: Más antiguos primero" : "Ordenar: Más recientes primero"}
+                        style={{ 
+                          width: '38px', 
+                          height: '38px', 
+                          padding: 0, 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          background: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-secondary)'
+                        }}
+                      >
+                        {estelaSortAsc ? <Icons.ArrowUp size={16} /> : <Icons.ArrowDown size={16} />}
+                      </button>
+                    ) : (
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setEstelaTimelineScale(prev => {
+                            if (prev === 60) return 120;
+                            if (prev === 120) return 200;
+                            return 60;
+                          });
+                        }}
+                        title={
+                          estelaTimelineScale === 60 ? "Escala: Compacta (junta las fechas) - Clic para Mediana" :
+                          estelaTimelineScale === 120 ? "Escala: Mediana - Clic para Amplia" :
+                          "Escala: Amplia (separa las fechas) - Clic para Compacta"
+                        }
+                        style={{ 
+                          width: '38px', 
+                          height: '38px', 
+                          padding: 0, 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          background: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-subtle)',
+                          color: estelaTimelineScale !== 120 ? '#ec4899' : 'var(--text-secondary)'
+                        }}
+                      >
+                        <Icons.Ruler size={16} />
+                      </button>
+                    )
                   )}
 
                   {/* Sorting button for Personas (Cercanía afectiva vs Recientes) */}
@@ -2185,6 +2219,7 @@ export default function Home() {
                   items={filteredItems}
                   sortAsc={estelaSortAsc}
                   onItemClick={(item) => handleSelectItem(item)}
+                  pxPerYear={estelaTimelineScale}
                 />
               ) : selectedDoorId === 'estela' ? (
                 <EstelaTimelineView
