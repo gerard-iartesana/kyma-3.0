@@ -675,7 +675,14 @@ export const dbClient = {
       await this.syncElementTags(createdDbItem.id, userId, tagsToLink, sb);
     }
     
-    return mapDbToKymaItem(createdDbItem, tagsToLink);
+    const newItem = mapDbToKymaItem(createdDbItem, tagsToLink);
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = this.getCachedItems();
+        localStorage.setItem('kyma_cached_items', JSON.stringify([newItem, ...cached]));
+      } catch (e) {}
+    }
+    return newItem;
   },
 
   async updateItem(id: string, updates: Partial<Omit<KymaItem, 'id' | 'userId'>>, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
@@ -749,7 +756,15 @@ export const dbClient = {
       finalTags = currentTags;
     }
     
-    return mapDbToKymaItem(updatedDbItem, finalTags);
+    const updatedItem = mapDbToKymaItem(updatedDbItem, finalTags);
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = this.getCachedItems();
+        const updatedCache = cached.map((i: KymaItem) => i.id === id ? updatedItem : i);
+        localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
+      } catch (e) {}
+    }
+    return updatedItem;
   },
 
   async deleteItem(id: string, cachedItem?: KymaItem, overrideUserId?: string, customClient?: any): Promise<void> {
@@ -800,6 +815,14 @@ export const dbClient = {
       
     if (error) {
       throw new Error(`Error deleting element: ${error.message}`);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = this.getCachedItems();
+        const updatedCache = cached.filter((i: KymaItem) => i.id !== id);
+        localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
+      } catch (e) {}
     }
   },
 

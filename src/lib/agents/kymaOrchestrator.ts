@@ -238,6 +238,14 @@ Devuelve UNICAMENTE un JSON con este formato:
   const recentMsgsSnippet = messages.slice(-4).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join(' | ');
   const doorsToExtract: DoorId[] = [];
 
+  // Fetch user items early to check for tentative items in confirmations
+  let allUserItems: KymaItem[] = [];
+  try {
+    allUserItems = await dbClient.getItems(undefined, userId, sbClient);
+  } catch (err) {
+    console.error('Error fetching user items for context:', err);
+  }
+
   // Detector inteligente de confirmaciones a propuestas previas de Kyma (interpretando la acción exacta propuesta)
   const isShortConfirmation = /^(?:ok|sí|si|vale|perfecto|adelante|de acuerdo|claro|por supuesto|hazlo|créala|creala|modifícala|modificala|actualízala|actualizala)\b/i.test(userText.trim());
   const lastKymaMsgObj = [...messages].reverse().find(m => m.sender === 'kyma');
@@ -273,8 +281,25 @@ Devuelve UNICAMENTE un JSON con este formato:
       targetDoor = 'reflexiones';
     }
 
-    if (!doorsToExtract.includes(targetDoor)) {
-      doorsToExtract.push(targetDoor);
+    // Check if there is an existing tentative item in targetDoor
+    let tentativeItem: KymaItem | undefined;
+    if (allUserItems.length > 0) {
+      tentativeItem = allUserItems
+        .filter(i => i.doorId === targetDoor && i.origen === 'kyma_sugerido')
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    }
+
+    if (tentativeItem) {
+      try {
+        const confirmed = await dbClient.confirmItem(tentativeItem.id, userId, sbClient);
+        allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: targetDoor });
+      } catch (err) {
+        console.error('Error confirming tentative item:', err);
+      }
+    } else {
+      if (!doorsToExtract.includes(targetDoor)) {
+        doorsToExtract.push(targetDoor);
+      }
     }
 
     if (proposedAction === 'create') {
@@ -339,13 +364,8 @@ Devuelve UNICAMENTE un JSON con este formato:
   const primaryExtracted = allExtractedResults[0] || { action: 'none' };
   let finalAction: string = primaryExtracted.action;
 
-  // Step 3: Fetch user items context to allow Kyma to read agenda, tasks, notes, etc.
-  let allUserItems: KymaItem[] = [];
-  try {
-    allUserItems = await dbClient.getItems(undefined, userId, sbClient);
-  } catch (err) {
-    console.error('Error fetching user items for Kyma context:', err);
-  }
+  // Step 3: User items context is already loaded early in Step 2 as allUserItems
+
 
   // Step 3.5: AI Item Management & Relocation Engine (Deletion, Relocation, Correction)
   let deletedItemTitle = '';

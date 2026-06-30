@@ -233,6 +233,21 @@ export default function Home() {
   }, [items, userProfile.autoApprove]);
 
   const handleItemAddedOrModified = async (item?: KymaItem, action?: string) => {
+    if (item) {
+      try {
+        const cached = localStorage.getItem('kyma_cached_items');
+        if (cached) {
+          const itemsList: KymaItem[] = JSON.parse(cached);
+          const filtered = itemsList.filter(i => i.id !== item.id);
+          if (action !== 'delete') {
+            filtered.unshift(item);
+          }
+          localStorage.setItem('kyma_cached_items', JSON.stringify(filtered));
+        }
+      } catch (e) {
+        console.error('Error updating local cache with server item:', e);
+      }
+    }
     await refreshItems();
     if (item && item.doorId) {
       const doorMod = DOOR_MODULES.find(m => m.id === item.doorId);
