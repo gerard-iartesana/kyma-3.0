@@ -248,6 +248,23 @@ button, input, textarea, select {
   color: #fff;
 }
 
+.icon-btn-ghost {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.icon-btn-ghost:hover {
+  background: rgba(252, 252, 253, 0.08);
+  color: var(--text-primary);
+}
+
 .input-field {
   width: 100%;
   padding: 10px 14px;
