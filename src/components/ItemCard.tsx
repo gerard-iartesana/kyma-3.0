@@ -167,7 +167,7 @@ export function ItemCard({
     if (freq >= 63) return 'Semanal';
     if (freq >= 38) return 'Mensual';
     if (freq >= 13) return 'Anual';
-    return 'Sin contacto (0)';
+    return 'Sin contacto';
   };
 
   // Helper for rendering door-specific badges or decorations

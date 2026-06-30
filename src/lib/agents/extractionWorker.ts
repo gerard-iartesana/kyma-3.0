@@ -48,7 +48,7 @@ function formatTagList(tags: string[], itemTitle?: string): string[] {
 function getFrequencyScore(freqLabel?: string): number | undefined {
   if (!freqLabel) return undefined;
   const l = freqLabel.toLowerCase();
-  if (l.includes('0') || l.includes('cero') || l.includes('ningun') || l.includes('ningún') || l.includes('nulo') || l.includes('sin contacto') || l.includes('no nos hablamos') || l.includes('dejamos de hablar') || l.includes('distanci')) return 0;
+  if (l.includes('0') || l.includes('cero') || l.includes('ningun') || l.includes('ningún') || l.includes('ninguno') || l.includes('nada') || l.includes('nulo') || l.includes('sin contacto') || l.includes('no nos hablamos') || l.includes('dejamos de hablar') || l.includes('distanci')) return 0;
   if (l.includes('diario') || l.includes('día') || l.includes('dia')) return 100;
   if (l.includes('semanal') || l.includes('semana')) return 75;
   if (l.includes('mensual') || l.includes('mes')) return 50;
@@ -201,7 +201,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     "recurrencia": "none" | "semanal" | "mensual" | "anual" | "primer_lunes_mes" | "ultimo_viernes_mes" (solo si es agenda, detecta expresiones como "todos los lunes", "primer lunes de cada mes", "último viernes del mes"),
     "completed": false (solo si es tareas),
     "cercania": "nucleo" | "cercana" | "orbita" (solo si es personas, defecto orbita),
-    "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" (solo si es personas),
+    "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" (solo si es personas, usa 'ninguno' si no hay contacto o el contacto es cero),
     "year": 2018 (número de 4 dígitos, solo si es estela),
     "dateStr": "14 de Mayo" o "Verano" (solo si es estela),
     "lugar": "París, Francia" (solo si es estela),
@@ -243,7 +243,14 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     // Determine origen (todas las sugerencias de Kyma requieren confirmacion previa)
     const origen = 'kyma_sugerido';
-    const calculatedFreq = getFrequencyScore(result.extractedData.frecuenciaContacto) ?? result.extractedData.frecuencia;
+    let calculatedFreq = getFrequencyScore(result.extractedData.frecuenciaContacto) ?? result.extractedData.frecuencia;
+    if (doorId === 'personas') {
+      const isExplicitNoContact = /\b(?:contacto 0|contacto cero|sin contacto|no nos hablamos|no me hablo|dejamos de hablar|cero contacto|contacto nulo|ningún contacto|ningun contacto)\b/i.test(userMessage) || 
+        /\b(?:cero|ninguno|no nos hablamos|sin contacto)\b/i.test(result.extractedData.frecuenciaContacto || '');
+      if (isExplicitNoContact) {
+        calculatedFreq = 0;
+      }
+    }
 
     // Fallback for year and peso in estela
     let extractedYear = result.extractedData.year;
