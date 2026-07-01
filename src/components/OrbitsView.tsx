@@ -3,6 +3,7 @@ import { KymaItem } from '../lib/db/client';
 
 interface OrbitsViewProps {
   people: KymaItem[];
+  scale?: number;
   onPersonClick: (person: KymaItem) => void;
 }
 
@@ -20,7 +21,7 @@ interface SimulationNode {
   closeness: string;
 }
 
-export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
+export function OrbitsView({ people, scale = 1.0, onPersonClick }: OrbitsViewProps) {
   const domElementsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
   const nodesRef = useRef<SimulationNode[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -235,13 +236,13 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         const closeness = p.cercania || 'orbita';
         const freq = typeof p.frecuencia === 'number' ? p.frecuencia : 50;
 
-        let nodeRadius = radius;
+        let nodeRadius = radius * scale;
         if (closeness === 'nucleo') {
-          nodeRadius = 90 - (freq / 100) * 30; // [60, 90]
+          nodeRadius = (90 - (freq / 100) * 30) * scale; // [60, 90] * scale
         } else if (closeness === 'cercana') {
-          nodeRadius = 175 - (freq / 100) * 50; // [125, 175]
+          nodeRadius = (175 - (freq / 100) * 50) * scale; // [125, 175] * scale
         } else {
-          nodeRadius = 295 - (freq / 100) * 90; // [205, 295]
+          nodeRadius = (295 - (freq / 100) * 90) * scale; // [205, 295] * scale
         }
 
         const existing = prevNodesMap.get(p.id);
@@ -327,7 +328,7 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
     return () => {
       cancelAnimationFrame(animFrameId);
     };
-  }, [people]);
+  }, [people, scale]);
 
   return (
     <div ref={containerRef} className="orbits-container">
@@ -345,10 +346,10 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         </div>
 
         {/* Concentric Rings */}
-        <div className="orbit-ring ring-nucleo" />
-        <div className="orbit-ring ring-cercana" />
-        <div className="orbit-ring ring-orbita" />
-        <div className="orbit-ring ring-orbita-lejana" />
+        <div className="orbit-ring ring-nucleo" style={{ width: `${150 * scale}px`, height: `${150 * scale}px` }} />
+        <div className="orbit-ring ring-cercana" style={{ width: `${300 * scale}px`, height: `${300 * scale}px` }} />
+        <div className="orbit-ring ring-orbita" style={{ width: `${450 * scale}px`, height: `${450 * scale}px` }} />
+        <div className="orbit-ring ring-orbita-lejana" style={{ width: `${590 * scale}px`, height: `${590 * scale}px` }} />
 
         {/* Person Nodes */}
         {people.map((p) => {
@@ -447,7 +448,7 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
         }
 
         /* Concentric Rings */
-        .orbit-ring {
+         .orbit-ring {
           position: absolute;
           left: 50%;
           top: 50%;
@@ -458,6 +459,7 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
           align-items: flex-start;
           justify-content: center;
           pointer-events: none;
+          transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1), height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .ring-nucleo {
           width: 150px;

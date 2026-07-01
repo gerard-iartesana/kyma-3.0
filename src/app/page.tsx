@@ -119,6 +119,12 @@ export default function Home() {
   // Timeline scale for Estela de vida (60 = Compact, 120 = Medium, 200 = Spacious)
   const [estelaTimelineScale, setEstelaTimelineScale] = useState<number>(60);
 
+  // Orbits view settings for Vínculos (personas)
+  const [personasOrbitsScale, setPersonasOrbitsScale] = useState<number>(1.0);
+  const [personasShowNucleo, setPersonasShowNucleo] = useState<boolean>(true);
+  const [personasShowCercana, setPersonasShowCercana] = useState<boolean>(true);
+  const [personasShowOrbita, setPersonasShowOrbita] = useState<boolean>(true);
+
   // Tag filtering state
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [undoToast, setUndoToast] = useState<{ show: boolean; title?: string } | null>(null);
@@ -1564,6 +1570,105 @@ export default function Home() {
                     </button>
                   )}
 
+                  {/* Orbits controls for Personas */}
+                  {selectedDoorId === 'personas' && !isVelado && personasViewMode === 'orbits' && (
+                    <>
+                      {/* Scale (Ruler) */}
+                      <button 
+                        className="btn btn-secondary animate-fade-in"
+                        onClick={() => {
+                          setPersonasOrbitsScale(prev => {
+                            if (prev === 0.65) return 1.0;
+                            if (prev === 1.0) return 1.45;
+                            return 0.65;
+                          });
+                        }}
+                        title={
+                          personasOrbitsScale === 0.65 ? "Órbitas: Compactas - Clic para Medianas" :
+                          personasOrbitsScale === 1.0 ? "Órbitas: Medianas - Clic para Amplias" :
+                          "Órbitas: Amplias - Clic para Compactas"
+                        }
+                        style={{ 
+                          width: '38px', 
+                          height: '38px', 
+                          padding: 0, 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          background: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-subtle)',
+                          color: personasOrbitsScale !== 1.0 ? '#c084fc' : 'var(--text-secondary)',
+                          marginLeft: '8px'
+                        }}
+                      >
+                        <Icons.Ruler size={16} />
+                      </button>
+
+                      {/* Filter: Nucleo (Target) */}
+                      <button 
+                        className={`btn btn-secondary animate-fade-in ${personasShowNucleo ? 'active' : ''}`}
+                        onClick={() => setPersonasShowNucleo(prev => !prev)}
+                        title={personasShowNucleo ? "Ocultar Vínculos del Núcleo" : "Mostrar Vínculos del Núcleo"}
+                        style={{ 
+                          width: '38px', 
+                          height: '38px', 
+                          padding: 0, 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          background: personasShowNucleo ? 'rgba(236, 72, 153, 0.2)' : 'var(--bg-tertiary)',
+                          borderColor: personasShowNucleo ? '#ec4899' : 'var(--border-subtle)',
+                          color: personasShowNucleo ? '#ec4899' : 'var(--text-muted)',
+                          marginLeft: '8px'
+                        }}
+                      >
+                        <Icons.Target size={16} />
+                      </button>
+
+                      {/* Filter: Cercana (Users) */}
+                      <button 
+                        className={`btn btn-secondary animate-fade-in ${personasShowCercana ? 'active' : ''}`}
+                        onClick={() => setPersonasShowCercana(prev => !prev)}
+                        title={personasShowCercana ? "Ocultar Vínculos Cercanos" : "Mostrar Vínculos Cercanos"}
+                        style={{ 
+                          width: '38px', 
+                          height: '38px', 
+                          padding: 0, 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          background: personasShowCercana ? 'rgba(56, 189, 248, 0.2)' : 'var(--bg-tertiary)',
+                          borderColor: personasShowCercana ? '#38bdf8' : 'var(--border-subtle)',
+                          color: personasShowCercana ? '#38bdf8' : 'var(--text-muted)',
+                          marginLeft: '8px'
+                        }}
+                      >
+                        <Icons.Users size={16} />
+                      </button>
+
+                      {/* Filter: Orbita (Globe) */}
+                      <button 
+                        className={`btn btn-secondary animate-fade-in ${personasShowOrbita ? 'active' : ''}`}
+                        onClick={() => setPersonasShowOrbita(prev => !prev)}
+                        title={personasShowOrbita ? "Ocultar Vínculos de la Órbita" : "Mostrar Vínculos de la Órbita"}
+                        style={{ 
+                          width: '38px', 
+                          height: '38px', 
+                          padding: 0, 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          background: personasShowOrbita ? 'rgba(148, 163, 184, 0.2)' : 'var(--bg-tertiary)',
+                          borderColor: personasShowOrbita ? '#94a3b8' : 'var(--border-subtle)',
+                          color: personasShowOrbita ? '#94a3b8' : 'var(--text-muted)',
+                          marginLeft: '8px'
+                        }}
+                      >
+                        <Icons.Globe size={16} />
+                      </button>
+                    </>
+                  )}
+
                   {/* Sorting button for Reflexiones (Destacados vs Recientes) */}
                   {selectedDoorId === 'reflexiones' && !isVelado && (
                     <button 
@@ -2316,7 +2421,13 @@ export default function Home() {
                 </div>
               ) : selectedDoorId === 'personas' && personasViewMode === 'orbits' ? (
                 <OrbitsView 
-                  people={filteredItems}
+                  people={filteredItems.filter(p => {
+                    const closeness = p.cercania || 'orbita';
+                    if (closeness === 'nucleo') return personasShowNucleo;
+                    if (closeness === 'cercana') return personasShowCercana;
+                    return personasShowOrbita;
+                  })}
+                  scale={personasOrbitsScale}
                   onPersonClick={(person) => handleSelectItem(person)}
                 />
               ) : selectedDoorId === 'intereses' && interesesViewMode === 'orbits' ? (
