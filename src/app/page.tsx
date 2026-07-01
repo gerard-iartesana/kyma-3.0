@@ -433,64 +433,81 @@ export default function Home() {
   // Process Google Calendar temp connection after redirect callback
   useEffect(() => {
     if (typeof window !== 'undefined' && user && configLoaded) {
-      const tempCalendar = localStorage.getItem('kyma_temp_google_calendar');
-      if (tempCalendar) {
-        try {
-          const calendarData = JSON.parse(tempCalendar);
-          localStorage.removeItem('kyma_temp_google_calendar');
+      const urlParams = new URLSearchParams(window.location.search);
+      const isGoogleCallback = urlParams.get('google_callback') === 'success';
+
+      if (isGoogleCallback) {
+        const accessToken = urlParams.get('access_token');
+        const refreshToken = urlParams.get('refresh_token');
+        const expiresIn = urlParams.get('expires_in');
+
+        // Clean up the URL parameters immediately for security
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+
+        if (accessToken) {
+          const calendarData = {
+            connected: true,
+            accessToken,
+            refreshToken: refreshToken || undefined,
+            tokenExpiry: new Date(Date.now() + (parseInt(expiresIn || '3600') * 1000)).toISOString(),
+            selectedCalendars: []
+          };
 
           (async () => {
-            const config = await dbClient.getUserConfig();
-            const currentPerfil = config?.perfil || userProfile;
-            const currentLogs = config?.logs || trustLogs;
+            try {
+              const config = await dbClient.getUserConfig();
+              const currentPerfil = config?.perfil || userProfile;
+              const currentLogs = config?.logs || trustLogs;
 
-            const datos = {
-              is_system_config: true,
-              perfil: currentPerfil,
-              logs: currentLogs,
-              googleCalendar: calendarData
-            };
+              const datos = {
+                is_system_config: true,
+                perfil: currentPerfil,
+                logs: currentLogs,
+                googleCalendar: calendarData
+              };
 
-            const { data: existing } = await supabase
-              .from('elementos')
-              .select('id')
-              .eq('user_id', user.id)
-              .eq('tipo', 'nota')
-              .eq('titulo', 'kyma_system_user_configuration');
-
-            if (existing && existing.length > 0) {
-              await supabase
+              const { data: existing } = await supabase
                 .from('elementos')
-                .update({ datos, updated_at: new Date().toISOString() })
-                .eq('id', existing[0].id);
-            } else {
-              await supabase
-                .from('elementos')
-                .insert({
-                  user_id: user.id,
-                  tipo: 'nota',
-                  titulo: 'kyma_system_user_configuration',
-                  datos,
-                  peso: 1,
-                  origen: 'manual'
-                });
-            }
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('tipo', 'nota')
+                .eq('titulo', 'kyma_system_user_configuration');
 
-            setGoogleCalendarConnected(true);
-            setToastNotification({
-              show: true,
-              message: 'Google Calendar conectado con éxito.',
-              doorId: 'agenda'
-            });
+              if (existing && existing.length > 0) {
+                await supabase
+                  .from('elementos')
+                  .update({ datos, updated_at: new Date().toISOString() })
+                  .eq('id', existing[0].id);
+              } else {
+                await supabase
+                  .from('elementos')
+                  .insert({
+                    user_id: user.id,
+                    tipo: 'nota',
+                    titulo: 'kyma_system_user_configuration',
+                    datos,
+                    peso: 1,
+                    origen: 'manual'
+                  });
+              }
 
-            const sessionRes = await supabase.auth.getSession();
-            const token = sessionRes.data.session?.access_token;
-            if (token) {
-              await fetchGoogleEvents(token);
+              setGoogleCalendarConnected(true);
+              setToastNotification({
+                show: true,
+                message: 'Google Calendar conectado con éxito.',
+                doorId: 'agenda'
+              });
+
+              const sessionRes = await supabase.auth.getSession();
+              const token = sessionRes.data.session?.access_token;
+              if (token) {
+                await fetchGoogleEvents(token);
+              }
+            } catch (e) {
+              console.error('Error saving Google Calendar config from callback:', e);
             }
           })();
-        } catch (e) {
-          console.error('Error processing temp Google Calendar session:', e);
         }
       }
     }

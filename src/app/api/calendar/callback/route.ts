@@ -51,71 +51,19 @@ export async function GET(request: Request) {
 
     const accessToken = tokens.access_token;
     const refreshToken = tokens.refresh_token || '';
-    const tokenExpiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+    const expiresIn = String(tokens.expires_in || '3600');
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Sincronizando Google Calendar...</title>
-        <style>
-          body {
-            background-color: #08080a;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-          }
-          .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: #a855f7;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px auto;
-          }
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        </style>
-      </head>
-      <body>
-        <div>
-          <div class="spinner"></div>
-          <p>Conectando con Google Calendar...</p>
-        </div>
-        <script>
-          try {
-            const data = {
-              accessToken: "${accessToken}",
-              refreshToken: "${refreshToken}",
-              tokenExpiry: "${tokenExpiry}",
-              connected: true
-            };
-            localStorage.setItem('kyma_temp_google_calendar', JSON.stringify(data));
-            window.location.href = "/?calendar_sync=success";
-          } catch (e) {
-            console.error("Error storing calendar data in localStorage:", e);
-            window.location.href = "/?calendar_error=local_storage_failed";
-          }
-        </script>
-      </body>
-      </html>
-    `;
-
-    return new Response(htmlContent, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
+    const params = new URLSearchParams({
+      google_callback: 'success',
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      expires_in: expiresIn
     });
+
+    return NextResponse.redirect(`${origin}/?${params.toString()}`);
   } catch (err: any) {
     console.error('Error in /api/calendar/callback:', err);
-    return NextResponse.redirect(new URL(`/?calendar_error=${encodeURIComponent(err.message)}`, request.url));
+    const origin = new URL(request.url).origin;
+    return NextResponse.redirect(`${origin}/?calendar_error=${encodeURIComponent(err.message)}`);
   }
 }
