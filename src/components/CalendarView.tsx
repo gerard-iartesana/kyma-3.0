@@ -185,6 +185,9 @@ export function CalendarView({
           time = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
         }
 
+        const rawName = evt.organizer?.displayName || (evt.organizer?.email ? evt.organizer.email.split('@')[0] : 'Google');
+        const organizerName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
         return {
           id: `google-${evt.id}`,
           userId: '',
@@ -198,7 +201,8 @@ export function CalendarView({
           completed: false,
           peso: 1 as const,
           createdAt: evt.created || new Date().toISOString(),
-          isGoogle: true
+          isGoogle: true,
+          organizerName: organizerName
         };
       });
 
@@ -308,23 +312,27 @@ export function CalendarView({
                     <div 
                       key={evt.id} 
                       style={{ 
-                        padding: '12px 16px', 
-                        background: 'rgba(255, 255, 255, 0.02)', 
-                        border: '1px solid rgba(255, 255, 255, 0.06)', 
-                        borderRadius: '12px',
+                        padding: '10px 14px', 
+                        background: 'transparent', 
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.04)', 
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '4px',
+                        gap: '2px',
                         textAlign: 'left'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--accent-purple)', fontWeight: 600 }}>
-                        <Clock size={12} />
-                        <span>GOOGLE CALENDAR • {evt.eventTime || 'Todo el día'}</span>
+                      <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 500, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--text-muted)', marginRight: '8px' }}>•</span>
+                        {evt.title}
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>
+                          ({(evt as any).organizerName || 'Google'})
+                        </span>
+                      </h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: '14px' }}>
+                        <span>{evt.eventTime || 'Todo el día'}</span>
                       </div>
-                      <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-primary)' }}>{evt.title}</h4>
                       {evt.content && (
-                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{evt.content}</p>
+                        <p style={{ margin: '2px 0 0 14px', fontSize: '0.84rem', color: 'var(--text-muted)' }}>{evt.content}</p>
                       )}
                     </div>
                   );

@@ -2282,66 +2282,7 @@ export default function Home() {
             )}
 
             <div className="door-viewport">
-              {/* Google Calendar announcements (plain text list) */}
-              {selectedDoorId === 'agenda' && googleCalendarConnected && (
-                <div className="google-calendar-announcements-banner" style={{
-                  padding: '14px 18px',
-                  background: 'rgba(139, 92, 246, 0.03)',
-                  border: '1px dashed rgba(139, 92, 246, 0.2)',
-                  borderRadius: '16px',
-                  marginBottom: '20px',
-                  fontSize: '0.88rem',
-                  color: 'var(--text-secondary)',
-                  lineHeight: '1.5',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  textAlign: 'left'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', fontWeight: 600, color: '#ffffff' }}>
-                    <Icons.Calendar size={15} className="text-purple" style={{ color: 'var(--accent-purple)' }} />
-                    <span>Eventos en tu Google Calendar</span>
-                  </div>
-                  {loadingGoogleEvents ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                      <span className="minimal-spinner-small" style={{
-                        width: '12px',
-                        height: '12px',
-                        border: '2px solid rgba(255,255,255,0.1)',
-                        borderTopColor: 'var(--accent-purple)',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        animation: 'kymaSpin 0.75s linear infinite'
-                      }}></span>
-                      <span>Sincronizando...</span>
-                    </div>
-                  ) : googleEvents.length === 0 ? (
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                      No hay eventos en tu Google Calendar para los próximos días.
-                    </span>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                      {googleEvents.map(evt => {
-                        const startDate = new Date(evt.start.dateTime || evt.start.date);
-                        const isToday = startDate.toDateString() === new Date().toDateString();
-                        const isTomorrow = startDate.toDateString() === new Date(Date.now() + 24*3600*1000).toDateString();
-                        let dayLabel = startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-                        if (isToday) dayLabel = 'Hoy';
-                        if (isTomorrow) dayLabel = 'Mañana';
-                        const timeLabel = evt.start.dateTime 
-                          ? startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) 
-                          : 'Todo el día';
-                        return (
-                          <div key={evt.id} style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                            <span style={{ fontWeight: 600, color: 'var(--accent-purple)', fontSize: '0.82rem' }}>
-                              • {dayLabel} a las {timeLabel}:
-                            </span>
-                            <span style={{ color: 'var(--text-primary)' }}>{evt.summary}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+
 
               {isVelado ? (
                 <div className="velado-container animate-fade-in">
@@ -3012,6 +2953,8 @@ export default function Home() {
                       const virtualGoogleItems = googleEvents.map(evt => {
                         const dateStr = (evt.start.dateTime || evt.start.date).split('T')[0];
                         const timeStr = evt.start.dateTime ? evt.start.dateTime.split('T')[1]?.substring(0, 5) : undefined;
+                        const rawName = evt.organizer?.displayName || (evt.organizer?.email ? evt.organizer.email.split('@')[0] : 'Google');
+                        const organizerName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
                         return {
                           id: `google-${evt.id}`,
                           userId: '',
@@ -3024,7 +2967,8 @@ export default function Home() {
                           tags: ['Google Calendar'],
                           completed: false,
                           peso: 1 as const,
-                          createdAt: evt.created || new Date().toISOString()
+                          createdAt: evt.created || new Date().toISOString(),
+                          organizerName: organizerName
                         };
                       });
                       
@@ -3053,35 +2997,33 @@ export default function Home() {
                               key={item.id} 
                               className="google-event-text-item"
                               style={{
-                                padding: '14px 18px',
-                                background: 'rgba(139, 92, 246, 0.02)',
-                                border: '1px dashed rgba(139, 92, 246, 0.2)',
-                                borderRadius: '16px',
+                                padding: '10px 16px',
+                                background: 'transparent',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 gap: '12px',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                                 gridColumn: '1 / -1'
                               }}
                             >
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--accent-purple)', fontWeight: 600 }}>
-                                  <Icons.Calendar size={12} />
-                                  <span>GOOGLE CALENDAR</span>
-                                </div>
-                                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
+                                <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center' }}>
+                                  <span style={{ color: 'var(--text-muted)', marginRight: '8px' }}>•</span>
                                   {item.title}
+                                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>
+                                    ({(item as any).organizerName || 'Google'})
+                                  </span>
                                 </h4>
                                 {item.content && (
-                                  <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  <p style={{ margin: '2px 0 0 14px', fontSize: '0.84rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {item.content}
                                   </p>
                                 )}
                               </div>
-                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formattedDate}</div>
-                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.eventTime || 'Todo el día'}</div>
+                              <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{item.eventTime || 'Todo el día'}</span>
+                                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-muted)', minWidth: '60px', textAlign: 'right' }}>{formattedDate}</span>
                               </div>
                             </div>
                           );
