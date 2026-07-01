@@ -249,16 +249,16 @@ Devuelve UNICAMENTE un JSON con este formato:
     }
 
     // Question / query check & management intent check
-    const isQuestion = /^\s*¿|\?|^\s*(?:qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir)\b/i.test(userText.trim());
-    const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)\b/i.test(userText);
+    const isQuestion = /^\s*¿|\?|^\s*(?:qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|recuérdame|recuerdame|puedes decir)(?:\s+|$|[.,;!¿?])/i.test(userText.trim());
+    const isManagementIntent = /(?:elimina|eliminar|borra|borrar|cancela|cancelar|quita|quitar|cámbialo|cambialo|muévelo|muevelo|pásalo|pasalo|ponlo como|muévela|muevela|cámbiala|cambiala)(?:\s+|$|[.,;!¿?])/i.test(userText);
 
     if ((isQuestion || isManagementIntent) && !isCorrection) {
       triage = { isFicheable: false, confidence: 0 };
     } else {
       // Deterministic override for time, documents/notes, person frequency, tasks, reflexiones vs memories
-      const timePattern = /\b(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})\b/i;
-      const documentNotePattern = /\b(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas)\b/i;
-      const personFrequencyPattern = /\b(?:hablo|hablo poco|hablo mucho|veo|veo poco|veo mucho|contacto|contacto es|frecuencia|una vez al año|una vez al mes|una vez a la semana|diario|diariamente|casi nunca)\b/i;
+      const timePattern = /(?:\s+|^|[.,;!])(?:a las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2})(?:\s+|$|[.,;!])/i;
+      const documentNotePattern = /(?:\s+|^|[.,;!])(?:dni|documento|adjunto|nota|teléfono|telefono|correo|email|dirección|direccion|para tenerlo a mano|guardar en notas)(?:\s+|$|[.,;!])/i;
+      const personFrequencyPattern = /(?:\s+|^|[.,;!])(?:hablo|hablo poco|hablo mucho|veo|veo poco|veo mucho|contacto|contacto es|frecuencia|una vez al año|una vez al mes|una vez a la semana|diario|diariamente|casi nunca)(?:\s+|$|[.,;!])/i;
       const pendingTaskPattern = /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i;
       const reflectionKeywords = /\b(?:reflexión|reflexion|pensamiento|filosofía|filosofia|principio vital)\b/i;
       const pastYearMatch = userText.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
@@ -297,7 +297,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   }
 
   // Detector inteligente de confirmaciones a propuestas previas de Kyma (interpretando la acción exacta propuesta)
-  const isShortConfirmation = /^(?:ok|sí|si|vale|perfecto|adelante|de acuerdo|claro|por supuesto|hazlo|créala|creala|modifícala|modificala|actualízala|actualizala)\b/i.test(userText.trim());
+  const isShortConfirmation = /^(?:ok|sí|si|vale|perfecto|adelante|de acuerdo|claro|por supuesto|hazlo|créala|creala|modifícala|modificala|actualízala|actualizala)(?:\s+|$|[.,;!¿?])/i.test(userText.trim());
   const lastKymaMsgObj = [...messages].reverse().find(m => m.sender === 'kyma');
   const lastKymaMsg = lastKymaMsgObj?.text || '';
 
