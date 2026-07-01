@@ -375,7 +375,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
       // PROHIBICIÓN ABSOLUTA: Las personas/vínculos como tal NUNCA se crean en Estela de vida
       const personKeywords = /\b(?:hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|sobrina|sobrino|compañero|compañera|hijo|hija|tío|tía|jefe|jefa|socio|socia)\b/i;
       const isPersonIntent = personKeywords.test(userMessage) || personKeywords.test(finalTitle) || result.extractedData.cercania !== undefined || result.extractedData.frecuenciaContacto !== undefined;
-      const memoryKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|distanciamiento|me dejé de hablar|nos dejamos de hablar|adopt|adopc|perro|gato|mascota|viaje|viajé|mudanza|mudé)\b/i;
+      const memoryKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|distanciamiento|me dejé de hablar|nos dejamos de hablar|adopt|adopc|perro|gato|mascota|viaje|viajé|mudanza|mudé|ingres|ingreso|hospital|enfermedad|salud|operac|operó|opero|cirugía|accidente|infarto|derrame|médico|medico|diagnóst|diagnost)\b/i;
 
       // Si se trata de la persona como tal (o cambio de frecuencia) y no de un evento/hito del pasado explícito, rechazar Estela
       if (isPersonIntent && !memoryKeywords.test(userMessage)) {
@@ -398,7 +398,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         }
       }
 
-      const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|trabajo|empleo|proyecto|elecciones|consell|gerard|jefe|empresa|socio|19\d\d|20[0-1]\d|202[0-5])\b/i;
+      const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|trabajo|empleo|proyecto|elecciones|consell|gerard|jefe|empresa|socio|19\d\d|20[0-1]\d|202[0-5]|ingres|ingreso|hospital|enfermedad|salud|operac|operó|opero|cirugía|accidente|infarto|derrame|médico|medico|diagnóst|diagnost)\b/i;
       const hasExplicitPastYear = extractedYear && extractedYear < currentYear;
       const isHistoricalMemory = historicalKeywords.test(userMessage);
 

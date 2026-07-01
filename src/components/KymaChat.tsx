@@ -341,7 +341,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           isNew: true
         };
         setMessages(prev => [...prev, timeoutMsg]);
-      }, 15000);
+      }, 45000);
 
       // Background async DB write for user message
       dbClient.sendMessage(fullTextForDB, ctx).then(savedMsg => {
