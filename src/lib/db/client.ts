@@ -1011,7 +1011,7 @@ export const dbClient = {
     const sb = customClient || supabase;
     const updatedItem = await this.updateItem(id, { origen: 'kyma_confirmado' }, overrideUserId, customClient);
     
-    if (updatedItem.doorId === 'agenda' && typeof window !== 'undefined') {
+    if (updatedItem.doorId === 'agenda' && !updatedItem.googleEventId && typeof window !== 'undefined') {
       (async () => {
         try {
           const sessionRes = await sb.auth.getSession();
