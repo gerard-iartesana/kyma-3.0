@@ -269,8 +269,18 @@ export default function Home() {
         setUserProfile(e.detail);
       }
     };
+    const handleSyncError = (e: any) => {
+      if (e.detail) {
+        setToastNotification({
+          show: true,
+          message: `Error de Google Calendar: ${e.detail}`,
+          doorId: 'agenda'
+        });
+      }
+    };
     if (typeof window !== 'undefined') {
       window.addEventListener('kyma_user_profile_updated', handleProfileEvent);
+      window.addEventListener('kyma_calendar_sync_error', handleSyncError);
     }
 
     const timer = setTimeout(() => {
@@ -281,6 +291,7 @@ export default function Home() {
       subscription.unsubscribe();
       if (typeof window !== 'undefined') {
         window.removeEventListener('kyma_user_profile_updated', handleProfileEvent);
+        window.removeEventListener('kyma_calendar_sync_error', handleSyncError);
       }
       clearTimeout(timer);
     };

@@ -737,6 +737,10 @@ export const dbClient = {
                   localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
                 } catch (e) {}
               }
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              const errMsg = errData.error || res.statusText || 'Error desconocido';
+              window.dispatchEvent(new CustomEvent('kyma_calendar_sync_error', { detail: errMsg }));
             }
           }
         } catch (e) {
@@ -884,12 +888,17 @@ export const dbClient = {
               const selectedCalendars: string[] = googleCalendar.selectedCalendars || [];
               const targetCalendarId = selectedCalendars.length > 0 ? selectedCalendars[0] : 'primary';
 
-              await fetch(`/api/calendar/events?eventId=${googleEventId}&calendarId=${encodeURIComponent(targetCalendarId)}`, {
+              const res = await fetch(`/api/calendar/events?eventId=${googleEventId}&calendarId=${encodeURIComponent(targetCalendarId)}`, {
                 method: 'DELETE',
                 headers: {
                   'Authorization': `Bearer ${token}`
                 }
               });
+              if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData.error || res.statusText || 'Error desconocido';
+                window.dispatchEvent(new CustomEvent('kyma_calendar_sync_error', { detail: `Error al borrar de Google: ${errMsg}` }));
+              }
             }
           } catch (e) {
             console.warn('Google Calendar delete sync failed:', e);
@@ -999,6 +1008,10 @@ export const dbClient = {
                   localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
                 } catch (e) {}
               }
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              const errMsg = errData.error || res.statusText || 'Error desconocido';
+              window.dispatchEvent(new CustomEvent('kyma_calendar_sync_error', { detail: errMsg }));
             }
           }
         } catch (e) {
