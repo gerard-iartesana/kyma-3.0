@@ -349,7 +349,7 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''} ${isExpanded ? 'card-expanded' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''} ${isExpanded ? 'card-expanded' : ''} ${item.completed ? 'card-completed' : ''}`}
       onClick={() => setIsExpanded(!isExpanded)}
       style={{ cursor: 'pointer' }}
     >
@@ -731,6 +731,11 @@ export function ItemCard({
           align-self: flex-start;
           flex-shrink: 0;
         }
+        .card-completed {
+          opacity: 0.65;
+          border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
         .card-title {
           font-family: var(--font-noto), var(--font-sans), sans-serif;
           font-size: 1.28rem;

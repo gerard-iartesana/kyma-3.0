@@ -153,6 +153,7 @@ export default function Home() {
   const [newCercania, setNewCercania] = useState<'nucleo' | 'cercana' | 'orbita'>('orbita');
   const [newRecurrencia, setNewRecurrencia] = useState<'none' | 'semanal' | 'mensual' | 'anual'>('none');
   const [showPastAgendaEvents, setShowPastAgendaEvents] = useState(false);
+  const [showAllCompletedTasks, setShowAllCompletedTasks] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -542,7 +543,26 @@ export default function Home() {
     ? (selectedDoorId === 'agenda' 
         ? expandRecurringAgendaItems(items.filter(item => item.doorId === 'agenda')) 
         : selectedDoorId === 'tareas'
-          ? items.filter(item => item.doorId === 'tareas' && !item.completed && item.estado !== 'archivado')
+          ? items.filter(item => {
+              if (item.doorId !== 'tareas') return false;
+              if (showAllCompletedTasks) return true; // Mostrar todas las completadas (Historial)
+              if (!item.completed) return true; // Mostrar pendientes por defecto
+              
+              // Si está completada, solo mostrar si se completó en los últimos 30 días
+              if (item.fechaEjecucion) {
+                const executionDate = new Date(item.fechaEjecucion);
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                return executionDate >= oneMonthAgo;
+              }
+              if (item.createdAt) {
+                const createdDate = new Date(item.createdAt);
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                return createdDate >= oneMonthAgo;
+              }
+              return true;
+            })
           : items.filter(item => item.doorId === selectedDoorId))
     : [];
 
@@ -1429,6 +1449,27 @@ export default function Home() {
                         <Icons.Orbit size={16} />
                       </button>
                     </div>
+                  )}
+
+                  {selectedDoorId === 'tareas' && !isVelado && (
+                    <button 
+                      className={`btn btn-secondary ${showAllCompletedTasks ? 'active' : ''}`}
+                      onClick={() => setShowAllCompletedTasks(!showAllCompletedTasks)}
+                      title={showAllCompletedTasks ? "Mostrando todas las tareas (historial completo) - Clic para ver activas" : "Ver todas las tareas (historial completo)"}
+                      style={{ 
+                        width: '38px', 
+                        height: '38px', 
+                        padding: 0, 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: showAllCompletedTasks ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-tertiary)',
+                        borderColor: showAllCompletedTasks ? 'var(--accent-purple)' : 'var(--border-subtle)',
+                        color: showAllCompletedTasks ? '#ffffff' : 'var(--text-secondary)'
+                      }}
+                    >
+                      <Icons.Clock size={16} />
+                    </button>
                   )}
 
                   {selectedDoorId === 'agenda' && !isVelado && (
