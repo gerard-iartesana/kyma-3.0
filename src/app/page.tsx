@@ -91,6 +91,9 @@ export default function Home() {
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
   const [googleEvents, setGoogleEvents] = useState<any[]>([]);
   const [loadingGoogleEvents, setLoadingGoogleEvents] = useState(false);
+  const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
+  const [loadingGoogleCalendars, setLoadingGoogleCalendars] = useState(false);
   const [selectedDoorId, setSelectedDoorId] = useState<string | null>(null);
   const [items, setItems] = useState<KymaItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<KymaItem | null>(null);
@@ -219,6 +222,7 @@ export default function Home() {
           }
           if (config.googleCalendar && config.googleCalendar.connected) {
             setGoogleCalendarConnected(true);
+            setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
           }
         }
         setConfigLoaded(true);
@@ -243,6 +247,7 @@ export default function Home() {
           }
           if (config.googleCalendar && config.googleCalendar.connected) {
             setGoogleCalendarConnected(true);
+            setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
           }
         }
         setConfigLoaded(true);
@@ -309,6 +314,105 @@ export default function Home() {
       setLoadingGoogleEvents(false);
     }
   };
+
+  // Load Google Calendar List
+  const fetchGoogleCalendars = async (token: string) => {
+    setLoadingGoogleCalendars(true);
+    try {
+      const res = await fetch('/api/calendar/list', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.connected) {
+          setGoogleCalendars(data.calendars || []);
+          setGoogleCalendarConnected(true);
+        } else {
+          setGoogleCalendarConnected(false);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching Google calendars:', err);
+    } finally {
+      setLoadingGoogleCalendars(false);
+    }
+  };
+
+  // Toggle calendar selection and sync with Supabase config
+  const handleToggleCalendar = async (calendarId: string) => {
+    if (!user) return;
+
+    let newSelectedIds = [...selectedCalendarIds];
+    
+    // Initialize if empty using the primary calendar id
+    if (newSelectedIds.length === 0 && googleCalendars.length > 0) {
+      const primaryCal = googleCalendars.find(c => c.primary);
+      if (primaryCal) {
+        newSelectedIds = [primaryCal.id];
+      }
+    }
+
+    if (newSelectedIds.includes(calendarId)) {
+      newSelectedIds = newSelectedIds.filter(id => id !== calendarId);
+    } else {
+      newSelectedIds.push(calendarId);
+    }
+
+    setSelectedCalendarIds(newSelectedIds);
+
+    try {
+      const config = await dbClient.getUserConfig();
+      const currentPerfil = config?.perfil || userProfile;
+      const currentLogs = config?.logs || trustLogs;
+      const currentGoogleCalendar = config?.googleCalendar || {};
+
+      const datos = {
+        is_system_config: true,
+        perfil: currentPerfil,
+        logs: currentLogs,
+        googleCalendar: {
+          ...currentGoogleCalendar,
+          selectedCalendars: newSelectedIds
+        }
+      };
+
+      const { data: existing } = await supabase
+        .from('elementos')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('tipo', 'nota')
+        .eq('titulo', 'kyma_system_user_configuration');
+
+      if (existing && existing.length > 0) {
+        await supabase
+          .from('elementos')
+          .update({ datos, updated_at: new Date().toISOString() })
+          .eq('id', existing[0].id);
+      }
+
+      // Refresh events immediately
+      const sessionRes = await supabase.auth.getSession();
+      const token = sessionRes.data.session?.access_token;
+      if (token) {
+        await fetchGoogleEvents(token);
+      }
+    } catch (e) {
+      console.error('Error toggling calendar selection:', e);
+    }
+  };
+
+  // Load Google calendars list automatically when connected
+  useEffect(() => {
+    if (user && googleCalendarConnected) {
+      (async () => {
+        const sessionRes = await supabase.auth.getSession();
+        const token = sessionRes.data.session?.access_token;
+        if (token) {
+          await fetchGoogleCalendars(token);
+        }
+      })();
+    }
+  }, [user, googleCalendarConnected]);
 
   // Process Google Calendar temp connection after redirect callback
   useEffect(() => {
@@ -427,6 +531,8 @@ export default function Home() {
 
       setGoogleCalendarConnected(false);
       setGoogleEvents([]);
+      setGoogleCalendars([]);
+      setSelectedCalendarIds([]);
       setToastNotification({
         show: true,
         message: 'Google Calendar desconectado.',
@@ -2467,30 +2573,92 @@ export default function Home() {
                       Sincroniza tus eventos de la Agenda de Kyma directamente con tu Google Calendar general. Podrás ver tus eventos programados y las nuevas tarjetas se añadirán de forma automática.
                     </p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                      {googleCalendarConnected ? (
-                        <>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '0.88rem', fontWeight: 500 }}>
-                            <Icons.CheckCircle size={16} />
-                            <span>Google Calendar Conectado</span>
-                          </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {googleCalendarConnected ? (
+                          <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '0.88rem', fontWeight: 500 }}>
+                              <Icons.CheckCircle size={16} />
+                              <span>Google Calendar Conectado</span>
+                            </div>
+                            <button 
+                              className="btn btn-secondary" 
+                              onClick={handleDisconnectGoogleCalendar} 
+                              style={{ padding: '8px 14px', fontSize: '0.8rem' }}
+                            >
+                              Desconectar
+                            </button>
+                          </>
+                        ) : (
                           <button 
-                            className="btn btn-secondary" 
-                            onClick={handleDisconnectGoogleCalendar} 
-                            style={{ padding: '8px 14px', fontSize: '0.8rem' }}
+                            className="btn btn-primary" 
+                            onClick={handleConnectGoogleCalendar} 
+                            style={{ gap: '8px', padding: '10px 16px' }}
                           >
-                            Desconectar
+                            <Icons.Calendar size={16} />
+                            <span>Conectar Google Calendar</span>
                           </button>
-                        </>
-                      ) : (
-                        <button 
-                          className="btn btn-primary" 
-                          onClick={handleConnectGoogleCalendar} 
-                          style={{ gap: '8px', padding: '10px 16px' }}
-                        >
-                          <Icons.Calendar size={16} />
-                          <span>Conectar Google Calendar</span>
-                        </button>
+                        )}
+                      </div>
+
+                      {googleCalendarConnected && (
+                        <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '12px' }}>
+                          <h4 style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff', marginBottom: '8px' }}>
+                            Mis Calendarios activos:
+                          </h4>
+                          {loadingGoogleCalendars ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                              <Icons.Loader className="animate-spin" size={12} />
+                              <span>Recuperando calendarios de Google...</span>
+                            </div>
+                          ) : googleCalendars.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                              {googleCalendars.map((cal) => {
+                                const isChecked = selectedCalendarIds.includes(cal.id) || 
+                                  (selectedCalendarIds.length === 0 && cal.primary);
+                                return (
+                                  <label 
+                                    key={cal.id} 
+                                    style={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center', 
+                                      gap: '8px', 
+                                      padding: '6px 10px', 
+                                      borderRadius: '8px', 
+                                      background: 'rgba(255, 255, 255, 0.01)',
+                                      border: `1px solid ${isChecked ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)'}`,
+                                      cursor: 'pointer',
+                                      fontSize: '0.8rem',
+                                      color: isChecked ? '#ffffff' : 'var(--text-secondary)',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <input 
+                                      type="checkbox" 
+                                      checked={isChecked}
+                                      onChange={() => handleToggleCalendar(cal.id)}
+                                      style={{ accentColor: 'var(--accent-purple)', cursor: 'pointer' }}
+                                    />
+                                    <div style={{ 
+                                      width: '8px', 
+                                      height: '8px', 
+                                      borderRadius: '50%', 
+                                      background: cal.backgroundColor || 'var(--accent-purple)',
+                                      flexShrink: 0 
+                                    }} />
+                                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {cal.summary} {cal.primary && '(Principal)'}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              No se encontraron calendarios. Asegúrate de tener al menos un calendario activo en tu cuenta.
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

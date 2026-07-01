@@ -1,82 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseClient } from '@/lib/supabase';
-
-// Helper to refresh Google access token if it is expired or close to expiry
-async function getValidGoogleAccessToken(supabaseClient: any, user: any, configElement: any) {
-  const datos = configElement.datos || {};
-  const googleCalendar = datos.googleCalendar;
-
-  if (!googleCalendar || !googleCalendar.connected || !googleCalendar.refreshToken) {
-    return null;
-  }
-
-  const expiry = new Date(googleCalendar.tokenExpiry);
-  const now = new Date();
-
-  // If token expires in less than 2 minutes, refresh it
-  if (expiry.getTime() - now.getTime() < 120 * 1000) {
-    console.log('Google access token expired or close to expiry. Refreshing...');
-    try {
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-      if (!clientId || !clientSecret) {
-        console.error('Google OAuth client credentials missing in env variables');
-        return null;
-      }
-
-      const response = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: clientId,
-          client_secret: clientSecret,
-          refresh_token: googleCalendar.refreshToken,
-          grant_type: 'refresh_token',
-        }),
-      });
-
-      const refreshTokens = await response.json();
-
-      if (refreshTokens.error) {
-        console.error('Error refreshing Google token:', refreshTokens);
-        return null;
-      }
-
-      // Update access token and expiry
-      googleCalendar.accessToken = refreshTokens.access_token;
-      googleCalendar.tokenExpiry = new Date(Date.now() + refreshTokens.expires_in * 1000).toISOString();
-
-      if (refreshTokens.refresh_token) {
-        googleCalendar.refreshToken = refreshTokens.refresh_token;
-      }
-
-      datos.googleCalendar = googleCalendar;
-
-      // Update user config element in Supabase
-      const { error: updateError } = await supabaseClient
-        .from('elementos')
-        .update({
-          datos,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', configElement.id);
-
-      if (updateError) {
-        console.error('Failed to save refreshed Google tokens to Supabase:', updateError);
-      } else {
-        console.log('Google access token refreshed and saved successfully.');
-      }
-    } catch (err) {
-      console.error('Exception refreshing Google token:', err);
-      return null;
-    }
-  }
-
-  return googleCalendar.accessToken;
-}
+import { getValidGoogleAccessToken } from '../helper';
 
 export async function GET(request: Request) {
   try {
@@ -113,6 +37,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ connected: false, message: 'Google Calendar no conectado o token inválido' });
     }
 
+    // Get dates range
     const { searchParams } = new URL(request.url);
     const paramTimeMin = searchParams.get('timeMin');
     const paramTimeMax = searchParams.get('timeMax');
@@ -129,29 +54,67 @@ export async function GET(request: Request) {
       timeMax = new Date(paramTimeMax);
     }
 
-    const googleCalendarUrl =
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
-      `timeMin=${encodeURIComponent(timeMin.toISOString())}` +
-      `&timeMax=${encodeURIComponent(timeMax.toISOString())}` +
-      `&singleEvents=true` +
-      `&orderBy=startTime`;
+    // Get selected calendars from user configuration (default to 'primary' if empty)
+    const googleCalendar = configElement.datos?.googleCalendar || {};
+    const selectedCalendars: string[] = googleCalendar.selectedCalendars || [];
+    const calendarsToQuery = selectedCalendars.length > 0 ? selectedCalendars : ['primary'];
 
-    const eventsRes = await fetch(googleCalendarUrl, {
-      headers: {
-        Authorization: `Bearer ${googleToken}`
+    // Fetch events from all selected calendars in parallel
+    const allEventsPromises = calendarsToQuery.map(async (calendarId) => {
+      try {
+        const googleCalendarUrl =
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
+          `timeMin=${encodeURIComponent(timeMin.toISOString())}` +
+          `&timeMax=${encodeURIComponent(timeMax.toISOString())}` +
+          `&singleEvents=true` +
+          `&orderBy=startTime`;
+
+        const eventsRes = await fetch(googleCalendarUrl, {
+          headers: {
+            Authorization: `Bearer ${googleToken}`
+          }
+        });
+
+        if (!eventsRes.ok) {
+          console.error(`Google Calendar API error for calendar ${calendarId}:`, await eventsRes.text());
+          return [];
+        }
+
+        const eventsData = await eventsRes.json();
+        return (eventsData.items || []).map((item: any) => ({
+          ...item,
+          googleCalendarId: calendarId // Keep track of which calendar it came from
+        }));
+      } catch (e) {
+        console.error(`Exception fetching events for calendar ${calendarId}:`, e);
+        return [];
       }
     });
 
-    if (!eventsRes.ok) {
-      const errBody = await eventsRes.text();
-      console.error('Google Calendar API error response:', errBody);
-      return NextResponse.json({ error: 'Error al consultar Google Calendar' }, { status: eventsRes.status });
+    const results = await Promise.all(allEventsPromises);
+    
+    // Flatten and deduplicate events by ID
+    const flattenedEvents = results.flat();
+    const uniqueEventsMap = new Map<string, any>();
+    
+    for (const event of flattenedEvents) {
+      if (event.id) {
+        uniqueEventsMap.set(event.id, event);
+      }
     }
+    
+    const uniqueEvents = Array.from(uniqueEventsMap.values());
 
-    const eventsData = await eventsRes.json();
+    // Sort combined events chronologically by start time
+    uniqueEvents.sort((a, b) => {
+      const startA = a.start?.dateTime || a.start?.date || '';
+      const startB = b.start?.dateTime || b.start?.date || '';
+      return startA.localeCompare(startB);
+    });
+
     return NextResponse.json({
       connected: true,
-      events: eventsData.items || []
+      events: uniqueEvents
     });
   } catch (err: any) {
     console.error('Error in GET /api/calendar/events:', err);
