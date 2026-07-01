@@ -198,7 +198,7 @@ export async function processKymaTurn(
 
   // Step 1: Triage with recent conversation context
   let triage: TriageResult = { isFicheable: false, confidence: 0 };
-  const isCorrection = /\b(?:corrige|corregir|borra|elimina|no ha|no he|has guardado|has puesto|has creado|debía ser|debería ser|deberia ser|era un(?:a)?\s+(?:nota|hito|tarea|evento|vínculo|vinculo|reflexión|reflexion)|como nota|como hito|en notas|en estela|en vínculos|en vinculos)\b/i.test(userText);
+  const isCorrection = /(?:\s+|^|[.,;!¿?])(?:corrige|corregir|borra|elimina|no ha|no he|me he|has guardado|has puesto|has creado|debía ser|debia ser|debería ser|deberia ser|equivocado|equivocado|confundido|confundido|error|fallo|no era|no es|era en|es en|era un(?:a)?\s+(?:nota|hito|tarea|evento|vínculo|vinculo|reflexión|reflexion)|como nota|como hito|en notas|en estela|en vínculos|en vinculos)(?:\s+|$|[.,;!¿?])/i.test(userText);
 
   if (userText.trim().length > 3) {
     const recentMsgs = messages.slice(-5).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join('\n');
@@ -499,7 +499,7 @@ REGLAS DE SALIDA E INVIOLABILIDAD:
 1. REGLA SAGRADA PARA PERSONAS (VÍNCULOS): Las fichas en la puerta "personas" (vínculos) NUNCA SE MOVERÁN NI REUBICARÁN a otra puerta.
 2. Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false, "shouldUpdateTitle": false.
 3. Si el usuario pide explícitamente mover una ficha de otra puerta o reubicarla: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": true, "targetDoorId": "<puerta>", "newTitle": "<titulo>", "shouldUpdateTitle": false.
-4. Si el usuario pide CAMBIAR EL TÍTULO o EDITAR una ficha existente: "shouldDelete": false, "shouldCreateNew": false, "shouldUpdateTitle": true, "targetItemIdToUpdate": "<id de la ficha a modificar>", "newUpdatedTitle": "<nuevo título exacto e ideal>".
+4. Si el usuario pide EDITAR, CORREGIR O ACTUALIZAR campos de una ficha existente (como cambiar el título, corregir el año de un hito, actualizar la fecha/hora de un evento, o modificar el contenido/texto): "shouldUpdateFields": true, "targetItemIdToUpdate": "<id de la ficha a modificar>", "fieldsToUpdate": { ...objeto con los campos a actualizar con sus nuevos valores, ej: "title", "content", "year", "dateStr", "eventDate", "eventTime", "emocion", "cercania", "frecuenciaContacto" }
 5. Si el usuario indica que no se ha creado/guardado o que falta añadir una ficha basada en el historial de mensajes: "shouldDelete": false, "shouldCreateNew": true, "targetDoorId": "<puerta de destino>", "newTitle": "<título adecuado para la ficha>", "newContent": "<contenido redactado en primera persona singular>", "year": <año si es estela o null>, "emocion": <emoción de 1 a 5 si es estela o null>, "shouldUpdateTitle": false.
 
 Devuelve ÚNICAMENTE un JSON con este formato:
@@ -516,8 +516,20 @@ Devuelve ÚNICAMENTE un JSON con este formato:
   "cercania": "nucleo" | "cercana" | "orbita" | null (si targetDoorId es personas),
   "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" | null (si targetDoorId es personas),
   "shouldUpdateTitle": boolean,
-  "targetItemIdToUpdate": "ID exacto de la ficha a cambiar título o null",
-  "newUpdatedTitle": "Nuevo título exacto para la ficha o null"
+  "targetItemIdToUpdate": "ID exacto de la ficha a cambiar/actualizar o null",
+  "newUpdatedTitle": "Nuevo título exacto para la ficha o null",
+  "shouldUpdateFields": boolean,
+  "fieldsToUpdate": {
+    "title": "Nuevo título o null",
+    "content": "Nuevo contenido o null",
+    "year": number or null,
+    "dateStr": "Nueva fecha string o null",
+    "eventDate": "YYYY-MM-DD o null",
+    "eventTime": "HH:MM o null",
+    "emocion": number or null,
+    "cercania": "nucleo" | "cercana" | "orbita" | null,
+    "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" | null
+  } or null
 }
 `;
     try {
@@ -533,19 +545,34 @@ Devuelve ÚNICAMENTE un JSON con este formato:
           const parsedMgmt = JSON.parse(cleanJson);
           if (parsedMgmt && typeof parsedMgmt === 'object') {
 
-          if (parsedMgmt.shouldUpdateTitle && parsedMgmt.targetItemIdToUpdate && parsedMgmt.newUpdatedTitle) {
-            let cleanNewTitle = parsedMgmt.newUpdatedTitle.replace(/\bentrenamiento\b/gi, 'Entreno')
-              .replace(/\breunión\b|\breunion\b|\bcita médica\b|\bcita medica\b/gi, 'Cita')
-              .replace(/\bbicicleta\b/gi, 'Bici')
-              .replace(/\bpartido de pádel\b|\bpartido de padel\b/gi, 'Partido')
-              .replace(/\bcorte de pelo\b/gi, 'Pelo');
+          if ((parsedMgmt.shouldUpdateFields || parsedMgmt.shouldUpdateTitle) && parsedMgmt.targetItemIdToUpdate) {
+            const fields: any = parsedMgmt.fieldsToUpdate || {};
+            if (parsedMgmt.newUpdatedTitle && !fields.title) {
+              fields.title = parsedMgmt.newUpdatedTitle;
+            }
 
-            const updatedItem = await dbClient.updateItem(parsedMgmt.targetItemIdToUpdate, {
-              title: cleanNewTitle
-            }, userId, sbClient);
+            if (fields.title) {
+              fields.title = fields.title.replace(/\bentrenamiento\b/gi, 'Entreno')
+                .replace(/\breunión\b|\breunion\b|\bcita médica\b|\bcita medica\b/gi, 'Cita')
+                .replace(/\bbicicleta\b/gi, 'Bici')
+                .replace(/\bpartido de pádel\b|\bpartido de padel\b/gi, 'Partido')
+                .replace(/\bcorte de pelo\b/gi, 'Pelo');
+            }
 
-            allExtractedResults.unshift({ item: updatedItem, action: 'enrich', doorId: updatedItem.doorId });
-            finalAction = 'enrich';
+            if (fields.frecuenciaContacto) {
+              fields.frecuencia = fields.frecuenciaContacto === 'diario' ? 100 : 
+                fields.frecuenciaContacto === 'semanal' ? 75 : 
+                parsedMgmt.frecuenciaContacto === 'mensual' ? 50 : 
+                parsedMgmt.frecuenciaContacto === 'anual' ? 25 : 
+                parsedMgmt.frecuenciaContacto === 'ninguno' ? 0 : undefined;
+              delete fields.frecuenciaContacto;
+            }
+
+            if (Object.keys(fields).length > 0) {
+              const updatedItem = await dbClient.updateItem(parsedMgmt.targetItemIdToUpdate, fields, userId, sbClient);
+              allExtractedResults.unshift({ item: updatedItem, action: 'enrich', doorId: updatedItem.doorId });
+              finalAction = 'enrich';
+            }
           }
 
           if (parsedMgmt.shouldDelete && parsedMgmt.itemIdToDelete) {
