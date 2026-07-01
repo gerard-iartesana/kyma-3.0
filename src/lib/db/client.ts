@@ -24,6 +24,7 @@ export interface KymaItem {
   recurrencia?: 'none' | 'semanal' | 'mensual' | 'anual' | 'primer_lunes_mes' | 'ultimo_viernes_mes' | string; // Specific to agenda
   fileUrl?: string;
   fileName?: string;
+  googleEventId?: string;
 }
 
 export interface ChatMessage {
@@ -333,6 +334,7 @@ function mapDbToKymaItem(dbItem: any, tagNames: string[]): KymaItem {
 
   if (datos.file_url) item.fileUrl = datos.file_url;
   if (datos.file_name) item.fileName = datos.file_name;
+  if (datos.googleEventId) item.googleEventId = datos.googleEventId;
 
   return item;
 }
@@ -377,6 +379,7 @@ function mapKymaToDbFields(item: Partial<Omit<KymaItem, 'id' | 'userId'>>) {
   if (item.emocion !== undefined) datos.emocion = item.emocion;
   if (item.fileUrl !== undefined) datos.file_url = item.fileUrl;
   if (item.fileName !== undefined) datos.file_name = item.fileName;
+  if (item.googleEventId !== undefined) datos.googleEventId = item.googleEventId;
   
   if (Object.keys(datos).length > 0) {
     dbItem.datos = datos;
@@ -703,7 +706,7 @@ export const dbClient = {
           const sessionRes = await sb.auth.getSession();
           const token = sessionRes.data.session?.access_token;
           if (token) {
-            await fetch('/api/calendar/events', {
+            const res = await fetch('/api/calendar/events', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -716,6 +719,25 @@ export const dbClient = {
                 time: newItem.eventTime
               })
             });
+            if (res.ok) {
+              const resData = await res.json();
+              if (resData.event?.id) {
+                const updatedDatos = {
+                  ...(createdDbItem.datos || {}),
+                  googleEventId: resData.event.id
+                };
+                await sb.from('elementos')
+                  .update({ datos: updatedDatos })
+                  .eq('id', createdDbItem.id);
+
+                newItem.googleEventId = resData.event.id;
+                try {
+                  const cached = this.getCachedItems();
+                  const updatedCache = cached.map((i: KymaItem) => i.id === newItem.id ? newItem : i);
+                  localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
+                } catch (e) {}
+              }
+            }
           }
         } catch (e) {
           console.warn('Google Calendar sync failed:', e);
@@ -812,9 +834,10 @@ export const dbClient = {
     const sb = customClient || supabase;
     const userId = await getCurrentUserId(overrideUserId);
     
+    let itemToTrash = cachedItem;
+    
     // Save item in trash recovery stack
     try {
-      let itemToTrash = cachedItem;
       if (!itemToTrash) {
         const { data: dbRow } = await sb
           .from('elementos')
@@ -846,6 +869,33 @@ export const dbClient = {
       }
     } catch (e) {
       console.warn('Could not cache deleted item in trash stack:', e);
+    }
+
+    if (itemToTrash && itemToTrash.doorId === 'agenda' && typeof window !== 'undefined') {
+      const googleEventId = itemToTrash.googleEventId;
+      if (googleEventId) {
+        (async () => {
+          try {
+            const sessionRes = await sb.auth.getSession();
+            const token = sessionRes.data.session?.access_token;
+            if (token) {
+              const config = await this.getUserConfig();
+              const googleCalendar = config?.googleCalendar || {};
+              const selectedCalendars: string[] = googleCalendar.selectedCalendars || [];
+              const targetCalendarId = selectedCalendars.length > 0 ? selectedCalendars[0] : 'primary';
+
+              await fetch(`/api/calendar/events?eventId=${googleEventId}&calendarId=${encodeURIComponent(targetCalendarId)}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+            }
+          } catch (e) {
+            console.warn('Google Calendar delete sync failed:', e);
+          }
+        })();
+      }
     }
 
     const { error } = await sb
@@ -917,7 +967,7 @@ export const dbClient = {
           const sessionRes = await sb.auth.getSession();
           const token = sessionRes.data.session?.access_token;
           if (token) {
-            await fetch('/api/calendar/events', {
+            const res = await fetch('/api/calendar/events', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -930,6 +980,26 @@ export const dbClient = {
                 time: updatedItem.eventTime
               })
             });
+            if (res.ok) {
+              const resData = await res.json();
+              if (resData.event?.id) {
+                const dbFields = mapKymaToDbFields(updatedItem);
+                const updatedDatos = {
+                  ...(dbFields.datos || {}),
+                  googleEventId: resData.event.id
+                };
+                await sb.from('elementos')
+                  .update({ datos: updatedDatos })
+                  .eq('id', updatedItem.id);
+
+                updatedItem.googleEventId = resData.event.id;
+                try {
+                  const cached = this.getCachedItems();
+                  const updatedCache = cached.map((i: KymaItem) => i.id === updatedItem.id ? updatedItem : i);
+                  localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
+                } catch (e) {}
+              }
+            }
           }
         } catch (e) {
           console.warn('Google Calendar sync on confirm failed:', e);

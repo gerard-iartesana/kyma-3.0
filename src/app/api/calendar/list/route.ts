@@ -59,10 +59,67 @@ export async function GET(request: Request) {
     }
 
     const listData = await listRes.json();
-    
+    const calendars = listData.items || [];
+
+    let kymaCalendar = calendars.find((cal: any) => cal.summary?.toLowerCase() === 'kyma');
+
+    if (!kymaCalendar) {
+      console.log('Kyma calendar not found. Creating a dedicated one...');
+      try {
+        const createCalRes = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${googleToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ summary: 'Kyma' })
+        });
+
+        if (createCalRes.ok) {
+          const newCal = await createCalRes.json();
+          kymaCalendar = {
+            id: newCal.id,
+            summary: newCal.summary,
+            primary: false,
+            accessRole: 'owner'
+          };
+          calendars.push(kymaCalendar);
+        } else {
+          console.error('Failed to create Google calendar:', await createCalRes.text());
+        }
+      } catch (e) {
+        console.error('Exception creating Google calendar:', e);
+      }
+    }
+
+    if (kymaCalendar) {
+      try {
+        const currentGoogleConfig = configElement.datos?.googleCalendar || {};
+        const selected: string[] = currentGoogleConfig.selectedCalendars || [];
+
+        if (!selected.includes(kymaCalendar.id)) {
+          const updatedGoogleConfig = {
+            ...currentGoogleConfig,
+            selectedCalendars: [kymaCalendar.id]
+          };
+          const updatedDatos = {
+            ...configElement.datos,
+            googleCalendar: updatedGoogleConfig
+          };
+
+          await supabaseClient
+            .from('elementos')
+            .update({ datos: updatedDatos, updated_at: new Date().toISOString() })
+            .eq('id', configElement.id);
+        }
+      } catch (dbErr) {
+        console.error('Failed to update config with selected Kyma calendar:', dbErr);
+      }
+    }
+
     return NextResponse.json({
       connected: true,
-      calendars: listData.items || []
+      calendars: calendars
     });
   } catch (err: any) {
     console.error('Error in GET /api/calendar/list:', err);

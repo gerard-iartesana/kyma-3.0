@@ -227,3 +227,73 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get('eventId');
+    const calendarId = searchParams.get('calendarId') || 'primary';
+
+    if (!eventId) {
+      return NextResponse.json({ error: 'Falta el parámetro eventId' }, { status: 400 });
+    }
+
+    const supabaseToken = authHeader.replace('Bearer ', '');
+    const supabaseClient = createSupabaseClient(supabaseToken);
+
+    // Get authenticating user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Get user configuration
+    const { data: configData, error: configError } = await supabaseClient
+      .from('elementos')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('tipo', 'nota')
+      .eq('titulo', 'kyma_system_user_configuration');
+
+    if (configError || !configData || configData.length === 0) {
+      return NextResponse.json(
+        { error: 'Google Calendar no conectado (configuración no encontrada)' },
+        { status: 400 }
+      );
+    }
+
+    const configElement = configData[0];
+    const googleToken = await getValidGoogleAccessToken(supabaseClient, user, configElement);
+
+    if (!googleToken) {
+      return NextResponse.json({ error: 'Google Calendar no conectado o credenciales inválidas' }, { status: 400 });
+    }
+
+    const deleteUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`;
+    const deleteRes = await fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${googleToken}`
+      }
+    });
+
+    if (!deleteRes.ok && deleteRes.status !== 404) {
+      const errText = await deleteRes.text();
+      console.error('Google Calendar Event Delete error:', errText);
+      return NextResponse.json(
+        { error: 'Error al borrar el evento en Google Calendar' },
+        { status: deleteRes.status }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('Error in DELETE /api/calendar/events:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
