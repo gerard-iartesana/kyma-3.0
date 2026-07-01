@@ -280,7 +280,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         
         let itemExtractedYear = itemData.year;
         if (doorId === 'estela' && !itemExtractedYear) {
-          const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/);
+          const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/) || (contextSnippet && contextSnippet.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/));
           if (yearMatch) {
             itemExtractedYear = parseInt(yearMatch[1]);
           }

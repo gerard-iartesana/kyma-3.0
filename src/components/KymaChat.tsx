@@ -322,10 +322,25 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       onClearContext();
     }
 
+    let isTimerCleared = false;
     try {
       // Safety timeout to guarantee unblocking UI in case of network stall
       const safetyTimer = setTimeout(() => {
+        if (isTimerCleared) return;
+        isTimerCleared = true;
         setIsTyping(false);
+        setTypingStatus(null);
+
+        const tempKymaId = `kyma-${Date.now()}-timeout`;
+        const timeoutMsg: ChatMessage = {
+          id: tempKymaId,
+          clientKey: tempKymaId,
+          sender: 'kyma',
+          text: 'Disculpa, se ha producido un pequeño error o la conexión es inestable. ¿Podrías repetírmelo?',
+          timestamp: new Date().toISOString(),
+          isNew: true
+        };
+        setMessages(prev => [...prev, timeoutMsg]);
       }, 15000);
 
       // Background async DB write for user message
@@ -403,6 +418,8 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             kymaText = await generateResponse(fullTextForDB, contextItem);
           }
 
+          if (isTimerCleared) return;
+          isTimerCleared = true;
           clearTimeout(safetyTimer);
           
           setTypingStatus('preparing');
@@ -432,14 +449,39 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             setMessages(prev => prev.map(m => m.id === tempKymaId ? { ...savedKymaMsg, clientKey: tempKymaId, isNew: true } : m));
           }).catch(err => console.error('Error guardando mensaje de Kyma en segundo plano:', err));
         } catch (err) {
-          clearTimeout(safetyTimer);
-          setIsTyping(false);
-          setTypingStatus(null);
+          if (!isTimerCleared) {
+            isTimerCleared = true;
+            clearTimeout(safetyTimer);
+            setIsTyping(false);
+            setTypingStatus(null);
+
+            const tempKymaId = `kyma-${Date.now()}-error`;
+            const errorMsg: ChatMessage = {
+              id: tempKymaId,
+              clientKey: tempKymaId,
+              sender: 'kyma',
+              text: 'Disculpa, se ha producido un pequeño error al procesar tu respuesta. ¿Podrías repetírmelo?',
+              timestamp: new Date().toISOString(),
+              isNew: true
+            };
+            setMessages(prev => [...prev, errorMsg]);
+          }
           console.error(err);
         }
       })();
     } catch (err) {
       setIsTyping(false);
+      setTypingStatus(null);
+      const tempKymaId = `kyma-${Date.now()}-outer-error`;
+      const errorMsg: ChatMessage = {
+        id: tempKymaId,
+        clientKey: tempKymaId,
+        sender: 'kyma',
+        text: 'Disculpa, se ha producido un pequeño error al procesar tu respuesta. ¿Podrías repetírmelo?',
+        timestamp: new Date().toISOString(),
+        isNew: true
+      };
+      setMessages(prev => [...prev, errorMsg]);
       setTypingStatus(null);
       console.error(err);
     }
