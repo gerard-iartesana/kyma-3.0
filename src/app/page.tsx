@@ -86,6 +86,11 @@ export default function Home() {
 
   const [isMounted, setIsMounted] = useState(false);
   const [dbState, setLocalDbState] = useState<'populated' | 'empty'>('populated');
+
+  // Google Calendar Integration States
+  const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
+  const [googleEvents, setGoogleEvents] = useState<any[]>([]);
+  const [loadingGoogleEvents, setLoadingGoogleEvents] = useState(false);
   const [selectedDoorId, setSelectedDoorId] = useState<string | null>(null);
   const [items, setItems] = useState<KymaItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<KymaItem | null>(null);
@@ -212,6 +217,9 @@ export default function Home() {
             setTrustLogs(config.logs);
             localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
           }
+          if (config.googleCalendar && config.googleCalendar.connected) {
+            setGoogleCalendarConnected(true);
+          }
         }
         setConfigLoaded(true);
       }
@@ -233,12 +241,17 @@ export default function Home() {
             setTrustLogs(config.logs);
             localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
           }
+          if (config.googleCalendar && config.googleCalendar.connected) {
+            setGoogleCalendarConnected(true);
+          }
         }
         setConfigLoaded(true);
         refreshItems();
       } else {
         setItems([]);
         setConfigLoaded(false);
+        setGoogleCalendarConnected(false);
+        setGoogleEvents([]);
       }
       setLoadingSession(false);
     });
@@ -273,6 +286,156 @@ export default function Home() {
       dbClient.saveUserConfig(userProfile, trustLogs);
     }
   }, [userProfile, trustLogs, user, configLoaded]);
+
+  // Load Google Calendar Events
+  const fetchGoogleEvents = async (token: string) => {
+    setLoadingGoogleEvents(true);
+    try {
+      const res = await fetch('/api/calendar/events', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.connected) {
+          setGoogleEvents(data.events || []);
+          setGoogleCalendarConnected(true);
+        } else {
+          setGoogleCalendarConnected(false);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching Google events:', err);
+    } finally {
+      setLoadingGoogleEvents(false);
+    }
+  };
+
+  // Process Google Calendar temp connection after redirect callback
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user && configLoaded) {
+      const tempCalendar = localStorage.getItem('kyma_temp_google_calendar');
+      if (tempCalendar) {
+        try {
+          const calendarData = JSON.parse(tempCalendar);
+          localStorage.removeItem('kyma_temp_google_calendar');
+
+          (async () => {
+            const config = await dbClient.getUserConfig();
+            const currentPerfil = config?.perfil || userProfile;
+            const currentLogs = config?.logs || trustLogs;
+
+            const datos = {
+              is_system_config: true,
+              perfil: currentPerfil,
+              logs: currentLogs,
+              googleCalendar: calendarData
+            };
+
+            const { data: existing } = await supabase
+              .from('elementos')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('tipo', 'nota')
+              .eq('titulo', 'kyma_system_user_configuration');
+
+            if (existing && existing.length > 0) {
+              await supabase
+                .from('elementos')
+                .update({ datos, updated_at: new Date().toISOString() })
+                .eq('id', existing[0].id);
+            } else {
+              await supabase
+                .from('elementos')
+                .insert({
+                  user_id: user.id,
+                  tipo: 'nota',
+                  titulo: 'kyma_system_user_configuration',
+                  datos,
+                  peso: 1,
+                  origen: 'manual'
+                });
+            }
+
+            setGoogleCalendarConnected(true);
+            setToastNotification({
+              show: true,
+              message: 'Google Calendar conectado con éxito.',
+              doorId: 'agenda'
+            });
+
+            const sessionRes = await supabase.auth.getSession();
+            const token = sessionRes.data.session?.access_token;
+            if (token) {
+              await fetchGoogleEvents(token);
+            }
+          })();
+        } catch (e) {
+          console.error('Error processing temp Google Calendar session:', e);
+        }
+      }
+    }
+  }, [user, configLoaded]);
+
+  // Fetch Google Calendar events when selecting Agenda tab
+  useEffect(() => {
+    if (selectedDoorId === 'agenda' && user && googleCalendarConnected) {
+      (async () => {
+        const sessionRes = await supabase.auth.getSession();
+        const token = sessionRes.data.session?.access_token;
+        if (token) {
+          await fetchGoogleEvents(token);
+        }
+      })();
+    }
+  }, [selectedDoorId, user, googleCalendarConnected]);
+
+  const handleConnectGoogleCalendar = async () => {
+    if (!user) return;
+    window.location.href = `/api/calendar/auth?userId=${user.id}`;
+  };
+
+  const handleDisconnectGoogleCalendar = async () => {
+    try {
+      const config = await dbClient.getUserConfig();
+      const currentPerfil = config?.perfil || userProfile;
+      const currentLogs = config?.logs || trustLogs;
+
+      const datos = {
+        is_system_config: true,
+        perfil: currentPerfil,
+        logs: currentLogs,
+        googleCalendar: {
+          connected: false
+        }
+      };
+
+      if (user) {
+        const { data: existing } = await supabase
+          .from('elementos')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('tipo', 'nota')
+          .eq('titulo', 'kyma_system_user_configuration');
+
+        if (existing && existing.length > 0) {
+          await supabase
+            .from('elementos')
+            .update({ datos, updated_at: new Date().toISOString() })
+            .eq('id', existing[0].id);
+        }
+      }
+
+      setGoogleCalendarConnected(false);
+      setGoogleEvents([]);
+      setToastNotification({
+        show: true,
+        message: 'Google Calendar desconectado.',
+        doorId: 'agenda'
+      });
+    } catch (e) {
+      console.error('Error disconnecting calendar:', e);
+    }
+  };
 
   useEffect(() => {
     if (undoToast && undoToast.show) {
@@ -1973,6 +2136,67 @@ export default function Home() {
             )}
 
             <div className="door-viewport">
+              {/* Google Calendar announcements (plain text list) */}
+              {selectedDoorId === 'agenda' && googleCalendarConnected && (
+                <div className="google-calendar-announcements-banner" style={{
+                  padding: '14px 18px',
+                  background: 'rgba(139, 92, 246, 0.03)',
+                  border: '1px dashed rgba(139, 92, 246, 0.2)',
+                  borderRadius: '16px',
+                  marginBottom: '20px',
+                  fontSize: '0.88rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.5',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', fontWeight: 600, color: '#ffffff' }}>
+                    <Icons.Calendar size={15} className="text-purple" style={{ color: 'var(--accent-purple)' }} />
+                    <span>Eventos en tu Google Calendar</span>
+                  </div>
+                  {loadingGoogleEvents ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      <span className="minimal-spinner-small" style={{
+                        width: '12px',
+                        height: '12px',
+                        border: '2px solid rgba(255,255,255,0.1)',
+                        borderTopColor: 'var(--accent-purple)',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        animation: 'kymaSpin 0.75s linear infinite'
+                      }}></span>
+                      <span>Sincronizando...</span>
+                    </div>
+                  ) : googleEvents.length === 0 ? (
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      No hay eventos en tu Google Calendar para los próximos días.
+                    </span>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                      {googleEvents.map(evt => {
+                        const startDate = new Date(evt.start.dateTime || evt.start.date);
+                        const isToday = startDate.toDateString() === new Date().toDateString();
+                        const isTomorrow = startDate.toDateString() === new Date(Date.now() + 24*3600*1000).toDateString();
+                        let dayLabel = startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                        if (isToday) dayLabel = 'Hoy';
+                        if (isTomorrow) dayLabel = 'Mañana';
+                        const timeLabel = evt.start.dateTime 
+                          ? startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) 
+                          : 'Todo el día';
+                        return (
+                          <div key={evt.id} style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--accent-purple)', fontSize: '0.82rem' }}>
+                              • {dayLabel} a las {timeLabel}:
+                            </span>
+                            <span style={{ color: 'var(--text-primary)' }}>{evt.summary}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {isVelado ? (
                 <div className="velado-container animate-fade-in">
                   <div className="velado-overlay">
@@ -2231,6 +2455,43 @@ export default function Home() {
                         <Icons.Trash2 size={16} />
                         <span>Limpiar caché y datos locales</span>
                       </button>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px' }}>
+                      <Icons.Calendar size={20} className="text-purple" />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>Integración con Google Calendar</h3>
+                    </div>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                      Sincroniza tus eventos de la Agenda de Kyma directamente con tu Google Calendar general. Podrás ver tus eventos programados y las nuevas tarjetas se añadirán de forma automática.
+                    </p>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                      {googleCalendarConnected ? (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '0.88rem', fontWeight: 500 }}>
+                            <Icons.CheckCircle size={16} />
+                            <span>Google Calendar Conectado</span>
+                          </div>
+                          <button 
+                            className="btn btn-secondary" 
+                            onClick={handleDisconnectGoogleCalendar} 
+                            style={{ padding: '8px 14px', fontSize: '0.8rem' }}
+                          >
+                            Desconectar
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={handleConnectGoogleCalendar} 
+                          style={{ gap: '8px', padding: '10px 16px' }}
+                        >
+                          <Icons.Calendar size={16} />
+                          <span>Conectar Google Calendar</span>
+                        </button>
+                      )}
                     </div>
                   </div>
 

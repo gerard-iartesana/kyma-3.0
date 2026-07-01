@@ -696,6 +696,33 @@ export const dbClient = {
         localStorage.setItem('kyma_cached_items', JSON.stringify([newItem, ...cached]));
       } catch (e) {}
     }
+
+    if (newItem.doorId === 'agenda') {
+      (async () => {
+        try {
+          const sessionRes = await sb.auth.getSession();
+          const token = sessionRes.data.session?.access_token;
+          if (token) {
+            await fetch('/api/calendar/events', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                summary: newItem.title,
+                description: newItem.content,
+                date: newItem.eventDate,
+                time: newItem.eventTime
+              })
+            });
+          }
+        } catch (e) {
+          console.warn('Google Calendar sync failed:', e);
+        }
+      })();
+    }
+
     return newItem;
   },
 
@@ -1015,7 +1042,7 @@ export const dbClient = {
     }
   },
 
-  async getUserConfig(): Promise<{ perfil?: any; logs?: any } | null> {
+  async getUserConfig(): Promise<{ perfil?: any; logs?: any; googleCalendar?: any } | null> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -1036,7 +1063,8 @@ export const dbClient = {
         const datos = data[0].datos || {};
         return {
           perfil: datos.perfil,
-          logs: datos.logs
+          logs: datos.logs,
+          googleCalendar: datos.googleCalendar
         };
       }
       return null;
@@ -1051,14 +1079,17 @@ export const dbClient = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: existing, error: fetchError } = await supabase
+      const { data: existing } = await supabase
         .from('elementos')
-        .select('id')
+        .select('id, datos')
         .eq('user_id', user.id)
         .eq('tipo', 'nota')
         .eq('titulo', 'kyma_system_user_configuration');
 
+      const existingDatos = existing && existing.length > 0 ? existing[0].datos || {} : {};
+
       const datos = {
+        ...existingDatos,
         is_system_config: true,
         perfil,
         logs
