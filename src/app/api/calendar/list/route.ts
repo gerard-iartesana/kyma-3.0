@@ -48,7 +48,14 @@ export async function GET(request: Request) {
     if (!listRes.ok) {
       const errBody = await listRes.text();
       console.error('Google Calendar List API error:', errBody);
-      return NextResponse.json({ error: 'Error al consultar la lista de calendarios' }, { status: listRes.status });
+      let detail = 'Error desconocido';
+      try {
+        const parsed = JSON.parse(errBody);
+        detail = parsed.error?.message || parsed.error_description || parsed.error || errBody;
+      } catch (e) {
+        detail = errBody;
+      }
+      return NextResponse.json({ error: `Google API: ${detail}` }, { status: listRes.status });
     }
 
     const listData = await listRes.json();
