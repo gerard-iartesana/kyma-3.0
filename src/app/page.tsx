@@ -3320,6 +3320,7 @@ export default function Home() {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
           gap: 20px;
+          align-items: start;
         }
 
         .grid-layout.compact-layout {
