@@ -194,7 +194,11 @@ export async function POST(request: Request) {
       end
     };
 
-    const createEventUrl = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+    const googleCalendar = configElement.datos?.googleCalendar || {};
+    const selectedCalendars: string[] = googleCalendar.selectedCalendars || [];
+    const targetCalendarId = selectedCalendars.length > 0 ? selectedCalendars[0] : 'primary';
+
+    const createEventUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events`;
     const createRes = await fetch(createEventUrl, {
       method: 'POST',
       headers: {
