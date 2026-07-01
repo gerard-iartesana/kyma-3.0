@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KymaItem } from '../lib/db/client';
 import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { ItemCard } from './ItemCard';
+import { supabase } from '../lib/supabase';
 
 interface CalendarViewProps {
   items: KymaItem[];
   googleEvents?: any[];
+  googleCalendarConnected?: boolean;
   onItemClick: (item: KymaItem) => void;
   onAskKyma: (item: KymaItem, e?: React.MouseEvent) => void;
   onConfirmItem?: (item: KymaItem, e: React.MouseEvent) => void;
@@ -16,6 +18,7 @@ interface CalendarViewProps {
 export function CalendarView({ 
   items, 
   googleEvents = [],
+  googleCalendarConnected = false,
   onItemClick,
   onAskKyma,
   onConfirmItem,
@@ -28,6 +31,8 @@ export function CalendarView({
   });
 
   const [selectedDayModal, setSelectedDayModal] = useState<{ dateString: string; events: KymaItem[] } | null>(null);
+  const [googleEventsState, setGoogleEventsState] = useState<any[]>([]);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -114,6 +119,43 @@ export function CalendarView({
 
   const cells = getDayCells();
 
+  // Dynamic Google Calendar Loading
+  useEffect(() => {
+    if (!googleCalendarConnected) {
+      setGoogleEventsState([]);
+      return;
+    }
+
+    if (cells.length === 0) return;
+
+    (async () => {
+      setLoadingGoogle(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return;
+
+        const timeMinStr = cells[0].dateString;
+        const timeMaxStr = cells[cells.length - 1].dateString;
+
+        const res = await fetch(`/api/calendar/events?timeMin=${timeMinStr}T00:00:00Z&timeMax=${timeMaxStr}T23:59:59Z`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connected) {
+            setGoogleEventsState(data.events || []);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching Google events in CalendarView:', e);
+      } finally {
+        setLoadingGoogle(false);
+      }
+    })();
+  }, [currentDate, googleCalendarConnected]);
+
   // Helper to filter events on a specific date string
   const getEventsForDate = (dateStr: string) => {
     const kymaEvents = items
@@ -123,29 +165,42 @@ export function CalendarView({
           ? item.eventDate.split('T')[0]
           : item.eventDate;
         return itemDateStr === dateStr;
-      });
+      })
+      .map(item => ({ ...item, isGoogle: false }));
 
-    const googleEvts = (googleEvents || [])
+    const googleEvts = (googleEventsState || [])
       .filter((evt) => {
         const evtDate = evt.start?.dateTime || evt.start?.date;
         if (!evtDate) return false;
         const evtDateStr = evtDate.split('T')[0];
         return evtDateStr === dateStr;
       })
-      .map((evt) => ({
-        id: `google-${evt.id}`,
-        userId: '',
-        doorId: 'agenda' as const,
-        title: evt.summary || '(Sin título)',
-        content: evt.description || '',
-        eventDate: evt.start?.dateTime || evt.start?.date,
-        eventTime: evt.start?.dateTime ? evt.start.dateTime.split('T')[1]?.substring(0, 5) : undefined,
-        origen: 'google_calendar' as const,
-        tags: ['Google Calendar'],
-        completed: false,
-        peso: 1 as const,
-        createdAt: evt.created || new Date().toISOString()
-      }));
+      .map((evt) => {
+        const start = evt.start?.dateTime || evt.start?.date || '';
+        const datePart = start.split('T')[0];
+        
+        let time: string | undefined = undefined;
+        if (evt.start?.dateTime) {
+          const d = new Date(evt.start.dateTime);
+          time = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        return {
+          id: `google-${evt.id}`,
+          userId: '',
+          doorId: 'agenda' as const,
+          title: evt.summary || '(Sin título)',
+          content: evt.description || '',
+          eventDate: datePart,
+          eventTime: time,
+          origen: 'google_calendar' as const,
+          tags: ['Google Calendar'],
+          completed: false,
+          peso: 1 as const,
+          createdAt: evt.created || new Date().toISOString(),
+          isGoogle: true
+        };
+      });
 
     return [...kymaEvents, ...googleEvts].sort((a, b) => {
       const timeA = a.eventTime || '00:00';
@@ -157,7 +212,7 @@ export function CalendarView({
   const handleCellClick = (dateStr: string) => {
     const dayEvents = getEventsForDate(dateStr);
     if (dayEvents.length > 0) {
-      setSelectedDayModal({ dateString: dateStr, events: dayEvents });
+      setSelectedDayModal({ dateString: dateStr, events: dayEvents as any });
     }
   };
 
@@ -217,12 +272,6 @@ export function CalendarView({
                   <div
                     key={event.id}
                     className={`calendar-event-pill ${cell.isToday ? 'event-today' : ''} ${event.origen === 'google_calendar' ? 'event-google' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (event.origen !== 'google_calendar') {
-                        onItemClick(event);
-                      }
-                    }}
                     title={`${event.eventTime ? `${event.eventTime} - ` : ''}${event.title}`}
                   >
                     {event.eventTime && (
@@ -239,7 +288,7 @@ export function CalendarView({
 
       {selectedDayModal && (
         <div className="modal-backdrop" onClick={() => setSelectedDayModal(null)}>
-          <div className="modal-content calendar-day-events-modal animate-fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
+          <div className="modal-content calendar-day-events-modal animate-fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px', width: '95%' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CalendarIcon size={18} color="var(--accent-purple)" />
@@ -265,11 +314,12 @@ export function CalendarView({
                         borderRadius: '12px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '4px'
+                        gap: '4px',
+                        textAlign: 'left'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--accent-purple)', fontWeight: 600 }}>
-                        <CalendarIcon size={12} />
+                        <Clock size={12} />
                         <span>GOOGLE CALENDAR • {evt.eventTime || 'Todo el día'}</span>
                       </div>
                       <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-primary)' }}>{evt.title}</h4>

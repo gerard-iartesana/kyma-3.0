@@ -113,10 +113,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ connected: false, message: 'Google Calendar no conectado o token inválido' });
     }
 
-    // Fetch events from today to 7 days from now
-    const timeMin = new Date();
-    timeMin.setHours(0, 0, 0, 0); // Start of today
-    const timeMax = new Date(timeMin.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days later
+    const { searchParams } = new URL(request.url);
+    const paramTimeMin = searchParams.get('timeMin');
+    const paramTimeMax = searchParams.get('timeMax');
+
+    let timeMin = new Date();
+    if (paramTimeMin) {
+      timeMin = new Date(paramTimeMin);
+    } else {
+      timeMin.setHours(0, 0, 0, 0); // Start of today
+    }
+
+    let timeMax = new Date(timeMin.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days later by default
+    if (paramTimeMax) {
+      timeMax = new Date(paramTimeMax);
+    }
 
     const googleCalendarUrl =
       `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +

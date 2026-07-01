@@ -2741,6 +2741,7 @@ export default function Home() {
               ) : selectedDoorId === 'agenda' && agendaViewMode === 'calendar' ? (
                 <CalendarView 
                   items={filteredItems}
+                  googleCalendarConnected={googleCalendarConnected}
                   googleEvents={googleCalendarConnected ? googleEvents : []}
                   onItemClick={(item) => handleSelectItem(item)}
                   onAskKyma={(item, e) => handleAskKyma(item, e)}
