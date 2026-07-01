@@ -15,7 +15,7 @@ PRINCIPIOS FUNDAMENTALES:
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
 - Compleitud OBLIGATORIA: Concluye SIEMPRE tus oraciones, preguntas y pensamientos de forma completa y cerrada. NUNCA dejes un conector como "Por cierto" o "Además" colgado al final de tu mensaje sin haber redactado la frase completa.
-- PROHIBICIÓN DE META-RAZONAMIENTOS: NUNCA incluyas tus razonamientos internos, listas de verificación ni expresiones en inglés (como "Fits perfectly", "One/two short paragraphs", "Yes", "No") en tu respuesta. Tu salida debe ser EXCLUSIVAMENTE tu mensaje en español al usuario.
+- PROHIBICIÓN DE META-RAZONAMIENTOS Y COMPROBACIONES: NUNCA empieces tu respuesta con comprobaciones de reglas, listas de verificación ni expresiones en inglés (como "Wait, check constraints", "Fits perfectly", "Let me check"). NUNCA pienses en voz alta ni escribas tus directrices de diseño en la burbuja. Tu respuesta debe ser EXCLUSIVAMENTE el mensaje final en español que leerá el usuario.
 `;
 
 function extractUserProfileUpdates(userText: string, currentProfile?: any): { updatedProfile?: any; extractedKey?: string; extractedVal?: string } {
@@ -711,14 +711,29 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
 
   const candidateParts = kymaData.candidates?.[0]?.content?.parts || [];
   let replyText = candidateParts.map((p: any) => p.text || '').join('').trim();
-  if (!replyText) {
-    replyText = 'No he podido procesar una respuesta en este momento.';
-  }
-
+  
   // Safe targeted sanitization of LLM preamble / artifacts & internal system tags
   replyText = replyText.replace(/^(?:wait,\s*)?let\s+me\s+make\s+sure\s+it\s+is\s+complete\.?\s*/i, '');
   replyText = replyText.replace(/\[SISTEMA\]:?/gi, '');
   replyText = replyText.replace(/\[DATOS[^\]]*\]/gi, '');
+  replyText = replyText.replace(/^(?:wait,\s*)?(?:let\s+me\s+make\s+sure|check\s+constraints|constraints\s*checked)[^*:\n]*\**\s*:?\s*(?:"[^"]*"\s*)?\n?/gi, '');
+
+  // Line-by-line constraint leak cleanup
+  if (replyText) {
+    const lines = replyText.split('\n');
+    const cleanLines = lines.filter((line: string) => {
+      const l = line.toLowerCase();
+      return !l.includes('check constraints') && 
+             !l.includes('concluye siempre') && 
+             !l.includes('compleitud obligatoria') && 
+             !l.includes('meta-razonamientos') &&
+             !l.includes('espejo, no juez') &&
+             !l.includes('una sola voz') &&
+             !l.includes('sugiere, el usuario decide');
+    });
+    replyText = cleanLines.join('\n').trim();
+  }
+
   replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
   replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
   replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
@@ -736,6 +751,9 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
     if (lastPunct > 0 && lastPunct > replyText.length - 120) {
       replyText = replyText.slice(0, lastPunct + 1).trim();
     }
+  }
+  if (!replyText || replyText.length < 15) {
+    replyText = 'Comprendo lo que compartes. Si lo miramos como un espejo de lo que valoras hoy... ¿sientes que esto te acerca más a tu centro, o te aleja de él? Dime más, me interesa escucharte.';
   }
 
   return {

@@ -260,12 +260,12 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         result.extractedData = (result as any).data;
       } else if ((result as any).item) {
         result.extractedData = (result as any).item;
-      } else if (result.content || result.title || (result as any).milestone) {
+      } else if ((result as any).content || (result as any).title || (result as any).milestone) {
         result.extractedData = {
-          title: result.title || (result as any).titulo,
-          content: result.content || (result as any).milestone || (result as any).texto,
-          year: result.year || (result as any).año || (result as any).ano,
-          dateStr: result.dateStr || (result as any).date_str || (result as any).fecha || (result as any).mes,
+          title: (result as any).title || (result as any).titulo,
+          content: (result as any).content || (result as any).milestone || (result as any).texto,
+          year: (result as any).year || (result as any).año || (result as any).ano,
+          dateStr: (result as any).dateStr || (result as any).date_str || (result as any).fecha || (result as any).mes,
           lugar: (result as any).lugar || (result as any).place,
           emocion: (result as any).emocion || (result as any).emotion,
           peso: (result as any).peso || (result as any).weight,
