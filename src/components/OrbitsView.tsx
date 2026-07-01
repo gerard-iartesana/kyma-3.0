@@ -222,20 +222,16 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
     const cercanaGroup = people.filter(p => p.cercania === 'cercana');
     const orbitaGroup = people.filter(p => p.cercania === 'orbita' || !p.cercania);
 
+    const prevNodesMap = new Map<string, SimulationNode>();
+    nodesRef.current.forEach(node => {
+      prevNodesMap.set(node.id, node);
+    });
+
     const simNodes: SimulationNode[] = [];
 
     const setupGroup = (group: KymaItem[], radius: number, speed: number) => {
       group.forEach((p, idx) => {
         const baseAngle = (idx / group.length) * 2 * Math.PI + 0.5;
-        // Start near the center with a slight random displacement
-        const startAngle = Math.random() * 2 * Math.PI;
-        const startDist = Math.random() * 10;
-        
-        // Blast outwards with velocity in the direction of the target angle
-        const blastForce = 5 + Math.random() * 4;
-        const vx = Math.cos(baseAngle) * blastForce;
-        const vy = Math.sin(baseAngle) * blastForce;
-
         const closeness = p.cercania || 'orbita';
         const freq = typeof p.frecuencia === 'number' ? p.frecuencia : 50;
 
@@ -248,19 +244,40 @@ export function OrbitsView({ people, onPersonClick }: OrbitsViewProps) {
           nodeRadius = 295 - (freq / 100) * 90; // [205, 295]
         }
 
-        simNodes.push({
-          id: p.id,
-          item: p,
-          cx: Math.cos(startAngle) * startDist,
-          cy: Math.sin(startAngle) * startDist,
-          vx,
-          vy,
-          radius: nodeRadius,
-          angle: baseAngle,
-          angularSpeed: speed,
-          initials: getInitials(p.title),
-          closeness
-        });
+        const existing = prevNodesMap.get(p.id);
+        if (existing) {
+          simNodes.push({
+            ...existing,
+            item: p,
+            radius: nodeRadius,
+            angularSpeed: speed,
+            initials: getInitials(p.title),
+            closeness
+          });
+        } else {
+          // Start near the center with a slight random displacement
+          const startAngle = Math.random() * 2 * Math.PI;
+          const startDist = Math.random() * 10;
+          
+          // Blast outwards with velocity in the direction of the target angle
+          const blastForce = 5 + Math.random() * 4;
+          const vx = Math.cos(baseAngle) * blastForce;
+          const vy = Math.sin(baseAngle) * blastForce;
+
+          simNodes.push({
+            id: p.id,
+            item: p,
+            cx: Math.cos(startAngle) * startDist,
+            cy: Math.sin(startAngle) * startDist,
+            vx,
+            vy,
+            radius: nodeRadius,
+            angle: baseAngle,
+            angularSpeed: speed,
+            initials: getInitials(p.title),
+            closeness
+          });
+        }
       });
     };
 
