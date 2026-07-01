@@ -697,7 +697,7 @@ export const dbClient = {
       } catch (e) {}
     }
 
-    if (newItem.doorId === 'agenda') {
+    if (newItem.doorId === 'agenda' && newItem.origen !== 'kyma_sugerido' && typeof window !== 'undefined') {
       (async () => {
         try {
           const sessionRes = await sb.auth.getSession();
@@ -908,7 +908,36 @@ export const dbClient = {
   },
 
   async confirmItem(id: string, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
-    return this.updateItem(id, { origen: 'kyma_confirmado' }, overrideUserId, customClient);
+    const sb = customClient || supabase;
+    const updatedItem = await this.updateItem(id, { origen: 'kyma_confirmado' }, overrideUserId, customClient);
+    
+    if (updatedItem.doorId === 'agenda' && typeof window !== 'undefined') {
+      (async () => {
+        try {
+          const sessionRes = await sb.auth.getSession();
+          const token = sessionRes.data.session?.access_token;
+          if (token) {
+            await fetch('/api/calendar/events', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                summary: updatedItem.title,
+                description: updatedItem.content,
+                date: updatedItem.eventDate,
+                time: updatedItem.eventTime
+              })
+            });
+          }
+        } catch (e) {
+          console.warn('Google Calendar sync on confirm failed:', e);
+        }
+      })();
+    }
+
+    return updatedItem;
   },
 
   async discardItem(id: string, overrideUserId?: string, customClient?: any): Promise<void> {
