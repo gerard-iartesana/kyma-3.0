@@ -886,7 +886,7 @@ export const dbClient = {
               const config = await this.getUserConfig();
               const googleCalendar = config?.googleCalendar || {};
               const selectedCalendars: string[] = googleCalendar.selectedCalendars || [];
-              const targetCalendarId = selectedCalendars.length > 0 ? selectedCalendars[0] : 'primary';
+              const targetCalendarId = googleCalendar.writeCalendarId || (selectedCalendars.length > 0 ? selectedCalendars[0] : 'primary');
 
               const res = await fetch(`/api/calendar/events?eventId=${googleEventId}&calendarId=${encodeURIComponent(targetCalendarId)}`, {
                 method: 'DELETE',
