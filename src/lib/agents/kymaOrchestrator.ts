@@ -198,7 +198,7 @@ export async function processKymaTurn(
 
   // Step 1: Triage with recent conversation context
   let triage: TriageResult = { isFicheable: false, confidence: 0 };
-  const isCorrection = /(?:\s+|^|[.,;!¿?])(?:corrige|corregir|borra|elimina|no ha|no he|me he|has guardado|has puesto|has creado|debía ser|debia ser|debería ser|deberia ser|equivocado|equivocado|confundido|confundido|error|fallo|no era|no es|era en|es en|era un(?:a)?\s+(?:nota|hito|tarea|evento|vínculo|vinculo|reflexión|reflexion)|como nota|como hito|en notas|en estela|en vínculos|en vinculos)(?:\s+|$|[.,;!¿?])/i.test(userText);
+  const isCorrection = /(?:\s+|^|[.,;!¿?])(?:corrige|corregir|borra|elimina|no ha|no he|me he|has guardado|has puesto|has creado|debía ser|debia ser|debería ser|deberia ser|equivocado|confundido|error|fallo|no era|no es|era en|es en|era un(?:a)?\s+(?:nota|hito|tarea|evento|vínculo|vinculo|reflexión|reflexion)|como nota|como hito|en notas|en estela|en vínculos|en vinculos|al final será|al final es|será a las|sera a las|cambia la hora|cambia el día|cambia el dia|cambia la fecha|cambia al|cambiar al|pásalo al|pasalo al|ponlo al|ponlo a las|ponla a las|cámbialo a las|cambialo a las|pásalo a las|pasalo a las|cambio de hora|cambio de fecha|cambio de día|cambio de dia)(?:\s+|$|[.,;!¿?])/i.test(userText);
 
   if (userText.trim().length > 3) {
     const recentMsgs = messages.slice(-5).map(m => `${m.sender === 'user' ? 'Usuario' : 'Kyma'}: ${m.text}`).join('\n');
