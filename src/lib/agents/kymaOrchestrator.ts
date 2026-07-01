@@ -788,8 +788,13 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
 
   return {
     replyText,
-    createdItem: primaryExtracted.item,
-    createdItems: allExtractedResults.map(r => r.item),
+    createdItem: primaryExtracted.item ? { ...primaryExtracted.item, action: primaryExtracted.action } as any : undefined,
+    createdItems: allExtractedResults.map(r => {
+      if (r.item) {
+        (r.item as any).action = r.action;
+      }
+      return r.item;
+    }),
     action: finalAction,
     updatedProfile: profileExtract.updatedProfile
   };

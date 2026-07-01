@@ -402,13 +402,24 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     }
 
     if (doorId === 'estela') {
+      if (!extractedYear) {
+        const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/) || (contextSnippet && contextSnippet.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/));
+        if (yearMatch) {
+          extractedYear = parseInt(yearMatch[1]);
+        } else {
+          extractedYear = currentYear;
+        }
+      }
+
+      const hasExplicitPastYear = extractedYear && extractedYear < currentYear;
+
       // PROHIBICIÓN ABSOLUTA: Las personas/vínculos como tal NUNCA se crean en Estela de vida
       const personKeywords = /\b(?:hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|sobrina|sobrino|compañero|compañera|hijo|hija|tío|tía|jefe|jefa|socio|socia)\b/i;
       const isPersonIntent = personKeywords.test(userMessage) || personKeywords.test(finalTitle) || result.extractedData.cercania !== undefined || result.extractedData.frecuenciaContacto !== undefined;
-      const memoryKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|distanciamiento|me dejé de hablar|nos dejamos de hablar|adopt|adopc|perro|gato|mascota|viaje|viajé|mudanza|mudé|ingres|ingreso|hospital|enfermedad|salud|operac|operó|opero|cirugía|accidente|infarto|derrame|médico|medico|diagnóst|diagnost)\b/i;
+      const memoryKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|distanciamiento|me dejé de hablar|nos dejamos de hablar|adopt|adopc|perro|gato|mascota|viaje|viajé|mudanza|mudé|ingres|ingreso|hospital|enfermedad|salud|operac|operó|opero|cirugía|accidente|infarto|derrame|médico|medico|diagnóst|diagnost|concierto|festival|show|evento|fiesta|celebrac|memorable|inolvidable|fuimos|visita|visit)\b/i;
 
       // Si se trata de la persona como tal (o cambio de frecuencia) y no de un evento/hito del pasado explícito, rechazar Estela
-      if (isPersonIntent && !memoryKeywords.test(userMessage)) {
+      if (isPersonIntent && !memoryKeywords.test(userMessage) && !hasExplicitPastYear) {
         console.warn('[Strict Guardrail Block] Rechazado Estela por tratarse de una persona o frecuencia de contacto.');
         return { action: 'none' };
       }
@@ -419,17 +430,7 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
         return { action: 'none' };
       }
 
-      if (!extractedYear) {
-        const yearMatch = userMessage.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/) || (contextSnippet && contextSnippet.match(/\b(19\d\d|20[0-1]\d|202[0-5])\b/));
-        if (yearMatch) {
-          extractedYear = parseInt(yearMatch[1]);
-        } else {
-          extractedYear = currentYear;
-        }
-      }
-
       const historicalKeywords = /\b(?:falleci|falleció|muerte|murió|murio|pérdida|perdida|gradu|gradué|gradue|licenciad|nacimiento|bebé|bebe|boda|casé|case|infancia|juventud|trabajo|empleo|proyecto|elecciones|consell|gerard|jefe|empresa|socio|19\d\d|20[0-1]\d|202[0-5]|ingres|ingreso|hospital|enfermedad|salud|operac|operó|opero|cirugía|accidente|infarto|derrame|médico|medico|diagnóst|diagnost)\b/i;
-      const hasExplicitPastYear = extractedYear && extractedYear < currentYear;
       const isHistoricalMemory = historicalKeywords.test(userMessage);
 
       if (!hasExplicitPastYear && !isHistoricalMemory) {
