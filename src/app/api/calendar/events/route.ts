@@ -56,8 +56,14 @@ export async function GET(request: Request) {
 
     // Get selected calendars from user configuration (default to 'primary' if empty)
     const googleCalendar = configElement.datos?.googleCalendar || {};
+    const writeCalendarId = googleCalendar.writeCalendarId;
     const selectedCalendars: string[] = googleCalendar.selectedCalendars || [];
-    const calendarsToQuery = selectedCalendars.length > 0 ? selectedCalendars : ['primary'];
+    
+    // Exclude the dedicated write calendar from query to prevent duplicates
+    let calendarsToQuery = selectedCalendars.filter(id => id !== writeCalendarId);
+    if (calendarsToQuery.length === 0) {
+      calendarsToQuery = ['primary'];
+    }
 
     // Fetch events from all selected calendars in parallel
     const allEventsPromises = calendarsToQuery.map(async (calendarId) => {
