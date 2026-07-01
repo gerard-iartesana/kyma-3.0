@@ -639,7 +639,7 @@ export function ItemCard({
               onClick={(e) => onAskKyma(item, e)}
               title={item.doorId === 'estela' ? "Recordar con Kyma sobre esto" : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? "Consultar con Kyma sobre esto" : "Explorar con Kyma sobre esto"}
             >
-              <LogoIcon size={13} className="kyma-btn-icon" />
+              <LogoIcon size={16} className="kyma-btn-icon" />
               <span>{item.doorId === 'estela' ? 'Recordar' : ['agenda', 'tareas', 'notas'].includes(item.doorId) ? 'Consultar' : 'Explorar'}</span>
             </button>
             <button 
@@ -650,8 +650,7 @@ export function ItemCard({
               }}
               title="Editar ficha"
             >
-              <Pencil size={13} className="action-grey-icon" />
-              <span>Editar</span>
+              <Pencil size={16} className="action-grey-icon" />
             </button>
           </div>
         </div>
@@ -919,7 +918,7 @@ export function ItemCard({
           filter: none !important;
           opacity: 0.55;
           transition: all 0.25s ease;
-          margin-right: 4px;
+          margin-right: 2px;
         }
         .ask-kyma-btn:hover {
           background: rgba(252, 252, 253, 0.04);
