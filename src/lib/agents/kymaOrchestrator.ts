@@ -310,69 +310,83 @@ Devuelve UNICAMENTE un JSON con este formato:
       proposedAction = 'create';
     }
 
-    // 2. Determinar la puerta de destino
-    let targetDoor: DoorId = 'personas';
+    // 2. Determinar las puertas de destino
+    const proposedDoors: DoorId[] = [];
     if (/vínculo|vinculo|personas|hermana|hermano|amigo|amiga|pareja|padre|madre|primo|prima|compañero|compañera/i.test(lastKymaMsg)) {
-      targetDoor = 'personas';
-    } else if (/interés|intereses|gusto|pasión|hobby/i.test(lastKymaMsg)) {
-      targetDoor = 'intereses';
-    } else if (/nota|apunte|documento|dni/i.test(lastKymaMsg) && !/hermana|hermano|amigo|amiga|pareja/i.test(lastKymaMsg)) {
-      targetDoor = 'notas';
-    } else if (/cita|reunión|evento|agenda|partido/i.test(lastKymaMsg)) {
-      targetDoor = 'agenda';
-    } else if (/tarea|pendiente|recado/i.test(lastKymaMsg)) {
-      targetDoor = 'tareas';
-    } else if (/estela|recuerdo|hito|infancia|juventud/i.test(lastKymaMsg)) {
-      targetDoor = 'estela';
-    } else if (/reflexión|reflexion|pensamiento|aprendizaje/i.test(lastKymaMsg)) {
-      targetDoor = 'reflexiones';
+      proposedDoors.push('personas');
+    }
+    if (/interés|intereses|gusto|pasión|hobby/i.test(lastKymaMsg)) {
+      proposedDoors.push('intereses');
+    }
+    if (/nota|apunte|documento|dni/i.test(lastKymaMsg) && !/hermana|hermano|amigo|amiga|pareja/i.test(lastKymaMsg)) {
+      proposedDoors.push('notas');
+    }
+    if (/cita|reunión|evento|agenda|partido/i.test(lastKymaMsg)) {
+      proposedDoors.push('agenda');
+    }
+    if (/tarea|pendiente|recado/i.test(lastKymaMsg)) {
+      proposedDoors.push('tareas');
+    }
+    if (/estela|recuerdo|hito|infancia|juventud/i.test(lastKymaMsg)) {
+      proposedDoors.push('estela');
+    }
+    if (/reflexión|reflexion|pensamiento|aprendizaje/i.test(lastKymaMsg)) {
+      proposedDoors.push('reflexiones');
     }
 
-    // Check if there are existing tentative items in targetDoor
+    if (proposedDoors.length === 0) {
+      proposedDoors.push('personas'); // fallback default
+    }
+
+    // Check if there are existing tentative items in proposedDoors
     let confirmedAny = false;
     if (allUserItems.length > 0) {
       const nowTime = Date.now();
-      const recentTentativeItems = allUserItems
-        .filter(i => i.doorId === targetDoor && i.origen === 'kyma_sugerido' && (nowTime - new Date(i.createdAt).getTime()) < 60000);
-      
-      if (recentTentativeItems.length > 0) {
-        for (const item of recentTentativeItems) {
-          try {
-            const confirmed = await dbClient.confirmItem(item.id, userId, sbClient);
-            allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: targetDoor });
-            confirmedAny = true;
-          } catch (err) {
-            console.error('Error confirming tentative item:', err);
+      for (const door of proposedDoors) {
+        const recentTentativeItems = allUserItems
+          .filter(i => i.doorId === door && i.origen === 'kyma_sugerido' && (nowTime - new Date(i.createdAt).getTime()) < 60000);
+        
+        if (recentTentativeItems.length > 0) {
+          for (const item of recentTentativeItems) {
+            try {
+              const confirmed = await dbClient.confirmItem(item.id, userId, sbClient);
+              allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: door });
+              confirmedAny = true;
+            } catch (err) {
+              console.error('Error confirming tentative item:', err);
+            }
           }
-        }
-      } else {
-        const latestTentative = allUserItems
-          .filter(i => i.doorId === targetDoor && i.origen === 'kyma_sugerido')
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-        if (latestTentative) {
-          try {
-            const confirmed = await dbClient.confirmItem(latestTentative.id, userId, sbClient);
-            allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: targetDoor });
-            confirmedAny = true;
-          } catch (err) {
-            console.error('Error confirming latest tentative item:', err);
+        } else {
+          const latestTentative = allUserItems
+            .filter(i => i.doorId === door && i.origen === 'kyma_sugerido')
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+          if (latestTentative) {
+            try {
+              const confirmed = await dbClient.confirmItem(latestTentative.id, userId, sbClient);
+              allExtractedResults.push({ item: confirmed, action: 'enrich', doorId: door });
+              confirmedAny = true;
+            } catch (err) {
+              console.error('Error confirming latest tentative item:', err);
+            }
           }
         }
       }
     }
 
     if (!confirmedAny) {
-      if (!doorsToExtract.includes(targetDoor)) {
-        doorsToExtract.push(targetDoor);
+      for (const door of proposedDoors) {
+        if (!doorsToExtract.includes(door)) {
+          doorsToExtract.push(door);
+        }
       }
     }
 
     if (proposedAction === 'create') {
-      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma: "${lastKymaMsg}". DEBES CREAR UNA NUEVA FICHA (action = "create") en la puerta "${targetDoor}". Redacta el contenido en primera persona del singular.`;
+      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma: "${lastKymaMsg}". DEBES CREAR UNA NUEVA FICHA (action = "create") en las siguientes puertas: ${proposedDoors.join(', ')}. Redacta el contenido en primera persona del singular.`;
     } else if (proposedAction === 'enrich') {
-      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma: "${lastKymaMsg}". DEBES MODIFICAR/ENRIQUECER LA FICHA EXISTENTE (action = "enrich") en la puerta "${targetDoor}".`;
+      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma: "${lastKymaMsg}". DEBES MODIFICAR/ENRIQUECER LA FICHA EXISTENTE (action = "enrich") en las siguientes puertas: ${proposedDoors.join(', ')}.`;
     } else {
-      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma respecto a la puerta "${targetDoor}".`;
+      syntheticProposalPrompt = `El usuario ha dicho "${userText}" confirmando la propuesta de Kyma respecto a las puertas: ${proposedDoors.join(', ')}.`;
     }
   }
 
