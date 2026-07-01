@@ -94,6 +94,7 @@ export default function Home() {
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
   const [loadingGoogleCalendars, setLoadingGoogleCalendars] = useState(false);
+  const [googleEnvStatus, setGoogleEnvStatus] = useState<{ hasClientId: boolean; hasClientSecret: boolean } | null>(null);
   const [selectedDoorId, setSelectedDoorId] = useState<string | null>(null);
   const [items, setItems] = useState<KymaItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<KymaItem | null>(null);
@@ -413,6 +414,21 @@ export default function Home() {
       })();
     }
   }, [user, googleCalendarConnected]);
+
+  // Check Google environment configuration status on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/calendar/config-check');
+        if (res.ok) {
+          const data = await res.json();
+          setGoogleEnvStatus(data);
+        }
+      } catch (e) {
+        console.error('Error checking Google env status:', e);
+      }
+    })();
+  }, [googleCalendarConnected]);
 
   // Process Google Calendar temp connection after redirect callback
   useEffect(() => {
@@ -2572,6 +2588,36 @@ export default function Home() {
                     <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                       Sincroniza tus eventos de la Agenda de Kyma directamente con tu Google Calendar general. Podrás ver tus eventos programados y las nuevas tarjetas se añadirán de forma automática.
                     </p>
+
+                    {googleEnvStatus && (!googleEnvStatus.hasClientId || !googleEnvStatus.hasClientSecret) && (
+                      <div style={{ 
+                        padding: '12px 16px', 
+                        background: 'rgba(239, 68, 68, 0.08)', 
+                        border: '1px solid rgba(239, 68, 68, 0.25)', 
+                        borderRadius: '12px',
+                        fontSize: '0.82rem',
+                        color: '#f87171',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        marginTop: '8px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                          <Icons.AlertTriangle size={16} />
+                          <span>Variables de entorno de Google no configuradas en el servidor</span>
+                        </div>
+                        <div style={{ margin: 0, color: 'rgba(248, 113, 113, 0.85)', fontSize: '0.8rem', lineHeight: 1.4 }}>
+                          Falta configurar:
+                          <ul style={{ margin: '4px 0 0 16px', padding: 0, listStyleType: 'disc' }}>
+                            {!googleEnvStatus.hasClientId && <li><code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code></li>}
+                            {!googleEnvStatus.hasClientSecret && <li><code>GOOGLE_CLIENT_SECRET</code></li>}
+                          </ul>
+                          <p style={{ marginTop: '8px', marginBottom: 0 }}>
+                            Por favor, entra a tu panel de **Vercel ➔ Settings ➔ Environment Variables**, agrégalas y haz un **Redeploy** de la app.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
