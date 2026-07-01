@@ -716,7 +716,8 @@ export const dbClient = {
                 summary: newItem.title,
                 description: newItem.content,
                 date: newItem.eventDate,
-                time: newItem.eventTime
+                time: newItem.eventTime,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
               })
             });
             if (res.ok) {
@@ -831,6 +832,46 @@ export const dbClient = {
         localStorage.setItem('kyma_cached_items', JSON.stringify(updatedCache));
       } catch (e) {}
     }
+
+    if (updatedItem.doorId === 'agenda' && updatedItem.googleEventId && typeof window !== 'undefined') {
+      (async () => {
+        try {
+          const sessionRes = await sb.auth.getSession();
+          const token = sessionRes.data.session?.access_token;
+          if (token) {
+            const config = await this.getUserConfig();
+            const googleCalendar = config?.googleCalendar || {};
+            const targetCalendarId = googleCalendar.writeCalendarId || 'primary';
+
+            const res = await fetch('/api/calendar/events', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                eventId: updatedItem.googleEventId,
+                calendarId: targetCalendarId,
+                summary: updatedItem.title,
+                description: updatedItem.content,
+                date: updatedItem.eventDate,
+                time: updatedItem.eventTime,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+              })
+            });
+
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              const errMsg = errData.error || res.statusText || 'Error desconocido';
+              window.dispatchEvent(new CustomEvent('kyma_calendar_sync_error', { detail: `Error al actualizar en Google: ${errMsg}` }));
+            }
+          }
+        } catch (e) {
+          console.warn('Google Calendar update sync failed:', e);
+        }
+      })();
+    }
+
     return updatedItem;
   },
 
@@ -986,7 +1027,8 @@ export const dbClient = {
                 summary: updatedItem.title,
                 description: updatedItem.content,
                 date: updatedItem.eventDate,
-                time: updatedItem.eventTime
+                time: updatedItem.eventTime,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
               })
             });
             if (res.ok) {
