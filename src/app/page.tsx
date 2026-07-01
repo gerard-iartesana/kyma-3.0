@@ -1901,11 +1901,51 @@ export default function Home() {
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label className="form-label">Edad</label>
                         <input 
-                          type="number" 
+                          type="text" 
                           className="input-field" 
                           value={userProfile.edad} 
                           onChange={e => handleUpdateUserProfile({ edad: e.target.value })}
-                          placeholder="ej: 34"
+                          onBlur={(e) => {
+                            const val = e.target.value.trim();
+                            if (!val) return;
+                            
+                            // 1. Check for 4-digit birth year (e.g. 1980)
+                            if (/^\b(19\d{2}|20[0-2]\d)\b$/.test(val)) {
+                              const calculated = new Date().getFullYear() - parseInt(val);
+                              handleUpdateUserProfile({ edad: String(calculated) });
+                            }
+                            // 2. Check for DD/MM/YYYY or DD-MM-YYYY format
+                            const dateMatch = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+                            if (dateMatch) {
+                              const day = parseInt(dateMatch[1]);
+                              const month = parseInt(dateMatch[2]) - 1;
+                              const year = parseInt(dateMatch[3]);
+                              const now = new Date();
+                              let calculated = now.getFullYear() - year;
+                              const currentMonth = now.getMonth();
+                              const currentDay = now.getDate();
+                              if (currentMonth < month || (currentMonth === month && currentDay < day)) {
+                                calculated--;
+                              }
+                              handleUpdateUserProfile({ edad: String(calculated) });
+                            }
+                            // 3. Check for YYYY-MM-DD ISO format
+                            const isoMatch = val.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+                            if (isoMatch) {
+                              const year = parseInt(isoMatch[1]);
+                              const month = parseInt(isoMatch[2]) - 1;
+                              const day = parseInt(isoMatch[3]);
+                              const now = new Date();
+                              let calculated = now.getFullYear() - year;
+                              const currentMonth = now.getMonth();
+                              const currentDay = now.getDate();
+                              if (currentMonth < month || (currentMonth === month && currentDay < day)) {
+                                calculated--;
+                              }
+                              handleUpdateUserProfile({ edad: String(calculated) });
+                            }
+                          }}
+                          placeholder="ej: 34 o 1980"
                         />
                       </div>
 

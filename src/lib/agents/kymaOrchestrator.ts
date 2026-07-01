@@ -45,7 +45,9 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
 
   // 2. Edad o Fecha de Nacimiento (calculada automáticamente)
   const ageMatch = text.match(/(?:tengo|mi edad es|cumplí|cumpli|tengo unos|tengo la edad de) (\d{1,3}) (?:años|anos)/i);
-  const birthDateMatch = text.match(/(?:nací el|nací en|naci el|naci en|mi fecha de nacimiento es|nacimiento|fecha de nacimiento)(?: el)?\s*(\d{1,2})?\s*(?:de\s+([a-zñáéíóú]+)\s+de\s+|\/|-)?\s*(19\d\d|20[0-2]\d)/i);
+  
+  // Use negative lookahead to prevent false word boundary issues with accented characters
+  const birthTriggerRegex = /(?:nací|naci|nacimiento|nacido|nacida|fecha de nacimiento)(?![a-zñáéíóúü])/i;
 
   if (ageMatch) {
     const newAge = ageMatch[1];
@@ -55,35 +57,77 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
       key = 'edad';
       val = newAge;
     }
-  } else if (birthDateMatch) {
-    const day = birthDateMatch[1] ? parseInt(birthDateMatch[1]) : null;
-    const monthStr = birthDateMatch[2] ? birthDateMatch[2].toLowerCase() : null;
-    const birthYear = parseInt(birthDateMatch[3]);
+  } else if (birthTriggerRegex.test(text)) {
+    const triggerIndex = text.search(birthTriggerRegex);
+    const birthText = text.slice(triggerIndex);
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    let calculatedAge = currentYear - birthYear;
+    // Formats
+    const format1Match = birthText.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+    const format2Match = birthText.match(/\b(\d{1,2})\s+de\s+([a-zñáéíóúü]+)\s+(?:de|del)\s+(19\d{2}|20[0-2]\d|\b\d{2}\b)/i);
+    const format3Match = birthText.match(/\b([a-zñáéíóúü]+)\s+(?:de|del)\s+(19\d{2}|20[0-2]\d|\b\d{2}\b)/i);
+    const format4Match = birthText.match(/(?:en\s+el|en|del|de|año|ano|:|\b)\s*\b(19\d{2}|20[0-2]\d|[3-9]\d|[0-2]\d)\b/i);
 
-    if (monthStr && day) {
-      const monthsMap: { [k: string]: number } = {
-        enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
-        julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
-      };
-      const birthMonth = monthsMap[monthStr];
-      if (birthMonth !== undefined) {
-        const currentMonth = now.getMonth();
-        const currentDay = now.getDate();
-        if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < day)) {
-          calculatedAge--;
-        }
+    let day: number | null = null;
+    let month: number | null = null; 
+    let birthYear: number | null = null;
+
+    const monthsMap: { [k: string]: number } = {
+      enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+      julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
+    };
+
+    if (format1Match) {
+      day = parseInt(format1Match[1]);
+      month = parseInt(format1Match[2]) - 1;
+      const yrStr = format1Match[3];
+      birthYear = parseInt(yrStr);
+      if (yrStr.length === 2) {
+        birthYear += (birthYear >= 30 ? 1900 : 2000);
+      }
+    } else if (format2Match) {
+      day = parseInt(format2Match[1]);
+      const mStr = format2Match[2].toLowerCase();
+      month = monthsMap[mStr];
+      const yrStr = format2Match[3];
+      birthYear = parseInt(yrStr);
+      if (yrStr.length === 2) {
+        birthYear += (birthYear >= 30 ? 1900 : 2000);
+      }
+    } else if (format3Match) {
+      const mStr = format3Match[1].toLowerCase();
+      month = monthsMap[mStr];
+      const yrStr = format3Match[2];
+      birthYear = parseInt(yrStr);
+      if (yrStr.length === 2) {
+        birthYear += (birthYear >= 30 ? 1900 : 2000);
+      }
+    } else if (format4Match) {
+      const yrStr = format4Match[1];
+      birthYear = parseInt(yrStr);
+      if (yrStr.length === 2) {
+        birthYear += (birthYear >= 30 ? 1900 : 2000);
       }
     }
 
-    if (calculatedAge > 0 && calculatedAge < 120 && String(calculatedAge) !== updated.edad) {
-      updated.edad = String(calculatedAge);
-      hasChanges = true;
-      key = 'edad';
-      val = `${calculatedAge} años (calculada a partir de tu fecha de nacimiento en ${birthYear})`;
+    if (birthYear) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      let calculatedAge = currentYear - birthYear;
+
+      if (month !== null && month !== undefined && day !== null && day !== undefined) {
+        const currentMonth = now.getMonth();
+        const currentDay = now.getDate();
+        if (currentMonth < month || (currentMonth === month && currentDay < day)) {
+          calculatedAge--;
+        }
+      }
+
+      if (calculatedAge > 0 && calculatedAge < 120 && String(calculatedAge) !== updated.edad) {
+        updated.edad = String(calculatedAge);
+        hasChanges = true;
+        key = 'edad';
+        val = `${calculatedAge} años (calculada a partir de tu fecha de nacimiento en ${birthYear})`;
+      }
     }
   }
 
