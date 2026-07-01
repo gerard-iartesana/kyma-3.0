@@ -238,7 +238,10 @@ Devuelve UNICAMENTE un JSON con este formato:
         const rawTriage = triageData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawTriage) {
           const cleanJson = rawTriage.replace(/```json/gi, '').replace(/```/g, '').trim();
-          triage = JSON.parse(cleanJson);
+          const parsed = JSON.parse(cleanJson);
+          if (parsed && typeof parsed === 'object') {
+            triage = parsed;
+          }
         }
       }
     } catch (e) {
@@ -525,6 +528,7 @@ Devuelve ÚNICAMENTE un JSON con este formato:
         if (rawMgmt) {
           const cleanJson = rawMgmt.replace(/```json/gi, '').replace(/```/g, '').trim();
           const parsedMgmt = JSON.parse(cleanJson);
+          if (parsedMgmt && typeof parsedMgmt === 'object') {
 
           if (parsedMgmt.shouldUpdateTitle && parsedMgmt.targetItemIdToUpdate && parsedMgmt.newUpdatedTitle) {
             let cleanNewTitle = parsedMgmt.newUpdatedTitle.replace(/\bentrenamiento\b/gi, 'Entreno')
@@ -585,6 +589,7 @@ Devuelve ÚNICAMENTE un JSON con este formato:
           }
         }
       }
+    }
     } catch (mgmtErr) {
       console.error('Error al procesar gestión de fichas en Kyma:', mgmtErr);
     }

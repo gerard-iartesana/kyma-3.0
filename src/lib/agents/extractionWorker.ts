@@ -237,15 +237,18 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     if (!rawText) return { action: 'none' };
 
     const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-    let result: ExtractionResult;
+    let result: ExtractionResult | undefined = undefined;
     try {
-      result = JSON.parse(cleanJson);
-      result.doorId = doorId;
+      const parsed = JSON.parse(cleanJson);
+      if (parsed && typeof parsed === 'object') {
+        result = parsed as ExtractionResult;
+        result.doorId = doorId;
+      }
     } catch (e) {
       return { action: 'none' };
     }
 
-    if (result.action === 'none') {
+    if (!result || result.action === 'none') {
       return { action: 'none' };
     }
 
