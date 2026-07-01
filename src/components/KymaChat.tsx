@@ -74,6 +74,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [typingStatus, setTypingStatus] = useState<'thinking' | 'preparing' | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -233,15 +234,19 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
     if (contextItem) {
       // Trigger a socratic question from Kyma automatically
       setIsTyping(true);
+      setTypingStatus('thinking');
       
       const timer = setTimeout(async () => {
-        setIsTyping(false);
+        setTypingStatus('preparing');
         const text = getSocraticQuestion(contextItem);
         try {
           const newMsg = await dbClient.receiveKymaMessage(text);
           setMessages(prev => [...prev, { ...newMsg, isNew: true }]);
         } catch (err) {
           console.error(err);
+        } finally {
+          setIsTyping(false);
+          setTypingStatus(null);
         }
       }, 1000);
 
@@ -311,6 +316,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
     setMessages(prev => [...prev, optimisticMsg]);
     setIsTyping(true);
+    setTypingStatus('thinking');
 
     if (contextItem) {
       onClearContext();
@@ -399,6 +405,9 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
           clearTimeout(safetyTimer);
           
+          setTypingStatus('preparing');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
           // INSTANT OPTIMISTIC RENDER (0ms latency transition from Pensando... to message)
           const tempKymaId = `kyma-${Date.now()}`;
           const optimisticKymaMsg: ChatMessage = {
@@ -412,6 +421,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
 
           setMessages(prev => [...prev, optimisticKymaMsg]);
           setIsTyping(false);
+          setTypingStatus(null);
 
           if (pendingItemCallback) {
             pendingItemCallback();
@@ -424,11 +434,13 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         } catch (err) {
           clearTimeout(safetyTimer);
           setIsTyping(false);
+          setTypingStatus(null);
           console.error(err);
         }
       })();
     } catch (err) {
       setIsTyping(false);
+      setTypingStatus(null);
       console.error(err);
     }
   };
@@ -534,7 +546,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
           <div className="message-wrapper wrapper-kyma animate-fade-in" style={{ padding: '4px 8px', margin: '4px 0' }}>
             <div className="thinking-content-clean" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary, #94a3b8)', fontSize: '0.86rem', fontWeight: 500 }}>
               <div className="minimal-chat-spinner" />
-              <span>Pensando...</span>
+              <span>{typingStatus === 'preparing' ? 'Preparando respuesta...' : 'Pensando...'}</span>
             </div>
           </div>
         )}
