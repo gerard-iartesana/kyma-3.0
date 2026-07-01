@@ -413,7 +413,7 @@ Devuelve UNICAMENTE un JSON con este formato:
     doorsToExtract.push('tareas');
   }
 
-  const interestKeywords = /\b(?:vea|ver|temporada|serie|película|pelicula|cine|me gusta|me apasiona|me encanta|afición|aficion|hobby|hobbies|escuchar|música|musica|juego|jugar|deporte|pádel|padel)\b/i;
+  const interestKeywords = /\b(?:vea|ver|temporada|serie|película|pelicula|cine|me gusta|me apasiona|me encanta|afición|aficion|hobby|hobbies|escuchar|música|musica|juego|jugar|deporte|pádel|padel|grupo|banda|cantante|favorit|baqueta)\b/i;
   if (interestKeywords.test(userText) && !doorsToExtract.includes('intereses')) {
     doorsToExtract.push('intereses');
   }

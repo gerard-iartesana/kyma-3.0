@@ -466,11 +466,11 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
     let extractedEmocion = result.extractedData.emocion;
 
     if (doorId === 'intereses') {
-      const isExplicitPassion = /\b(?:apasiona|apasionante|apasionado|apasionada|pasión|pasion|locura|mi mayor afición|mi gran afición)\b/i.test(userMessage) || 
-        /\b(?:apasiona|apasionante|pasión|pasion)\b/i.test(result.extractedData.content || '');
+      const isExplicitPassion = /\b(?:apasiona|apasionante|apasionado|apasionada|pasión|pasion|locura|mi mayor afición|mi gran afición|favorito|favorita|favoritos|favoritas|preferido|preferida|preferidos|preferidas)\b/i.test(userMessage) || 
+        /\b(?:apasiona|apasionante|pasión|pasion|favorito|favorita|favoritos|favoritas|preferido|preferida|preferidos|preferidas)\b/i.test(result.extractedData.content || '');
       if (isExplicitPassion) {
-        extractedPeso = 3; // Marcar como Pasión (peso 3) estrictamente si expresa pasion explicita
-      } else if (/\b(?:me gusta|me encanta|favorito|favorita|interesa|interesante|afición|aficion)\b/i.test(userMessage)) {
+        extractedPeso = 3; // Marcar como Pasión (peso 3) si expresa pasion/favorito
+      } else if (/\b(?:me gusta|me encanta|interesa|interesante|afición|aficion)\b/i.test(userMessage)) {
         extractedPeso = 2; // Marcar como Interés habitual (peso 2)
       } else if (!result.extractedData.peso) {
         extractedPeso = 2; // Defecto para intereses
