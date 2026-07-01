@@ -331,9 +331,21 @@ export default function Home() {
         } else {
           setGoogleCalendarConnected(false);
         }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setToastNotification({
+          show: true,
+          message: `Error al cargar tus calendarios: ${errData.error || res.statusText}`,
+          doorId: 'configuracion'
+        });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching Google calendars:', err);
+      setToastNotification({
+        show: true,
+        message: `Error de conexión al cargar calendarios: ${err.message}`,
+        doorId: 'configuracion'
+      });
     } finally {
       setLoadingGoogleCalendars(false);
     }
