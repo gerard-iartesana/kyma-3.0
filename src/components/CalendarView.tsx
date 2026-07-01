@@ -5,6 +5,7 @@ import { ItemCard } from './ItemCard';
 
 interface CalendarViewProps {
   items: KymaItem[];
+  googleEvents?: any[];
   onItemClick: (item: KymaItem) => void;
   onAskKyma: (item: KymaItem, e?: React.MouseEvent) => void;
   onConfirmItem?: (item: KymaItem, e: React.MouseEvent) => void;
@@ -14,6 +15,7 @@ interface CalendarViewProps {
 
 export function CalendarView({ 
   items, 
+  googleEvents = [],
   onItemClick,
   onAskKyma,
   onConfirmItem,
@@ -114,19 +116,42 @@ export function CalendarView({
 
   // Helper to filter events on a specific date string
   const getEventsForDate = (dateStr: string) => {
-    return items
+    const kymaEvents = items
       .filter((item) => {
         if (!item.eventDate) return false;
         const itemDateStr = item.eventDate.includes('T')
           ? item.eventDate.split('T')[0]
           : item.eventDate;
         return itemDateStr === dateStr;
-      })
-      .sort((a, b) => {
-        const timeA = a.eventTime || '00:00';
-        const timeB = b.eventTime || '00:00';
-        return timeA.localeCompare(timeB);
       });
+
+    const googleEvts = (googleEvents || [])
+      .filter((evt) => {
+        const evtDate = evt.start?.dateTime || evt.start?.date;
+        if (!evtDate) return false;
+        const evtDateStr = evtDate.split('T')[0];
+        return evtDateStr === dateStr;
+      })
+      .map((evt) => ({
+        id: `google-${evt.id}`,
+        userId: '',
+        doorId: 'agenda' as const,
+        title: evt.summary || '(Sin título)',
+        content: evt.description || '',
+        eventDate: evt.start?.dateTime || evt.start?.date,
+        eventTime: evt.start?.dateTime ? evt.start.dateTime.split('T')[1]?.substring(0, 5) : undefined,
+        origen: 'google_calendar' as const,
+        tags: ['Google Calendar'],
+        completed: false,
+        peso: 1 as const,
+        createdAt: evt.created || new Date().toISOString()
+      }));
+
+    return [...kymaEvents, ...googleEvts].sort((a, b) => {
+      const timeA = a.eventTime || '00:00';
+      const timeB = b.eventTime || '00:00';
+      return timeA.localeCompare(timeB);
+    });
   };
 
   const handleCellClick = (dateStr: string) => {
@@ -191,10 +216,12 @@ export function CalendarView({
                 {dayEvents.map((event) => (
                   <div
                     key={event.id}
-                    className={`calendar-event-pill ${cell.isToday ? 'event-today' : ''}`}
+                    className={`calendar-event-pill ${cell.isToday ? 'event-today' : ''} ${event.origen === 'google_calendar' ? 'event-google' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onItemClick(event);
+                      if (event.origen !== 'google_calendar') {
+                        onItemClick(event);
+                      }
                     }}
                     title={`${event.eventTime ? `${event.eventTime} - ` : ''}${event.title}`}
                   >
@@ -226,20 +253,47 @@ export function CalendarView({
             </div>
 
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto' }}>
-              {selectedDayModal.events.map((evt) => (
-                <ItemCard
-                  key={evt.id}
-                  item={evt}
-                  onClick={(clickedItem) => {
-                    onItemClick(clickedItem);
-                    setSelectedDayModal(null);
-                  }}
-                  onAskKyma={onAskKyma}
-                  onConfirmItem={onConfirmItem}
-                  onDiscardItem={onDiscardItem}
-                  onTagSelect={onTagSelect}
-                />
-              ))}
+              {selectedDayModal.events.map((evt) => {
+                if (evt.origen === 'google_calendar') {
+                  return (
+                    <div 
+                      key={evt.id} 
+                      style={{ 
+                        padding: '12px 16px', 
+                        background: 'rgba(255, 255, 255, 0.02)', 
+                        border: '1px solid rgba(255, 255, 255, 0.06)', 
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--accent-purple)', fontWeight: 600 }}>
+                        <CalendarIcon size={12} />
+                        <span>GOOGLE CALENDAR • {evt.eventTime || 'Todo el día'}</span>
+                      </div>
+                      <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-primary)' }}>{evt.title}</h4>
+                      {evt.content && (
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{evt.content}</p>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <ItemCard
+                    key={evt.id}
+                    item={evt}
+                    onClick={(clickedItem) => {
+                      onItemClick(clickedItem);
+                      setSelectedDayModal(null);
+                    }}
+                    onAskKyma={onAskKyma}
+                    onConfirmItem={onConfirmItem}
+                    onDiscardItem={onDiscardItem}
+                    onTagSelect={onTagSelect}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>

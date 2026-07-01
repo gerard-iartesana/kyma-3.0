@@ -249,7 +249,7 @@ Devuelve UNICAMENTE un JSON con este formato:
     }
 
     // Question / query check & management intent check
-    const isRequest = /(?:guarda|guardar|añade|añadir|apunta|apuntar|registra|registrar|anota|anotar|recuerda|recordar|recuérdame|recuerdame|me recuerdas|me puedes recordar|crea|crear|pon|poner|escribe|escribir|adjunta|adjuntar)(?:\s+|$|[.,;!¿?])/i.test(userText) || 
+    const isRequest = /(?:guarda|guardar|añade|añadir|apunta|apuntar|registra|registrar|anota|anotar|recuerda|recordar|recuérdame|recuerdame|me recuerdas|me puedes recordar|crea|crear|pon|poner|escribe|escribir|adjunta|adjuntar)(?:lo|la|los|las|me|nos|se|te)?(?:\s+|$|[.,;!¿?])/i.test(userText) || 
                       /tengo que|debo|hay que|pendiente|comprar|hacer la compra/i.test(userText);
 
     const isQuestion = !isRequest && (/^(?:\s*¿)|(?:\?)$|^\s*(?:qué|que hice|que tengo|quién|quien|cómo|como|cuándo|cuando|cuál|cual|cuántos|cuantos|dime|puedes decir)(?:\s+|$|[.,;!¿?])/i.test(userText.trim()));

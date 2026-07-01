@@ -436,6 +436,19 @@ button, input, textarea, select {
   color: var(--text-primary);
 }
 
+.calendar-event-pill.event-google {
+  background: rgba(139, 92, 246, 0.04);
+  border-color: rgba(139, 92, 246, 0.12);
+  border-left: 2px dashed var(--accent-purple);
+  color: var(--text-secondary);
+}
+
+.calendar-event-pill.event-google:hover {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: var(--accent-purple);
+  color: var(--text-primary);
+}
+
 .event-time-prefix {
   font-weight: 600;
   color: var(--text-muted);

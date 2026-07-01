@@ -2741,6 +2741,7 @@ export default function Home() {
               ) : selectedDoorId === 'agenda' && agendaViewMode === 'calendar' ? (
                 <CalendarView 
                   items={filteredItems}
+                  googleEvents={googleCalendarConnected ? googleEvents : []}
                   onItemClick={(item) => handleSelectItem(item)}
                   onAskKyma={(item, e) => handleAskKyma(item, e)}
                   onConfirmItem={(item, e) => handleConfirmItem(item, e)}
@@ -2766,21 +2767,104 @@ export default function Home() {
                   onDiscardItem={(item, e) => handleDiscardItem(item, e)}
                 />
               ) : (
-                <div className={`grid-layout ${isCompactView ? 'compact-layout' : ''} animate-fade-in`}>
-                  {filteredItems.map(item => (
-                    <ItemCard
-                      key={item.id}
-                      item={item}
-                      isCompact={isCompactView}
-                      onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                      onAskKyma={(item, e) => handleAskKyma(item, e)}
-                      onToggleComplete={selectedDoorId === 'tareas' ? handleToggleComplete : undefined}
-                      onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                      onDiscardItem={(item, e) => handleDiscardItem(item, e)}
-                      onTagSelect={(tag) => setSelectedTag(tag)}
-                    />
-                  ))}
-                </div>
+                (() => {
+                  const displayItems = (() => {
+                    if (selectedDoorId === 'agenda' && googleCalendarConnected) {
+                      const virtualGoogleItems = googleEvents.map(evt => {
+                        const dateStr = (evt.start.dateTime || evt.start.date).split('T')[0];
+                        const timeStr = evt.start.dateTime ? evt.start.dateTime.split('T')[1]?.substring(0, 5) : undefined;
+                        return {
+                          id: `google-${evt.id}`,
+                          userId: '',
+                          doorId: 'agenda' as const,
+                          title: evt.summary || '(Sin título)',
+                          content: evt.description || '',
+                          eventDate: dateStr,
+                          eventTime: timeStr,
+                          origen: 'google_calendar' as const,
+                          tags: ['Google Calendar'],
+                          completed: false,
+                          peso: 1 as const,
+                          createdAt: evt.created || new Date().toISOString()
+                        };
+                      });
+                      
+                      return [...filteredItems, ...virtualGoogleItems].sort((a, b) => {
+                        const dateA = a.eventDate || '';
+                        const dateB = b.eventDate || '';
+                        const dateCompare = dateA.localeCompare(dateB);
+                        if (dateCompare !== 0) return dateCompare;
+                        
+                        const timeA = a.eventTime || '00:00';
+                        const timeB = b.eventTime || '00:00';
+                        return timeA.localeCompare(timeB);
+                      });
+                    }
+                    return filteredItems;
+                  })();
+
+                  return (
+                    <div className={`grid-layout ${isCompactView ? 'compact-layout' : ''} animate-fade-in`}>
+                      {displayItems.map(item => {
+                        if (item.origen === 'google_calendar') {
+                          const startDate = item.eventDate ? new Date(item.eventDate + 'T00:00:00') : new Date();
+                          const formattedDate = startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).toUpperCase();
+                          return (
+                            <div 
+                              key={item.id} 
+                              className="google-event-text-item"
+                              style={{
+                                padding: '14px 18px',
+                                background: 'rgba(139, 92, 246, 0.02)',
+                                border: '1px dashed rgba(139, 92, 246, 0.2)',
+                                borderRadius: '16px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '12px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                                gridColumn: '1 / -1'
+                              }}
+                            >
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--accent-purple)', fontWeight: 600 }}>
+                                  <Icons.Calendar size={12} />
+                                  <span>GOOGLE CALENDAR</span>
+                                </div>
+                                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {item.title}
+                                </h4>
+                                {item.content && (
+                                  <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {item.content}
+                                  </p>
+                                )}
+                              </div>
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formattedDate}</div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.eventTime || 'Todo el día'}</div>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <ItemCard
+                            key={item.id}
+                            item={item}
+                            isCompact={isCompactView}
+                            onClick={(clickedItem) => handleSelectItem(clickedItem)}
+                            onAskKyma={(item, e) => handleAskKyma(item, e)}
+                            onToggleComplete={selectedDoorId === 'tareas' ? handleToggleComplete : undefined}
+                            onConfirmItem={(item, e) => handleConfirmItem(item, e)}
+                            onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                            onTagSelect={(tag) => setSelectedTag(tag)}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })()
               )}
             </div>
           </div>

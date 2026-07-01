@@ -9,7 +9,7 @@ export interface KymaItem {
   createdAt: string;
   tags: string[];
   peso: 1 | 2 | 3; // 1: Normal/Orbita/Curiosidad, 2: Destacado/Cercana, 3: Urgente/Nucleo/Pasion/Hito Vital
-  origen?: 'manual' | 'kyma_sugerido' | 'kyma_confirmado';
+  origen?: 'manual' | 'kyma_sugerido' | 'kyma_confirmado' | 'google_calendar';
   completed?: boolean; // Specific to tareas
   estado?: 'activo' | 'archivado';
   fechaEjecucion?: string; // Date when task was completed
