@@ -305,7 +305,7 @@ Devuelve UNICAMENTE un JSON con este formato:
   const lastKymaMsg = lastKymaMsgObj?.text || '';
 
   let syntheticProposalPrompt = '';
-  if (isShortConfirmation && lastKymaMsg && /(?:ficha|apuntado|registrar|abrirle una ficha|guardar|vínculos|vinculos|modificar|actualizar|añadir|detalles|hermana|hermano|amigo|amiga|estela|recuerdo|hito|reflexión|reflexion)/i.test(lastKymaMsg)) {
+  if (isShortConfirmation && lastKymaMsg && /(?:ficha|apuntado|apunte|apuntar|apuntemos|registrar|registro|registre|abrirle una ficha|guardar|vínculo|vinculo|vínculos|vinculos|personas|modificar|actualizar|añadir|detalles|hermana|hermano|amigo|amiga|estela|recuerdo|hito|reflexión|reflexion|agenda|calendario|cumpleaños|cumple|tarea|evento|cita)/i.test(lastKymaMsg)) {
     // 1. Determinar la acción exacta propuesta por Kyma en su mensaje
     let proposedAction: 'create' | 'enrich' | 'delete' = 'create';
     if (/(?:modificar|añadir a la ficha|actualizar|añadir este detalle|completar la ficha|editar|cambiar)/i.test(lastKymaMsg)) {
@@ -324,10 +324,10 @@ Devuelve UNICAMENTE un JSON con este formato:
     if (/interés|intereses|gusto|pasión|hobby/i.test(lastKymaMsg)) {
       proposedDoors.push('intereses');
     }
-    if (/nota|apunte|documento|dni/i.test(lastKymaMsg) && !/hermana|hermano|amigo|amiga|pareja/i.test(lastKymaMsg)) {
+    if (/nota|apunte|documento|dni/i.test(lastKymaMsg) && !/hermana|hermano|amigo|amiga|pareja|agenda|calendario|cumpleaños|cumple/i.test(lastKymaMsg)) {
       proposedDoors.push('notas');
     }
-    if (/cita|reunión|evento|agenda|partido/i.test(lastKymaMsg)) {
+    if (/cita|reunión|reunion|evento|agenda|partido|cumpleaños|cumple/i.test(lastKymaMsg)) {
       proposedDoors.push('agenda');
     }
     if (/tarea|pendiente|recado/i.test(lastKymaMsg)) {

@@ -733,7 +733,7 @@ export default function Home() {
     ? baseDoorItems
         .filter(item => !selectedTag || item.tags.includes(selectedTag))
         .filter(item => {
-          if (selectedDoorId === 'agenda' && !showPastAgendaEvents) {
+          if (selectedDoorId === 'agenda' && !showPastAgendaEvents && agendaViewMode !== 'calendar') {
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');

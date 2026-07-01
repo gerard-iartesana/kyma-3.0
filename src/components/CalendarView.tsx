@@ -22,7 +22,7 @@ export function CalendarView({
 }: CalendarViewProps) {
   // We initialize the calendar with the current date (Junio 2026 for demo consistency, or fallback to system date)
   const [currentDate, setCurrentDate] = useState(() => {
-    return new Date(2026, 5, 26); // 5 represents June (0-indexed)
+    return new Date();
   });
 
   const [selectedDayModal, setSelectedDayModal] = useState<{ dateString: string; events: KymaItem[] } | null>(null);
@@ -62,10 +62,7 @@ export function CalendarView({
     const cells = [];
     
     const today = new Date();
-    const isDemoYear = today.getFullYear() === 2026;
-    const todayString = isDemoYear
-      ? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-      : '2026-06-26';
+    const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     // 1. Add days from previous month
     for (let i = startDayIndex - 1; i >= 0; i--) {
