@@ -195,8 +195,7 @@ export async function POST(request: Request) {
     };
 
     const googleCalendar = configElement.datos?.googleCalendar || {};
-    const selectedCalendars: string[] = googleCalendar.selectedCalendars || [];
-    const targetCalendarId = selectedCalendars.length > 0 ? selectedCalendars[0] : 'primary';
+    const targetCalendarId = googleCalendar.writeCalendarId || (googleCalendar.selectedCalendars?.length > 0 ? googleCalendar.selectedCalendars[0] : 'primary');
 
     const createEventUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events`;
     const createRes = await fetch(createEventUrl, {
@@ -237,7 +236,7 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('eventId');
-    const calendarId = searchParams.get('calendarId') || 'primary';
+    let calendarId = searchParams.get('calendarId') || 'primary';
 
     if (!eventId) {
       return NextResponse.json({ error: 'Falta el parámetro eventId' }, { status: 400 });
@@ -268,6 +267,11 @@ export async function DELETE(request: Request) {
     }
 
     const configElement = configData[0];
+    const googleCalendar = configElement.datos?.googleCalendar || {};
+    if (!calendarId || calendarId === 'primary') {
+      calendarId = googleCalendar.writeCalendarId || (googleCalendar.selectedCalendars?.length > 0 ? googleCalendar.selectedCalendars[0] : 'primary');
+    }
+
     const googleToken = await getValidGoogleAccessToken(supabaseClient, user, configElement);
 
     if (!googleToken) {

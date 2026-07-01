@@ -95,12 +95,10 @@ export async function GET(request: Request) {
     if (kymaCalendar) {
       try {
         const currentGoogleConfig = configElement.datos?.googleCalendar || {};
-        const selected: string[] = currentGoogleConfig.selectedCalendars || [];
-
-        if (!selected.includes(kymaCalendar.id)) {
+        if (currentGoogleConfig.writeCalendarId !== kymaCalendar.id) {
           const updatedGoogleConfig = {
             ...currentGoogleConfig,
-            selectedCalendars: [kymaCalendar.id]
+            writeCalendarId: kymaCalendar.id
           };
           const updatedDatos = {
             ...configElement.datos,
@@ -117,9 +115,12 @@ export async function GET(request: Request) {
       }
     }
 
+    // Exclude Kyma calendar from the client list so it isn't rendering duplicates
+    const filteredCalendars = calendars.filter((cal: any) => cal.id !== kymaCalendar?.id);
+
     return NextResponse.json({
       connected: true,
-      calendars: calendars
+      calendars: filteredCalendars
     });
   } catch (err: any) {
     console.error('Error in GET /api/calendar/list:', err);
