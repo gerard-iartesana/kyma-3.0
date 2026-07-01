@@ -335,7 +335,7 @@ ${content}
               </div>
               
               <div className="form-group flex-1">
-                <label className="form-label">Ritmo de Contacto (Frecuencia deseada)</label>
+                <label className="form-label">Frecuencia de contacto</label>
                 <div className="radio-group" style={{ gap: '6px' }}>
                   {[
                     { val: 100, label: 'Diario' },
