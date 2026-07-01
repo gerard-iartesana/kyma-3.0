@@ -751,7 +751,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   // Robust Sentence Completeness Slicer: Ensure text ends on proper closing punctuation (. ? ! " ) )
   if (replyText && !/[.?!")}\u201D\u2019]$/.test(replyText)) {
     const lastPunct = Math.max(replyText.lastIndexOf('.'), replyText.lastIndexOf('?'), replyText.lastIndexOf('!'));
-    if (lastPunct > 0 && lastPunct > replyText.length - 120) {
+    if (lastPunct > 0) {
       replyText = replyText.slice(0, lastPunct + 1).trim();
     }
   }
