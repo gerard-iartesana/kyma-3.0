@@ -1074,7 +1074,7 @@ export const dbClient = {
     }
   },
 
-  async saveUserConfig(perfil: any, logs: any): Promise<void> {
+  async saveUserConfig(perfil: any, logs: any, googleCalendar?: any): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -1088,12 +1088,16 @@ export const dbClient = {
 
       const existingDatos = existing && existing.length > 0 ? existing[0].datos || {} : {};
 
-      const datos = {
+      const datos: any = {
         ...existingDatos,
         is_system_config: true,
         perfil,
         logs
       };
+
+      if (googleCalendar) {
+        datos.googleCalendar = googleCalendar;
+      }
 
       if (existing && existing.length > 0) {
         const { error: updateError } = await supabase
