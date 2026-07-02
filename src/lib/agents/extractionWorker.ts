@@ -594,8 +594,8 @@ Devuelve UNICAMENTE un objeto JSON con el siguiente esquema:
 
     return { item: newItem, action: 'create' };
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error en executeExtractionWorker:', err);
-    return { action: 'none' };
+    return { action: 'none', error: err.message || 'Error de extracción' } as any;
   }
 }

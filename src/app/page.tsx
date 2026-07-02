@@ -207,59 +207,74 @@ export default function Home() {
   }, [isOnline]);
 
   useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const config = await dbClient.getUserConfig();
-        if (config) {
-          if (config.perfil) {
-            setUserProfile(config.perfil);
-            localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+    // 1. Get initial session safely
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        try {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            const config = await dbClient.getUserConfig();
+            if (config) {
+              if (config.perfil) {
+                setUserProfile(config.perfil);
+                localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+              }
+              if (config.logs) {
+                setTrustLogs(config.logs);
+                localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
+              }
+              if (config.googleCalendar && config.googleCalendar.connected) {
+                setGoogleCalendarConnected(true);
+                setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
+              }
+            }
+            setConfigLoaded(true);
           }
-          if (config.logs) {
-            setTrustLogs(config.logs);
-            localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
-          }
-          if (config.googleCalendar && config.googleCalendar.connected) {
-            setGoogleCalendarConnected(true);
-            setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
-          }
+          refreshItems();
+        } catch (err) {
+          console.warn('Error loading initial session config:', err);
+        } finally {
+          setLoadingSession(false);
         }
-        setConfigLoaded(true);
-      }
-      refreshItems();
-      setLoadingSession(false);
-    });
+      })
+      .catch((err) => {
+        console.warn('Failed to get initial auth session:', err);
+        setLoadingSession(false);
+      });
 
-    // 2. Set auth listener
+    // 2. Set auth listener safely
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const config = await dbClient.getUserConfig();
-        if (config) {
-          if (config.perfil) {
-            setUserProfile(config.perfil);
-            localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+      try {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          const config = await dbClient.getUserConfig();
+          if (config) {
+            if (config.perfil) {
+              setUserProfile(config.perfil);
+              localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+            }
+            if (config.logs) {
+              setTrustLogs(config.logs);
+              localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
+            }
+            if (config.googleCalendar && config.googleCalendar.connected) {
+              setGoogleCalendarConnected(true);
+              setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
+            }
           }
-          if (config.logs) {
-            setTrustLogs(config.logs);
-            localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
-          }
-          if (config.googleCalendar && config.googleCalendar.connected) {
-            setGoogleCalendarConnected(true);
-            setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
-          }
+          setConfigLoaded(true);
+          refreshItems();
+        } else {
+          setItems([]);
+          setConfigLoaded(false);
+          setGoogleCalendarConnected(false);
+          setGoogleEvents([]);
         }
-        setConfigLoaded(true);
-        refreshItems();
-      } else {
-        setItems([]);
-        setConfigLoaded(false);
-        setGoogleCalendarConnected(false);
-        setGoogleEvents([]);
+      } catch (err) {
+        console.warn('Error in auth state change handler:', err);
+      } finally {
+        setLoadingSession(false);
       }
-      setLoadingSession(false);
     });
 
     setLocalDbState(getDbState());

@@ -398,6 +398,11 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
                   onUserProfileUpdated(data.updatedProfile);
                 }
               }
+              if (data.extractionError && typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('kyma_calendar_sync_error', { 
+                  detail: `Límite de API superado o fallo de red. No se ha podido auto-crear la tarjeta de forma automática.` 
+                }));
+              }
               if (data.createdItems && data.createdItems.length > 0) {
                 pendingItemCallback = () => {
                   data.createdItems.forEach((item: KymaItem) => {

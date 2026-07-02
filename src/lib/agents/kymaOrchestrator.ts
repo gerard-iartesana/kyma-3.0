@@ -179,7 +179,7 @@ export async function processKymaTurn(
   userId?: string,
   accessToken?: string,
   userProfile?: { nombre?: string; edad?: string; lugarResidencia?: string; idioma?: string }
-): Promise<{ replyText: string; createdItem?: KymaItem; createdItems?: KymaItem[]; action?: string; updatedProfile?: any }> {
+): Promise<{ replyText: string; createdItem?: KymaItem; createdItems?: KymaItem[]; action?: string; updatedProfile?: any; extractionError?: string }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
@@ -439,6 +439,8 @@ Devuelve UNICAMENTE un JSON con este formato:
     doorsToExtract.push('notas');
   }
 
+  let extractionError: string | undefined = undefined;
+
   for (const dId of doorsToExtract) {
     try {
       const promptToUse = syntheticProposalPrompt ? `${userText} (${syntheticProposalPrompt})` : userText;
@@ -449,6 +451,9 @@ Devuelve UNICAMENTE un JSON con este formato:
         accessToken,
         `Historial inmediato: ${recentMsgsSnippet}`
       );
+      if ((res as any).error) {
+        extractionError = (res as any).error;
+      }
       if (res.items && res.items.length > 0) {
         for (const item of res.items) {
           allExtractedResults.push({ item, action: res.action, doorId: dId });
@@ -456,8 +461,9 @@ Devuelve UNICAMENTE un JSON con este formato:
       } else if (res.item && res.action !== 'none') {
         allExtractedResults.push({ item: res.item, action: res.action, doorId: dId });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Error en extracción multi-puerta (${dId}):`, err);
+      extractionError = err.message || 'Error de red en extracción';
     }
   }
 
@@ -796,6 +802,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
       return r.item;
     }),
     action: finalAction,
-    updatedProfile: profileExtract.updatedProfile
+    updatedProfile: profileExtract.updatedProfile,
+    extractionError
   };
 }

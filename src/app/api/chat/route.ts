@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       createdItem: result.createdItem,
       createdItems: (result as any).createdItems || (result.createdItem ? [result.createdItem] : []),
       action: result.action,
-      updatedProfile: result.updatedProfile
+      updatedProfile: result.updatedProfile,
+      extractionError: (result as any).extractionError
     });
   } catch (err: any) {
     console.error('API Chat Route Handler Error:', err);
