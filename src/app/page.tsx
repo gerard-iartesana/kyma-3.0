@@ -937,6 +937,12 @@ export default function Home() {
               if (valA !== valB) {
                 return valB - valA;
               }
+              // Criterio secundario: desempatar por frecuencia de contacto (mayor frecuencia primero)
+              const freqA = a.frecuencia !== undefined ? a.frecuencia : 50;
+              const freqB = b.frecuencia !== undefined ? b.frecuencia : 50;
+              if (freqA !== freqB) {
+                return freqB - freqA;
+              }
             }
             const timeA = new Date((a as any).updatedAt || a.createdAt || 0).getTime();
             const timeB = new Date((b as any).updatedAt || b.createdAt || 0).getTime();
