@@ -302,6 +302,18 @@ export default function Home() {
       setIsMounted(true);
     }, 800);
 
+    // 3. Timeout de seguridad: Forzar visualización tras 5 segundos en caso de bloqueos de red o Supabase
+    const safetyTimer = setTimeout(() => {
+      setLoadingSession((prev) => {
+        if (prev) {
+          console.warn('Safety timeout reached for initial session. Forcing UI display.');
+          return false;
+        }
+        return prev;
+      });
+      setIsMounted(true);
+    }, 5000);
+
     return () => {
       subscription.unsubscribe();
       if (typeof window !== 'undefined') {
@@ -309,6 +321,7 @@ export default function Home() {
         window.removeEventListener('kyma_calendar_sync_error', handleSyncError);
       }
       clearTimeout(timer);
+      clearTimeout(safetyTimer);
     };
   }, []);
 
