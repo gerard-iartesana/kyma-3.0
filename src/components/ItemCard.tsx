@@ -576,9 +576,6 @@ export function ItemCard({
                   // Filter out duplicate person title
                   const personName = item.title.toLowerCase();
                   if (cleanTag === personName || personName.includes(cleanTag)) return false;
-                  // Filter out anecdotal activity / place / noise tags for personas
-                  const noiseTags = ['playa', 'contacto', 'conversacion', 'conversación', 'cine', 'padel', 'pádel', 'duelo', 'recuerdo', 'hito', 'viaje', 'general'];
-                  if (noiseTags.includes(cleanTag)) return false;
                 }
                 return true;
               })

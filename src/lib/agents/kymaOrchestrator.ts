@@ -678,7 +678,7 @@ Devuelve ÚNICAMENTE un JSON con este formato:
       if (ext.doorId === 'estela') {
         extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un hito/recuerdo en la puerta "Estela de vida" titulado "${ext.item.title}". DEBES incluir un acuse de recibo cálido (ej: "Guardado en tu Estela de vida: ${ext.item.title}.").`;
       } else if (ext.doorId === 'agenda') {
-        extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un evento en la puerta "Agenda" titulado "${ext.item.title}" (${ext.item.eventTime ? `a las ${ext.item.eventTime}` : 'para hoy/mañana'}). DEBES acusar recibo de forma muy clara citando el evento y la hora (ej: "Me apunto tu reunión de las ${ext.item.eventTime || '12:00'} con ${ext.item.title}.").`;
+        extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente un evento en la puerta "Agenda" titulado "${ext.item.title}" (${ext.item.eventTime ? `a las ${ext.item.eventTime}` : 'para hoy/mañana'}). DEBES acusar recibo de forma muy natural citando el evento y la hora (ej: "Anotado en tu agenda: '${ext.item.title}' a las ${ext.item.eventTime || '12:00'}" o "Me apunto tu '${ext.item.title}' de las ${ext.item.eventTime || '12:00'}").`;
       } else if (ext.doorId === 'tareas') {
         extraInstruction += `\n\n[SISTEMA]: Se ha ${actionType} automáticamente una tarea pendiente en la puerta "Tareas" titulada "${ext.item.title}". DEBES acusar recibo (ej: "Anotado en tus tareas: ${ext.item.title}.").`;
       } else {
@@ -754,19 +754,42 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   replyText = replyText.replace(/\[DATOS[^\]]*\]/gi, '');
   replyText = replyText.replace(/^(?:wait,\s*)?(?:let\s+me\s+make\s+sure|check\s+constraints|constraints\s*checked)[^*:\n]*\**\s*:?\s*(?:"[^"]*"\s*)?\n?/gi, '');
 
-  // Line-by-line constraint leak cleanup
+  // Line-by-line constraint leak and english preamble cleanup
   if (replyText) {
     const lines = replyText.split('\n');
-    const cleanLines = lines.filter((line: string) => {
-      const l = line.toLowerCase();
-      return !l.includes('check constraints') && 
-             !l.includes('concluye siempre') && 
-             !l.includes('compleitud obligatoria') && 
-             !l.includes('meta-razonamientos') &&
-             !l.includes('espejo, no juez') &&
-             !l.includes('una sola voz') &&
-             !l.includes('sugiere, el usuario decide');
-    });
+    const cleanLines = [];
+    let skippingPreamble = true;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const l = trimmed.toLowerCase();
+      
+      const isConstraintLeak = l.includes('check constraints') || 
+                               l.includes('concluye siempre') || 
+                               l.includes('compleitud obligatoria') || 
+                               l.includes('meta-razonamientos') ||
+                               l.includes('espejo, no juez') ||
+                               l.includes('una sola voz') ||
+                               l.includes('sugiere, el usuario decide');
+      
+      if (isConstraintLeak) {
+        continue;
+      }
+
+      if (skippingPreamble) {
+        // Detect English preamble phrases
+        const isEnglishPreamble = /^(?:wait|let's|let\s+me|need\s+to|make\s+sure|conclude|check|constraint|thinking|thought|analysis|here\s+is|here's|response|reply|write|polish|step)\b/i.test(trimmed) ||
+                                  /^[a-z\s()]+[:.]\s*$/i.test(trimmed) || // ej. "Let's write:" o "Final polish:"
+                                  (/^[a-z\s.,'!]+$/i.test(trimmed) && trimmed.split(/\s+/).length <= 5);
+        
+        if (isEnglishPreamble || trimmed === '') {
+          continue;
+        } else {
+          skippingPreamble = false;
+        }
+      }
+      cleanLines.push(line);
+    }
     replyText = cleanLines.join('\n').trim();
   }
 
