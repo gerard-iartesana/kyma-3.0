@@ -1086,14 +1086,15 @@ export default function Home() {
       markdown += `Email de usuario: ${user?.email || 'N/A'}\n\n`;
       markdown += `Este documento contiene la totalidad de tus fichas y relaciones guardadas en Kyma, estructuradas por sección.\n\n---\n\n`;
 
-      const doors = ['agenda', 'tareas', 'notas', 'intereses', 'personas', 'reflexiones'];
+      const doors = ['agenda', 'tareas', 'notas', 'intereses', 'personas', 'reflexiones', 'estela'];
       const doorNames: Record<string, string> = {
         agenda: 'Agenda (Eventos)',
         tareas: 'Tareas',
         notas: 'Notas',
         intereses: 'Intereses',
         personas: 'Vínculos (Personas)',
-        reflexiones: 'Reflexiones'
+        reflexiones: 'Reflexiones',
+        estela: 'Estela de vida (Recuerdos del pasado)'
       };
 
       for (const door of doors) {
@@ -1117,6 +1118,14 @@ export default function Home() {
             } else if (item.doorId === 'personas') {
               markdown += `- **Cercanía afectiva**: ${item.cercania || 'orbita'}\n`;
               markdown += `- **Frecuencia registrada**: ${item.frecuencia || 50}%\n`;
+            } else if (item.doorId === 'estela') {
+              markdown += `- **Año**: ${item.year || 'N/A'}\n`;
+              if (item.dateStr) markdown += `- **Fecha redactada**: ${item.dateStr}\n`;
+              if (item.lugar) markdown += `- **Lugar**: ${item.lugar}\n`;
+              if (item.emocion) {
+                const emotionText: Record<number, string> = { 1: 'Muy triste', 2: 'Triste', 3: 'Neutro', 4: 'Alegre', 5: 'Muy alegre' };
+                markdown += `- **Tono emocional**: ${emotionText[item.emocion] || item.emocion}/5\n`;
+              }
             }
             
             markdown += `\n**Contenido:**\n${item.content || '*Sin descripción*'}\n\n`;
