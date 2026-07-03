@@ -174,6 +174,73 @@ async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredMod
   return null;
 }
 
+export function sanitizeKymaReply(replyText: string): string {
+  if (!replyText) return '';
+  
+  let cleanText = replyText.trim();
+  
+  // 1. Safe targeted sanitization of LLM preamble / artifacts & internal system tags
+  cleanText = cleanText.replace(/^(?:wait,\s*)?let\s+me\s+make\s+sure\s+it\s+is\s+complete\.?\s*/i, '');
+  cleanText = cleanText.replace(/\[SISTEMA\]:?/gi, '');
+  cleanText = cleanText.replace(/\[DATOS[^\]]*\]/gi, '');
+  cleanText = cleanText.replace(/^(?:wait,\s*)?(?:let\s+me\s+make\s+sure|check\s+constraints|constraints\s*checked)[^*:\n]*\**\s*:?\s*(?:"[^"]*"\s*)?\n?/gi, '');
+
+  // 2. Line-by-line constraint leak and english preamble cleanup
+  const lines = cleanText.split('\n');
+  const cleanLines = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const l = trimmed.toLowerCase();
+    
+    const isConstraintLeak = l.includes('check constraints') || 
+                             l.includes('concluye siempre') || 
+                             l.includes('compleitud obligatoria') || 
+                             l.includes('meta-razonamientos') || 
+                             l.includes('espejo, no juez') || 
+                             l.includes('una sola voz') || 
+                             l.includes('sugiere, el usuario decide') || 
+                             l.includes('meta-reasoning') || 
+                             l.includes('clinical label') || 
+                             l.includes('clinical labels') || 
+                             l.includes('spanish dialect') || 
+                             l.includes('castellano dialect') || 
+                             l.includes('first person') || 
+                             l.includes('final polish') || 
+                             l.includes('fits perfectly') || 
+                             l.includes('let\'s write') || 
+                             l.includes('let\'s see') || 
+                             l.includes('let\'s check') || 
+                             l.includes('tone check') || 
+                             l.includes('no quotes') || 
+                             l.includes('no tags') || 
+                             l.includes('yes, just') || 
+                             /^(?:yes|no)\b.*\b(?:talking|labels|quotes|clinical|reasoning|states)\b/i.test(l) || 
+                             /\?\s*(?:yes|no)\b/i.test(l) || 
+                             /^(?:supongo que|me parece|parece que).*[.!?]*\s*["')}\]]*$/i.test(trimmed) && trimmed.includes('"') && trimmed.includes(',');
+    
+    if (isConstraintLeak || trimmed === '') {
+      continue;
+    }
+    
+    cleanLines.push(line);
+  }
+  
+  cleanText = cleanLines.join('\n').trim();
+  cleanText = cleanText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
+  cleanText = cleanText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
+  cleanText = cleanText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
+  cleanText = cleanText.replace(/(?:Fits perfectly|One\/two short paragraphs\?|Yes, two short paragraphs|No "" or tags\?|None|Spanish \(Spain\) dialect[^\n]*|\b(?:Spanish|Castellano|Castilian|Español|Espanol)\s*\([A-Za-z]+\)\s*dialect[^\n]*|\b[a-z]{1,3}"\.\s*No\s*"[^"]*")[^\n]*/gi, '');
+  cleanText = cleanText.replace(/(?:\n|^)\s*(?:"[A-Za-zÁÉÍÓÚa-záéíóúñ]+"\s*,?\s*){2,}[^\n]*/gi, '');
+  cleanText = cleanText.replace(/(?:\n|^)\s*[A-Za-zÁÉÍÓÚa-záéíóúñ\s]+" & [A-Za-zÁÉÍÓÚa-záéíóúñ\s]+"[^\n]*/gi, '');
+  cleanText = cleanText.replace(/^['"`]+|['"`]+$/g, '').trim();
+
+  // Trim dangling incomplete transition clauses at the end
+  cleanText = cleanText.replace(/(?:\n\n|\s+)(?:por\s+cierto|por|además|ademas|y|también|tambien|en\s+cuanto\s+a|sobre)\s*,?\s*$/gi, '').trim();
+
+  return cleanText;
+}
+
 export async function processKymaTurn(
   messages: ChatMessage[],
   userId?: string,
@@ -652,6 +719,13 @@ Devuelve ÚNICAMENTE un JSON con este formato:
     if (!msg.text || !msg.text.trim()) continue;
     const role = msg.sender === 'kyma' ? 'model' : 'user';
     let text = msg.text;
+    
+    // Clean history from english preamble / constraint leaks so Gemini doesn't copy the bad format
+    if (msg.sender === 'kyma') {
+      text = sanitizeKymaReply(text);
+      if (!text || text.trim().length === 0) continue;
+    }
+    
     if (msg.contextItem) {
       text = `[Con respecto al elemento de tipo "${msg.contextItem.doorId}" titulado "${msg.contextItem.title}"]: ${text}`;
     }
@@ -725,7 +799,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
 
   const isShortMsg = userText.trim().split(/\s+/).length <= 2;
   const isFicheableOrMgmt = triage.isFicheable || isManagementRequested;
-  const enableGrounding = !isShortConfirmation && !isShortMsg && !isFicheableOrMgmt;
+  const enableGrounding = false;
 
   const kymaData = await callGeminiWithFallback(apiKey, {
     contents,
@@ -748,66 +822,7 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   const candidateParts = kymaData.candidates?.[0]?.content?.parts || [];
   let replyText = candidateParts.map((p: any) => p.text || '').join('').trim();
   
-  // Safe targeted sanitization of LLM preamble / artifacts & internal system tags
-  replyText = replyText.replace(/^(?:wait,\s*)?let\s+me\s+make\s+sure\s+it\s+is\s+complete\.?\s*/i, '');
-  replyText = replyText.replace(/\[SISTEMA\]:?/gi, '');
-  replyText = replyText.replace(/\[DATOS[^\]]*\]/gi, '');
-  replyText = replyText.replace(/^(?:wait,\s*)?(?:let\s+me\s+make\s+sure|check\s+constraints|constraints\s*checked)[^*:\n]*\**\s*:?\s*(?:"[^"]*"\s*)?\n?/gi, '');
-
-  // Line-by-line constraint leak and english preamble cleanup
-  if (replyText) {
-    const lines = replyText.split('\n');
-    const cleanLines = [];
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      const l = trimmed.toLowerCase();
-      
-      const isConstraintLeak = l.includes('check constraints') || 
-                               l.includes('concluye siempre') || 
-                               l.includes('compleitud obligatoria') || 
-                               l.includes('meta-razonamientos') ||
-                               l.includes('espejo, no juez') ||
-                               l.includes('una sola voz') ||
-                               l.includes('sugiere, el usuario decide') ||
-                               l.includes('meta-reasoning') ||
-                               l.includes('clinical label') ||
-                               l.includes('clinical labels') ||
-                               l.includes('spanish dialect') ||
-                               l.includes('castellano dialect') ||
-                               l.includes('first person') ||
-                               l.includes('final polish') ||
-                               l.includes('fits perfectly') ||
-                               l.includes('let\'s write') ||
-                               l.includes('let\'s see') ||
-                               l.includes('let\'s check') ||
-                               l.includes('tone check') ||
-                               l.includes('no quotes') ||
-                               l.includes('no tags') ||
-                               l.includes('yes, just') ||
-                               /^(?:yes|no)\b.*\b(?:talking|labels|quotes|clinical|reasoning|states)\b/i.test(l) ||
-                               /\?\s*(?:yes|no)\b/i.test(l) ||
-                               /^(?:supongo que|me parece|parece que).*[.!?]*\s*["')}\]]*$/i.test(trimmed) && trimmed.includes('"') && trimmed.includes(',');
-      
-      if (isConstraintLeak || trimmed === '') {
-        continue;
-      }
-      
-      cleanLines.push(line);
-    }
-    replyText = cleanLines.join('\n').trim();
-  }
-
-  replyText = replyText.replace(/^(?:transition\?|first person|final polish|step \d+)[^\n]*\n?/gi, '');
-  replyText = replyText.replace(/^['"]?\s*included\.\s*\d+\.\s*\*\*[^*]+\*\*\s*:\s*/i, '');
-  replyText = replyText.replace(/^(?:\d+\.|\*|-)?\s*\*\*[^*]+\*\*:?\s*/i, '');
-  replyText = replyText.replace(/(?:Fits perfectly|One\/two short paragraphs\?|Yes, two short paragraphs|No "" or tags\?|None|Spanish \(Spain\) dialect[^\n]*|\b(?:Spanish|Castellano|Castilian|Español|Espanol)\s*\([A-Za-z]+\)\s*dialect[^\n]*|\b[a-z]{1,3}"\.\s*No\s*"[^"]*")[^\n]*/gi, '');
-  replyText = replyText.replace(/(?:\n|^)\s*(?:"[A-Za-zÁÉÍÓÚa-záéíóúñ]+"\s*,?\s*){2,}[^\n]*/gi, '');
-  replyText = replyText.replace(/(?:\n|^)\s*[A-Za-zÁÉÍÓÚa-záéíóúñ\s]+" & [A-Za-zÁÉÍÓÚa-záéíóúñ\s]+"[^\n]*/gi, '');
-  replyText = replyText.replace(/^['"`]+|['"`]+$/g, '').trim();
-
-  // Trim dangling incomplete transition clauses at the end of the response (e.g. "Por", "Por cierto", "Además,")
-  replyText = replyText.replace(/(?:\n\n|\s+)(?:por\s+cierto|por|además|ademas|y|también|tambien|en\s+cuanto\s+a|sobre)\s*,?\s*$/gi, '').trim();
+  replyText = sanitizeKymaReply(replyText);
 
   // Robust Sentence Completeness Slicer: Ensure text ends on proper closing punctuation (. ? ! " ) )
   if (replyText && !/[.?!")}\u201D\u2019]$/.test(replyText)) {
