@@ -14,8 +14,8 @@ PRINCIPIOS FUNDAMENTALES:
 - Acuses en línea (Solo con confirmación real de [SISTEMA]): ÚNICAMENTE cuando en el mensaje de [SISTEMA] de este turno se te confirme explícitamente que se ha registrado, actualizado o eliminado una ficha, debes incluir el acuse de recibo breve en tu respuesta. NUNCA repitas ni escribas las palabras "[SISTEMA]" ni etiquetas internas en tu mensaje al usuario.
 - Datos exactos: Copia siempre los números de teléfono o datos numéricos de forma exacta e íntegra, sin recortar dígitos.
 - Brevedad y naturalidad: Respondes con sobriedad (máximo 1 o 2 párrafos cortos), en texto plano fluido en español.
-- Compleitud OBLIGATORIA: Concluye SIEMPRE tus oraciones, preguntas y pensamientos de forma completa y cerrada. NUNCA dejes un conector como "Por cierto" o "Además" colgado al final de tu mensaje sin haber redactado la frase completa.
-- PROHIBICIÓN DE META-RAZONAMIENTOS Y COMPROBACIONES: NUNCA empieces tu respuesta con comprobaciones de reglas, listas de verificación ni expresiones en inglés (como "Wait, check constraints", "Fits perfectly", "Let me check"). NUNCA pienses en voz alta ni escribas tus directrices de diseño en la burbuja. Tu respuesta debe ser EXCLUSIVAMENTE el mensaje final en español que leerá el usuario.
+- Compleitud: Concluye tus oraciones y preguntas de forma completa y cerrada.
+- Respuesta limpia: Tu mensaje debe ser exclusivamente el texto final en español que leerá el usuario. NUNCA incluyas comprobaciones de directrices, notas de diseño, listas de autoevaluación ni pensamientos internos en inglés o español.
 `;
 
 function extractUserProfileUpdates(userText: string, currentProfile?: any): { updatedProfile?: any; extractedKey?: string; extractedVal?: string } {
@@ -758,7 +758,6 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
   if (replyText) {
     const lines = replyText.split('\n');
     const cleanLines = [];
-    let skippingPreamble = true;
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -770,24 +769,30 @@ REGLA DE LECTURA DE AGENDA Y FICHAS: Cuando el usuario te pregunte qué tiene pa
                                l.includes('meta-razonamientos') ||
                                l.includes('espejo, no juez') ||
                                l.includes('una sola voz') ||
-                               l.includes('sugiere, el usuario decide');
+                               l.includes('sugiere, el usuario decide') ||
+                               l.includes('meta-reasoning') ||
+                               l.includes('clinical label') ||
+                               l.includes('clinical labels') ||
+                               l.includes('spanish dialect') ||
+                               l.includes('castellano dialect') ||
+                               l.includes('first person') ||
+                               l.includes('final polish') ||
+                               l.includes('fits perfectly') ||
+                               l.includes('let\'s write') ||
+                               l.includes('let\'s see') ||
+                               l.includes('let\'s check') ||
+                               l.includes('tone check') ||
+                               l.includes('no quotes') ||
+                               l.includes('no tags') ||
+                               l.includes('yes, just') ||
+                               /^(?:yes|no)\b.*\b(?:talking|labels|quotes|clinical|reasoning|states)\b/i.test(l) ||
+                               /\?\s*(?:yes|no)\b/i.test(l) ||
+                               /^(?:supongo que|me parece|parece que).*[.!?]*\s*["')}\]]*$/i.test(trimmed) && trimmed.includes('"') && trimmed.includes(',');
       
-      if (isConstraintLeak) {
+      if (isConstraintLeak || trimmed === '') {
         continue;
       }
-
-      if (skippingPreamble) {
-        // Detect English preamble phrases
-        const isEnglishPreamble = /^(?:wait|let's|let\s+me|need\s+to|make\s+sure|conclude|check|constraint|thinking|thought|analysis|here\s+is|here's|response|reply|write|polish|step)\b/i.test(trimmed) ||
-                                  /^[a-z\s()]+[:.]\s*$/i.test(trimmed) || // ej. "Let's write:" o "Final polish:"
-                                  (/^[a-z\s.,'!]+$/i.test(trimmed) && trimmed.split(/\s+/).length <= 5);
-        
-        if (isEnglishPreamble || trimmed === '') {
-          continue;
-        } else {
-          skippingPreamble = false;
-        }
-      }
+      
       cleanLines.push(line);
     }
     replyText = cleanLines.join('\n').trim();
