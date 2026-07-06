@@ -182,10 +182,22 @@ export default function Home() {
 
     const interval = setInterval(updateTime, 30000); // 30 seconds
 
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
         updateTime();
-        refreshItems();
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error || !session) {
+            console.warn('Session expired or invalid on wake-up. Resetting auth.');
+            setUser(null);
+          } else {
+            setUser(session.user);
+            refreshItems();
+          }
+        } catch (e) {
+          console.error('Failed to verify session on wake-up:', e);
+          refreshItems();
+        }
       }
     };
 
@@ -2725,7 +2737,7 @@ export default function Home() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(255, 255, 255, 0.02)', padding: '12px 16px', borderRadius: '12px' }}>
                       {user?.user_metadata?.avatar_url ? (
-                        <img src={user.user_metadata.avatar_url} alt="Avatar" style={{ width: '42px', height: '42px', borderRadius: '50%' }} />
+                        <img src={user?.user_metadata?.avatar_url} alt="Avatar" style={{ width: '42px', height: '42px', borderRadius: '50%' }} />
                       ) : (
                         <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
                           <Icons.User size={20} />

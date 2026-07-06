@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { KymaItem } from '../lib/db/client';
-import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin, Download, FileText, Eye, Pencil } from 'lucide-react';
+import { Calendar, CheckSquare, Square, Star, ShieldAlert, Heart, AlertCircle, Smile, Check, X, Sparkles, MapPin, Download, FileText, Eye, Pencil, Gift } from 'lucide-react';
 import { LogoIcon } from './Logo';
 
 interface ItemCardProps {
@@ -27,6 +27,29 @@ export function ItemCard({
   showSectionBadge
 }: ItemCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  const isBirthday = item.doorId === 'agenda' && (
+    item.title.toLowerCase().includes('cumpleaños') || 
+    item.title.toLowerCase().includes('cumple') || 
+    item.tags.some(t => t.toLowerCase().includes('cumpleaños') || t.toLowerCase().includes('cumple')) ||
+    (item.content && (item.content.toLowerCase().includes('cumpleaños') || item.content.toLowerCase().includes('cumple')))
+  );
+
+  let displayTitle = item.title;
+  if (isBirthday) {
+    if (displayTitle.toLowerCase() === 'cumpleaños' || displayTitle.toLowerCase() === 'cumple') {
+      if (item.content) {
+        const cleanedContent = item.content
+          .replace(/^es el\s+/i, '')
+          .replace(/^es\s+/i, '')
+          .replace(/\.$/, '');
+        displayTitle = 'Cumpleaños de ' + cleanedContent.replace(/^cumpleaños de\s+/i, '');
+        displayTitle = displayTitle.charAt(0).toUpperCase() + displayTitle.slice(1);
+      } else {
+        displayTitle = 'Cumpleaños';
+      }
+    }
+  }
   // Helper for section title and icon
   const getSectionInfo = (doorId: string) => {
     switch (doorId) {
@@ -114,11 +137,11 @@ export function ItemCard({
     }
   };
 
-  const isHighlighted = item.doorId === 'agenda' 
+  const isHighlighted = (item.doorId === 'agenda' 
     ? (item.peso === 3 || isTodayEvent()) 
     : item.doorId === 'personas' 
     ? (item.cercania === 'nucleo' || item.peso === 3) 
-    : item.peso === 3;
+    : item.peso === 3) || isBirthday;
 
   const isPastAgendaEvent = () => {
     if (item.doorId !== 'agenda' || !item.eventDate) return false;
@@ -349,7 +372,7 @@ export function ItemCard({
 
   return (
     <div 
-      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''} ${isExpanded ? 'card-expanded' : ''} ${item.completed ? 'card-completed' : ''}`}
+      className={`card ${isHighlighted ? 'card-high-weight' : ''} ${isCompact ? 'card-compact' : ''} ${isPastAgendaEvent() ? 'card-past-event' : ''} ${item.origen === 'kyma_sugerido' ? 'card-tentative' : ''} ${isExpanded ? 'card-expanded' : ''} ${item.completed ? 'card-completed' : ''} ${isBirthday ? 'card-birthday' : ''}`}
       onClick={() => setIsExpanded(!isExpanded)}
       style={{ cursor: 'pointer' }}
     >
@@ -426,14 +449,17 @@ export function ItemCard({
               )}
             </button>
           )}
-          <h3 className={`card-title ${item.completed ? 'title-completed' : ''}`}>
-            {item.title}
+          <h3 className={`card-title ${item.completed ? 'title-completed' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            {isBirthday && (
+              <Gift size={16} color="#f59e0b" style={{ filter: 'drop-shadow(0 0 2px rgba(245, 158, 11, 0.4))', flexShrink: 0 }} />
+            )}
+            <span>{displayTitle}</span>
             {item.doorId === 'agenda' && item.recurrencia && item.recurrencia !== 'none' && (
               <span style={{ 
                 fontSize: '0.82rem', 
                 color: 'var(--text-muted)', 
                 fontWeight: 400, 
-                marginLeft: '8px',
+                marginLeft: '2px',
                 textTransform: 'lowercase'
               }}>
                 ({item.recurrencia === 'primer_lunes_mes' ? 'primer lunes del mes' : item.recurrencia === 'ultimo_viernes_mes' ? 'último viernes del mes' : item.recurrencia.replace(/_/g, ' ')})
@@ -501,7 +527,7 @@ export function ItemCard({
         </div>
       </div>
 
-      {(!isCompact || isExpanded) && item.content && (
+      {(!isCompact || isExpanded) && item.content && !isBirthday && (
         <p className={`card-content ${item.completed ? 'content-completed' : ''} ${isExpanded ? 'content-inline-expanded' : ''}`}>
           {item.content}
         </p>
@@ -563,7 +589,7 @@ export function ItemCard({
         </div>
       )}
 
-      {!isCompact && (
+      {!isCompact && !isBirthday && (
         <div className="card-footer">
           <div className="card-tags">
             {item.tags
@@ -688,6 +714,22 @@ export function ItemCard({
           height: 100%;
           width: 3px;
           background: linear-gradient(180deg, #ec4899 0%, #a855f7 100%);
+          border-top-left-radius: var(--border-radius-md);
+          border-bottom-left-radius: var(--border-radius-md);
+        }
+        .card.card-birthday {
+          border-color: rgba(245, 158, 11, 0.35) !important;
+          background: linear-gradient(135deg, rgba(24, 24, 27, 0.95) 0%, rgba(245, 158, 11, 0.04) 100%) !important;
+          box-shadow: 0 4px 20px rgba(245, 158, 11, 0.06);
+        }
+        .card.card-birthday::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 3px;
+          background: linear-gradient(180deg, #f59e0b 0%, #ec4899 100%) !important;
           border-top-left-radius: var(--border-radius-md);
           border-bottom-left-radius: var(--border-radius-md);
         }
