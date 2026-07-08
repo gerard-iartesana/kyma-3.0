@@ -124,6 +124,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
         rec.lang = 'es-ES';
 
         rec.onresult = (event: any) => {
+          if (!isListeningRef.current) return;
           let finalChunk = '';
           let interimChunk = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
