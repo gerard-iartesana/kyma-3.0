@@ -60,7 +60,7 @@ Analiza pasiones y gustos expresados. EVITA TÍTULOS GENÉRICOS de una palabra c
     category: 'mapa',
     guardrails: [
       'Crear fichas de persona requiere tacto. Extrae solo cuando la persona mencionada tenga peso afectivo o recurrencia.',
-      'TÍTULO: Nombre de la persona exclusivamente (ej: "Alejandro", "Marta", "David").',
+      'TÍTULO: Nombre de la persona (ej: "Alejandro", "Marta", "David"). Si detectas que ya existe otra persona con el mismo nombre en la lista de elementos existentes del usuario, añade obligatoriamente el apellido o una palabra/rol diferenciador para evitar colisiones (ej: "David de pádel", "David García", "Marc de la oficina").',
       'REDACCIÓN EN PRIMERA PERSONA: Describe la relación desde mi punto de vista ("Es mi hermano...", "Jugamos juntos a pádel...", "Hablo con él de cine..."). NUNCA en tercera persona ("Lo ve cada día").',
       'FRECUENCIA DE CONTACTO: Si el usuario indica con qué asiduidad ve o interactúa con esa persona, asigna o actualiza su frecuenciaContacto.',
       'ETIQUETAS SOCIALES EXCLUSIVAS (TAGS): En esta puerta, las etiquetas sirven EXCLUSIVAMENTE para clasificar el tipo de vínculo en el ámbito social (ej: "#Familia", "#Hermano", "#Sobrina", "#Padre", "#Madre", "#Pareja", "#Amigo", "#Trabajo", "#Compañero", "#Jefe", "#Cliente", "#Estudios", "#Vecino"). PROHIBIDO generar etiquetas de actividades anécdoticas o lugares (NUNCA crees tags como "#Playa", "#Cine", "#Padel", "#Conversacion", "#Contacto", "#Duelo"). PROHIBIDO repetir el nombre de la persona como tag (NUNCA crees tags como "#Rafa" en la ficha de Rafa).'
