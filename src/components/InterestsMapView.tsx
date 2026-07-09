@@ -339,10 +339,10 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
   useEffect(() => {
     let animFrameId: number;
 
-    const baseSpringK = 0.010; // Softer springs for more breathing room
-    const restLength = 160; // Distance between connected card and tag nodes
-    const repulsion = 4500; // Stronger base repulsion charge
-    const centerGravity = 0.0014; // MUCH weaker gravity to prevent squashing/clumping
+    const baseSpringK = 0.008; // Softer springs for more breathing room
+    const restLength = 200; // Distance between connected card and tag nodes
+    const repulsion = 5000; // Stronger base repulsion charge
+    const centerGravity = 0.0006; // MUCH weaker gravity to prevent squashing/clumping
     const friction = 0.88; // Damping factor
 
     const tick = () => {
