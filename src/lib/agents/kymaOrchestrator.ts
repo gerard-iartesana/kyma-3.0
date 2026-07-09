@@ -549,22 +549,24 @@ Devuelve UNICAMENTE un JSON con este formato:
     /\b(?:muévelo|muevelo|pásalo|pasalo|muévela|muevela|pásala|pasala|cámbiala|cambiala|mover|pasa|pasar|cambia|cambiar|corrige|corregir)\s+(?:la\s+)?(?:ficha|tarjeta|nota|hito|tarea|evento|vínculo|vinculo|relación|relacion)?\s*a\s+(?:estela|notas|tareas|agenda|intereses|vínculos|vinculos|reflexiones|personas)\b/i.test(userText) ||
     /\b(?:cambiar|cambia|editar|edita|modificar|modifica)\s+(?:el\s+)?(?:título|titulo|nombre|cuerpo|contenido|texto)\b/i.test(userText) ||
     /\b(?:debería ser|deberia ser|tendría que ser|tendria que ser|era un|era una|me lo ha puesto como|lo ha guardado como|ha creado como|clasificado como)\s+(?:un\s+|una\s+)?(?:hito|estela|nota|tarea|evento|vínculo|vinculo|reflexión|reflexion)s?\b/i.test(userText) ||
-    /\b(?:corregir|corrige|modificar|modifica)\s+(?:este|esta|ese|esa|el|la)?\s*(?:hito|evento|nota|tarea|vínculo|vinculo|ficha|tarjeta)\b/i.test(userText)
+    /\b(?:corregir|corrige|modificar|modifica)\s+(?:este|esta|ese|esa|el|la)?\s*(?:hito|evento|nota|tarea|vínculo|vinculo|ficha|tarjeta)\b/i.test(userText) ||
+    /\b(?:añadir|añade|pon|poner|quitar|quita|eliminar|elimina|cambiar|cambia|ponerle)\s+(?:la\s+)?(?:etiqueta|tag|categoría|categoria|tags|etiquetas|vínculo|vinculo|relación|relacion)s?\b/i.test(userText) ||
+    /\b(?:en todos|a todos|en todas|a todas|los compañeros|las personas|las fichas)\b/i.test(userText)
   );
 
   if (isManagementRequested) {
     const mgmtPrompt = `
 Analiza la frase del usuario y el historial reciente de mensajes para determinar si el usuario solicita:
-1. ELIMINAR / BORRAR una ficha existente.
-2. MOVER / CORREGIR la clasificación de una ficha existente de una puerta a otra.
-3. CAMBIAR O EDITAR EL TÍTULO o CONTENIDO de una ficha existente.
+1. ELIMINAR / BORRAR una o varias fichas existentes.
+2. MOVER / CORREGIR la clasificación de fichas existentes de una puerta a otra.
+3. CAMBIAR O EDITAR EL TÍTULO, CONTENIDO, ETIQUETAS/TAGS u otros campos de una o varias fichas existentes.
 4. CREAR una nueva ficha que Kyma omitió, no guardó o debería haber creado a partir del historial reciente (ej: "no has añadido la ficha del viaje", "apunta también eso").
 
 HISTORIAL RECIENTE DE MENSAJES (de abajo hacia arriba, los últimos mensajes):
 ${recentMsgsSnippet}
 
-FICHAS ACTUALES DEL USUARIO:
-${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.title, content: i.content, eventDate: i.eventDate })), null, 2)}
+FICHAS ACTUALES DEL USUARIO (incluyendo sus etiquetas/tags actuales):
+${JSON.stringify(allUserItems.map(i => ({ id: i.id, doorId: i.doorId, title: i.title, content: i.content, eventDate: i.eventDate, tags: i.tags })), null, 2)}
 
 FRASE DEL USUARIO: "${userText}"
 
@@ -572,7 +574,12 @@ REGLAS DE SALIDA E INVIOLABILIDAD:
 1. REGLA SAGRADA PARA PERSONAS (VÍNCULOS): Las fichas en la puerta "personas" (vínculos) NUNCA SE MOVERÁN NI REUBICARÁN a otra puerta.
 2. Si el usuario quiere borrar una ficha sin crear otra: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": false, "shouldUpdateTitle": false.
 3. Si el usuario pide explícitamente mover una ficha de otra puerta o reubicarla: "shouldDelete": true, "itemIdToDelete": "<id>", "shouldCreateNew": true, "targetDoorId": "<puerta>", "newTitle": "<titulo>", "shouldUpdateTitle": false.
-4. Si el usuario pide EDITAR, CORREGIR O ACTUALIZAR campos de una ficha existente (como cambiar el título, corregir el año de un hito, actualizar la fecha/hora de un evento, o modificar el contenido/texto): "shouldUpdateFields": true, "targetItemIdToUpdate": "<id de la ficha a modificar>", "fieldsToUpdate": { ...objeto con los campos a actualizar con sus nuevos valores, ej: "title", "content", "year", "dateStr", "eventDate", "eventTime", "emocion", "cercania", "frecuenciaContacto" }
+4. Si el usuario pide EDITAR, CORREGIR, AÑADIR O ACTUALIZAR etiquetas (tags) u otros campos de una o varias fichas existentes (incluso de forma simultánea a múltiples fichas):
+   - Establece "shouldUpdateFields": true.
+   - Si es una sola ficha, rellena "targetItemIdToUpdate" y "fieldsToUpdate".
+   - Si aplica a una o más fichas (por ejemplo: "añade a todos los compañeros que juegan a pádel la etiqueta padel"), DEBES rellenar el array "multipleUpdates" con un objeto por cada ficha a modificar. Cada objeto debe tener:
+     "targetItemIdToUpdate": "<id de la ficha>",
+     "fieldsToUpdate": { ...objeto con campos a actualizar, ej: "title", "content", "tags" (pasa el array completo con la etiqueta añadida/eliminada, empezando con '#', ej: ["#personas", "#companero", "#padel"]), "year", "cercania", "frecuenciaContacto" }
 5. Si el usuario indica que no se ha creado/guardado o que falta añadir una ficha basada en el historial de mensajes: "shouldDelete": false, "shouldCreateNew": true, "targetDoorId": "<puerta de destino>", "newTitle": "<título adecuado para la ficha>", "newContent": "<contenido redactado en primera persona singular>", "year": <año si es estela o null>, "emocion": <emoción de 1 a 5 si es estela o null>, "shouldUpdateTitle": false.
 
 Devuelve ÚNICAMENTE un JSON con este formato:
@@ -584,10 +591,10 @@ Devuelve ÚNICAMENTE un JSON con este formato:
   "targetDoorId": "agenda" | "tareas" | "notas" | "intereses" | "personas" | "reflexiones" | "estela" | null,
   "newTitle": "Título corto o null",
   "newContent": "Contenido o null",
-  "year": number or null (año de 4 dígitos, ej: 2023, si targetDoorId es estela),
-  "emocion": number or null (1 a 5, si targetDoorId es estela),
-  "cercania": "nucleo" | "cercana" | "orbita" | null (si targetDoorId es personas),
-  "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" | null (si targetDoorId es personas),
+  "year": number or null,
+  "emocion": number or null,
+  "cercania": "nucleo" | "cercana" | "orbita" | null,
+  "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" | null,
   "shouldUpdateTitle": boolean,
   "targetItemIdToUpdate": "ID exacto de la ficha a cambiar/actualizar o null",
   "newUpdatedTitle": "Nuevo título exacto para la ficha o null",
@@ -595,6 +602,7 @@ Devuelve ÚNICAMENTE un JSON con este formato:
   "fieldsToUpdate": {
     "title": "Nuevo título o null",
     "content": "Nuevo contenido o null",
+    "tags": ["array", "de", "tags", "o", "null"],
     "year": number or null,
     "dateStr": "Nueva fecha string o null",
     "eventDate": "YYYY-MM-DD o null",
@@ -602,7 +610,24 @@ Devuelve ÚNICAMENTE un JSON con este formato:
     "emocion": number or null,
     "cercania": "nucleo" | "cercana" | "orbita" | null,
     "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" | null
-  } or null
+  } or null,
+  "multipleUpdates": [
+    {
+      "targetItemIdToUpdate": "ID exacto de la ficha",
+      "fieldsToUpdate": {
+        "title": "Nuevo título o null",
+        "content": "Nuevo contenido o null",
+        "tags": ["array", "de", "tags", "o", "null"],
+        "year": number or null,
+        "dateStr": "Nueva fecha string o null",
+        "eventDate": "YYYY-MM-DD o null",
+        "eventTime": "HH:MM o null",
+        "emocion": number or null,
+        "cercania": "nucleo" | "cercana" | "orbita" | null,
+        "frecuenciaContacto": "diario" | "semanal" | "mensual" | "anual" | "ninguno" | null
+      }
+    }
+  ] or null
 }
 `;
     try {
@@ -618,33 +643,47 @@ Devuelve ÚNICAMENTE un JSON con este formato:
           const parsedMgmt = JSON.parse(cleanJson);
           if (parsedMgmt && typeof parsedMgmt === 'object') {
 
-          if ((parsedMgmt.shouldUpdateFields || parsedMgmt.shouldUpdateTitle) && parsedMgmt.targetItemIdToUpdate) {
-            const fields: any = parsedMgmt.fieldsToUpdate || {};
-            if (parsedMgmt.newUpdatedTitle && !fields.title) {
-              fields.title = parsedMgmt.newUpdatedTitle;
+          if ((parsedMgmt.shouldUpdateFields || parsedMgmt.shouldUpdateTitle) && (parsedMgmt.targetItemIdToUpdate || parsedMgmt.multipleUpdates)) {
+            const updatesList: { id: string; fields: any }[] = [];
+
+            if (parsedMgmt.multipleUpdates && Array.isArray(parsedMgmt.multipleUpdates)) {
+              for (const u of parsedMgmt.multipleUpdates) {
+                if (u.targetItemIdToUpdate && u.fieldsToUpdate) {
+                  updatesList.push({ id: u.targetItemIdToUpdate, fields: u.fieldsToUpdate });
+                }
+              }
+            } else if (parsedMgmt.targetItemIdToUpdate) {
+              const fields: any = parsedMgmt.fieldsToUpdate || {};
+              if (parsedMgmt.newUpdatedTitle && !fields.title) {
+                fields.title = parsedMgmt.newUpdatedTitle;
+              }
+              updatesList.push({ id: parsedMgmt.targetItemIdToUpdate, fields });
             }
 
-            if (fields.title) {
-              fields.title = fields.title.replace(/\bentrenamiento\b/gi, 'Entreno')
-                .replace(/\breunión\b|\breunion\b|\bcita médica\b|\bcita medica\b/gi, 'Cita')
-                .replace(/\bbicicleta\b/gi, 'Bici')
-                .replace(/\bpartido de pádel\b|\bpartido de padel\b/gi, 'Partido')
-                .replace(/\bcorte de pelo\b/gi, 'Pelo');
-            }
+            for (const updateItemInfo of updatesList) {
+              const fields = updateItemInfo.fields || {};
+              if (fields.title) {
+                fields.title = fields.title.replace(/\bentrenamiento\b/gi, 'Entreno')
+                  .replace(/\breunión\b|\breunion\b|\bcita médica\b|\bcita medica\b/gi, 'Cita')
+                  .replace(/\bbicicleta\b/gi, 'Bici')
+                  .replace(/\bpartido de pádel\b|\bpartido de padel\b/gi, 'Partido')
+                  .replace(/\bcorte de pelo\b/gi, 'Pelo');
+              }
 
-            if (fields.frecuenciaContacto) {
-              fields.frecuencia = fields.frecuenciaContacto === 'diario' ? 100 : 
-                fields.frecuenciaContacto === 'semanal' ? 75 : 
-                parsedMgmt.frecuenciaContacto === 'mensual' ? 50 : 
-                parsedMgmt.frecuenciaContacto === 'anual' ? 25 : 
-                parsedMgmt.frecuenciaContacto === 'ninguno' ? 0 : undefined;
-              delete fields.frecuenciaContacto;
-            }
+              if (fields.frecuenciaContacto) {
+                fields.frecuencia = fields.frecuenciaContacto === 'diario' ? 100 : 
+                  fields.frecuenciaContacto === 'semanal' ? 75 : 
+                  fields.frecuenciaContacto === 'mensual' ? 50 : 
+                  fields.frecuenciaContacto === 'anual' ? 25 : 
+                  fields.frecuenciaContacto === 'ninguno' ? 0 : undefined;
+                delete fields.frecuenciaContacto;
+              }
 
-            if (Object.keys(fields).length > 0) {
-              const updatedItem = await dbClient.updateItem(parsedMgmt.targetItemIdToUpdate, fields, userId, sbClient);
-              allExtractedResults.unshift({ item: updatedItem, action: 'enrich', doorId: updatedItem.doorId });
-              finalAction = 'enrich';
+              if (Object.keys(fields).length > 0) {
+                const updatedItem = await dbClient.updateItem(updateItemInfo.id, fields, userId, sbClient);
+                allExtractedResults.unshift({ item: updatedItem, action: 'enrich', doorId: updatedItem.doorId });
+                finalAction = 'enrich';
+              }
             }
           }
 
