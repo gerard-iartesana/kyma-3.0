@@ -89,6 +89,7 @@ export default function Home() {
 
   // Google Calendar Integration States
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const [googleEvents, setGoogleEvents] = useState<any[]>([]);
   const [loadingGoogleEvents, setLoadingGoogleEvents] = useState(false);
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
@@ -213,10 +214,17 @@ export default function Home() {
 
   // Load database state and session on mount, and sync offline queue
   useEffect(() => {
-    if (isOnline) {
+    if (isOnline && user) {
       dbClient.syncOfflineQueue().then(() => refreshItems());
     }
-  }, [isOnline]);
+  }, [isOnline, user]);
+
+  // Reactively load items whenever user is logged in
+  useEffect(() => {
+    if (user) {
+      refreshItems();
+    }
+  }, [user]);
 
   useEffect(() => {
     // 1. Get initial session safely
@@ -225,20 +233,24 @@ export default function Home() {
         try {
           setUser(session?.user ?? null);
           if (session?.user) {
-            const config = await dbClient.getUserConfig();
-            if (config) {
-              if (config.perfil) {
-                setUserProfile(config.perfil);
-                localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+            try {
+              const config = await dbClient.getUserConfig();
+              if (config) {
+                if (config.perfil) {
+                  setUserProfile(config.perfil);
+                  localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+                }
+                if (config.logs) {
+                  setTrustLogs(config.logs);
+                  localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
+                }
+                if (config.googleCalendar && config.googleCalendar.connected) {
+                  setGoogleCalendarConnected(true);
+                  setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
+                }
               }
-              if (config.logs) {
-                setTrustLogs(config.logs);
-                localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
-              }
-              if (config.googleCalendar && config.googleCalendar.connected) {
-                setGoogleCalendarConnected(true);
-                setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
-              }
+            } catch (configErr) {
+              console.warn('Failed to load user config element on mount:', configErr);
             }
             setConfigLoaded(true);
           }
@@ -259,20 +271,24 @@ export default function Home() {
       try {
         setUser(session?.user ?? null);
         if (session?.user) {
-          const config = await dbClient.getUserConfig();
-          if (config) {
-            if (config.perfil) {
-              setUserProfile(config.perfil);
-              localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+          try {
+            const config = await dbClient.getUserConfig();
+            if (config) {
+              if (config.perfil) {
+                setUserProfile(config.perfil);
+                localStorage.setItem('kyma_user_profile', JSON.stringify(config.perfil));
+              }
+              if (config.logs) {
+                setTrustLogs(config.logs);
+                localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
+              }
+              if (config.googleCalendar && config.googleCalendar.connected) {
+                setGoogleCalendarConnected(true);
+                setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
+              }
             }
-            if (config.logs) {
-              setTrustLogs(config.logs);
-              localStorage.setItem('kyma_trust_logs', JSON.stringify(config.logs));
-            }
-            if (config.googleCalendar && config.googleCalendar.connected) {
-              setGoogleCalendarConnected(true);
-              setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
-            }
+          } catch (configErr) {
+            console.warn('Failed to load user config element on auth state change:', configErr);
           }
           setConfigLoaded(true);
           refreshItems();
@@ -620,6 +636,50 @@ export default function Home() {
       });
     } catch (e) {
       console.error('Error disconnecting calendar:', e);
+    }
+  };
+
+  const handleSyncLocalEventsToGoogle = async () => {
+    setIsSyncingCalendar(true);
+    try {
+      const sessionRes = await supabase.auth.getSession();
+      const token = sessionRes.data.session?.access_token;
+      if (!token) {
+        throw new Error('No se encontró el token de sesión de Supabase.');
+      }
+
+      const res = await fetch('/api/calendar/sync', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || 'Error en el servidor al sincronizar.');
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setToastNotification({
+          show: true,
+          message: `Sincronizados con éxito ${data.syncedCount} eventos locales con Google Calendar.`,
+          doorId: 'configuracion'
+        });
+        refreshItems();
+      } else {
+        throw new Error(data.error || 'No se pudo completar la sincronización.');
+      }
+    } catch (e: any) {
+      console.error('Error synchronizing local events to Google Calendar:', e);
+      setToastNotification({
+        show: true,
+        message: `Error al sincronizar: ${e.message}`,
+        doorId: 'configuracion'
+      });
+    } finally {
+      setIsSyncingCalendar(false);
     }
   };
 
@@ -2642,19 +2702,39 @@ export default function Home() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {googleCalendarConnected ? (
-                          <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '0.88rem', fontWeight: 500 }}>
-                              <Icons.CheckCircle size={16} />
-                              <span>Google Calendar Conectado</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontSize: '0.88rem', fontWeight: 500 }}>
+                                <Icons.CheckCircle size={16} />
+                                <span>Google Calendar Conectado</span>
+                              </div>
+                              <button 
+                                className="btn btn-secondary" 
+                                onClick={handleDisconnectGoogleCalendar} 
+                                style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+                              >
+                                Desconectar
+                              </button>
                             </div>
-                            <button 
-                              className="btn btn-secondary" 
-                              onClick={handleDisconnectGoogleCalendar} 
-                              style={{ padding: '8px 14px', fontSize: '0.8rem' }}
+                            <button
+                              className="btn btn-primary"
+                              onClick={handleSyncLocalEventsToGoogle}
+                              disabled={isSyncingCalendar}
+                              style={{ gap: '8px', padding: '8px 14px', fontSize: '0.8rem', width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center' }}
                             >
-                              Desconectar
+                              {isSyncingCalendar ? (
+                                <>
+                                  <Icons.Loader className="animate-spin" size={14} />
+                                  <span>Sincronizando eventos...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Icons.RefreshCw size={14} />
+                                  <span>Sincronizar eventos locales a Google Calendar</span>
+                                </>
+                              )}
                             </button>
-                          </>
+                          </div>
                         ) : (
                           <button 
                             className="btn btn-primary" 
