@@ -954,23 +954,8 @@ export default function Home() {
         : selectedDoorId === 'tareas'
           ? items.filter(item => {
               if (item.doorId !== 'tareas') return false;
-              if (showAllCompletedTasks) return true; // Mostrar todas las completadas (Historial)
-              if (!item.completed) return true; // Mostrar pendientes por defecto
-              
-              // Si está completada, solo mostrar si se completó en los últimos 30 días
-              if (item.fechaEjecucion) {
-                const executionDate = new Date(item.fechaEjecucion);
-                const oneMonthAgo = new Date();
-                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-                return executionDate >= oneMonthAgo;
-              }
-              if (item.createdAt) {
-                const createdDate = new Date(item.createdAt);
-                const oneMonthAgo = new Date();
-                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-                return createdDate >= oneMonthAgo;
-              }
-              return true;
+              if (!item.completed) return true; // Mostrar pendientes siempre
+              return showAllCompletedTasks; // Mostrar completadas solo si se clica en el boton de reloj (historial)
             })
           : items.filter(item => item.doorId === selectedDoorId))
     : [];
