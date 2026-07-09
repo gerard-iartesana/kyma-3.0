@@ -55,11 +55,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Error al consultar la agenda local: ${agendaError.message}` }, { status: 500 });
     }
 
-    // Filter items that don't have googleEventId, have eventDate, and do NOT belong to 'estela' door
+    // Filter items that don't have googleEventId, have fecha (eventDate in frontend), and do NOT belong to 'estela' door
     const itemsToSync = (agendaItems || []).filter((item: any) => {
       const datos = item.datos || {};
       const isEstela = datos.year !== undefined || datos.dateStr !== undefined || datos.lugar !== undefined;
-      return !isEstela && !datos.googleEventId && datos.eventDate;
+      return !isEstela && !datos.googleEventId && datos.fecha;
     });
 
     let syncedCount = 0;
@@ -68,10 +68,10 @@ export async function POST(request: Request) {
     for (const item of itemsToSync) {
       try {
         const itemDatos = item.datos || {};
-        const date = itemDatos.eventDate;
-        const time = itemDatos.eventTime;
+        const date = itemDatos.fecha;
+        const time = itemDatos.hora;
         const summary = item.titulo;
-        const description = item.contenido || 'Sincronizado desde Kyma';
+        const description = item.cuerpo || 'Sincronizado desde Kyma';
 
         let start: any = {};
         let end: any = {};
