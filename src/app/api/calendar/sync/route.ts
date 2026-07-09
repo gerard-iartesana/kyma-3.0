@@ -43,22 +43,24 @@ export async function POST(request: Request) {
     const googleCalendar = configElement.datos?.googleCalendar || {};
     const targetCalendarId = googleCalendar.writeCalendarId || 'primary';
 
-    // Fetch all local agenda items for the user
+    // Fetch all local agenda items for the user (type 'evento' in Supabase elements table)
     const { data: agendaItems, error: agendaError } = await supabaseClient
       .from('elementos')
       .select('*')
       .eq('user_id', user.id)
-      .eq('tipo', 'agenda');
+      .eq('tipo', 'evento');
 
     if (agendaError) {
       console.error('Error fetching local agenda items:', agendaError);
-      return NextResponse.json({ error: 'Error al consultar la agenda local' }, { status: 500 });
+      return NextResponse.json({ error: `Error al consultar la agenda local: ${agendaError.message}` }, { status: 500 });
     }
 
-    // Filter items that don't have googleEventId and have an eventDate
-    const itemsToSync = (agendaItems || []).filter(
-      (item: any) => !item.datos?.googleEventId && item.datos?.eventDate
-    );
+    // Filter items that don't have googleEventId, have eventDate, and do NOT belong to 'estela' door
+    const itemsToSync = (agendaItems || []).filter((item: any) => {
+      const datos = item.datos || {};
+      const isEstela = datos.year !== undefined || datos.dateStr !== undefined || datos.lugar !== undefined;
+      return !isEstela && !datos.googleEventId && datos.eventDate;
+    });
 
     let syncedCount = 0;
     const failures = [];
