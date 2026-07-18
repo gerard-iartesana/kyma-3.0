@@ -251,7 +251,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
 
   // 2. Build Tag Nodes (Hubs) - neutral grey colors
   uniqueTagsMap.forEach((itemsWithTag, tag) => {
-    const colors = ['#a1a1aa', '#71717a', 'rgba(161, 161, 170, 0.12)'];
+    const colors = ['#475569', '#334155', 'rgba(71, 85, 105, 0.12)'];
     const tagRadius = 26 + itemsWithTag.length * 8;
 
     nodes.push({
@@ -269,12 +269,14 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
     });
   });
 
-  // 3. Build Card Nodes (Satellites) - Pasión = #ec4899, Otros = Púrpura
+  // 3. Build Card Nodes (Satellites) - Pasión = #ec4899, Interés = Morado Kyma (#8b5cf6), Curiosidad = Gris Claro
   interests.forEach(item => {
-    const isPasion = item.peso === 3;
-    const cardColors = isPasion 
-      ? ['#ec4899', '#db2777', 'rgba(236, 72, 153, 0.25)']
-      : ['#a855f7', '#8b5cf6', 'rgba(168, 85, 247, 0.25)'];
+    let cardColors = ['#cbd5e1', '#94a3b8', 'rgba(203, 213, 225, 0.25)']; // Curiosidad (peso = 1)
+    if (item.peso === 3) {
+      cardColors = ['#ec4899', '#db2777', 'rgba(236, 72, 153, 0.25)']; // Pasión
+    } else if (item.peso === 2) {
+      cardColors = ['#8b5cf6', '#7c3aed', 'rgba(139, 92, 246, 0.25)']; // Interés
+    }
       
     const cardRadius = 24 + item.peso * 6;
 

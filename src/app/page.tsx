@@ -3113,23 +3113,23 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #f472b6 0%, #db2777 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Núcleo</strong>: Relaciones más íntimas, vitales o frecuentes.
+                            <strong style={{ color: '#ffffff' }}>Núcleo</strong>: Relaciones íntimas o vitales.
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #38bdf8 0%, #0284c7 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #a78bfa 0%, #8b5cf6 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Cercana</strong>: Contacto habitual y estrecho.
+                            <strong style={{ color: '#ffffff' }}>Cercana</strong>: Relaciones de amistad y confianza.
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #94a3b8 0%, #475569 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Órbita</strong>: Relaciones esporádicas o de menor contacto.
+                            <strong style={{ color: '#ffffff' }}>Órbita</strong>: Relaciones de cordialidad y amabilidad.
                           </div>
                         </div>
                         <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: '8px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                          ℹ️ El <strong style={{ color: '#ffffff' }}>tamaño de la esfera</strong> indica la frecuencia de contacto (más grande = más interacción).
+                          ℹ️ La frecuencia de contacto se ve reflejada en la cercanía al centro y la intensidad.
                         </div>
                       </div>
                     </div>
@@ -3185,21 +3185,21 @@ export default function Home() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #38bdf8 0%, #0284c7 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #a78bfa 0%, #8b5cf6 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Interés</strong>: Gustos habituales o recurrentes.
+                            <strong style={{ color: '#ffffff' }}>Interés</strong>: Gustos habituales o recurrentes (lleva icono de estrella ⭐️).
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #94a3b8 0%, #475569 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #cbd5e1 0%, #94a3b8 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                             <strong style={{ color: '#ffffff' }}>Curiosidad</strong>: Gustos tempranos o curiosidades.
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1.5px dashed rgba(255, 255, 255, 0.4)', background: 'transparent', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #475569 0%, #334155 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Etiquetas</strong>: Nodos de categorías temáticas a las que se enlazan las tarjetas.
+                            <strong style={{ color: '#ffffff' }}>Etiquetas</strong>: Nodos de categorías temáticas a las que se enlazan las tarjetas (gris oscuro).
                           </div>
                         </div>
                       </div>

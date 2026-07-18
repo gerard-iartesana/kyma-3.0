@@ -206,14 +206,26 @@ export function ItemCard({
           />
         ) : null;
       case 'intereses':
-        return item.peso === 3 ? (
-          <Heart 
-            size={16} 
-            color="#ec4899" 
-            fill="none"
-            style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
-          />
-        ) : null;
+        if (item.peso === 3) {
+          return (
+            <Heart 
+              size={16} 
+              color="#ec4899" 
+              fill="none"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(236, 72, 153, 0.45))', flexShrink: 0 }} 
+            />
+          );
+        } else if (item.peso === 2) {
+          return (
+            <Star 
+              size={16} 
+              color="var(--accent-purple)" 
+              fill="none"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(139, 92, 246, 0.45))', flexShrink: 0 }} 
+            />
+          );
+        }
+        return null;
       case 'personas':
         if (item.cercania === 'nucleo' || item.peso === 3) {
           return (

@@ -366,8 +366,8 @@ export function OrbitsView({ people, scale = 1.0, onPersonClick }: OrbitsViewPro
             gradient = 'linear-gradient(135deg, #c084fc, #ec4899)';
           } else if (closeness === 'cercana') {
             size = 16 + (freq / 100) * 8;
-            glowColor = `rgba(56, 189, 248, ${0.2 + (freq / 100) * 0.3})`;
-            gradient = 'linear-gradient(135deg, #38bdf8, #818cf8)';
+            glowColor = `rgba(139, 92, 246, ${0.2 + (freq / 100) * 0.3})`;
+            gradient = 'linear-gradient(135deg, #a78bfa, #8b5cf6)';
           } else {
             size = 10 + (freq / 100) * 6;
             glowColor = `rgba(148, 163, 184, ${0.1 + (freq / 100) * 0.3})`;
@@ -624,9 +624,9 @@ export function OrbitsView({ people, scale = 1.0, onPersonClick }: OrbitsViewPro
         .node-cercana {
           width: 20px;
           height: 20px;
-          background: linear-gradient(135deg, #38bdf8, #818cf8);
+          background: linear-gradient(135deg, #a78bfa, #8b5cf6);
           border: none;
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+          box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
         }
         .node-orbita {
           width: 14px;
