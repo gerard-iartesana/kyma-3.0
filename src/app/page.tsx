@@ -1840,7 +1840,7 @@ export default function Home() {
                         }}
                       >
                         <Icons.HelpCircle size={14} />
-                        <span>{showLegend ? 'Ocultar leyenda de colores' : 'Ver leyenda de colores'}</span>
+                        <span>{showLegend ? 'Ocultar leyenda' : 'Ver leyenda'}</span>
                       </button>
                   )}
                 </div>
@@ -3152,19 +3152,19 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #f472b6 0%, #db2777 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Pasión</strong>: Interés destacado o favorito (peso = 3, lleva icono de corazón ❤️).
+                            <strong style={{ color: '#ffffff' }}>Pasión</strong>: Interés destacado o favorito (lleva icono de corazón ❤️).
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #38bdf8 0%, #0284c7 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Interés</strong>: Gustos habituales o recurrentes (peso = 2).
+                            <strong style={{ color: '#ffffff' }}>Interés</strong>: Gustos habituales o recurrentes.
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #94a3b8 0%, #475569 100%)', marginTop: '3px', flexShrink: 0 }} />
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            <strong style={{ color: '#ffffff' }}>Curiosidad</strong>: Gustos tempranos o curiosidades (peso = 1).
+                            <strong style={{ color: '#ffffff' }}>Curiosidad</strong>: Gustos tempranos o curiosidades.
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>

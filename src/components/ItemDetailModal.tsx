@@ -169,7 +169,7 @@ ${content}
       case 'tareas':
         return { label: 'Prioridad', options: [{ val: 1, text: 'Normal' }, { val: 3, text: 'Urgente' }] };
       case 'intereses':
-        return { label: 'Afinidad', options: [{ val: 1, text: 'Curiosidad' }, { val: 3, text: 'Pasión' }] };
+        return { label: 'Afinidad', options: [{ val: 1, text: 'Curiosidad' }, { val: 2, text: 'Interés' }, { val: 3, text: 'Pasión' }] };
       case 'personas':
         return { label: 'Cercanía afectiva', options: [{ val: 1, text: 'Órbita' }, { val: 2, text: 'Cercana' }, { val: 3, text: 'Núcleo' }] };
       default:
