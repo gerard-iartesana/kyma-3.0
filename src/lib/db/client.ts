@@ -1196,7 +1196,7 @@ export const dbClient = {
     }
   },
 
-  async getUserConfig(): Promise<{ perfil?: any; logs?: any; googleCalendar?: any } | null> {
+  async getUserConfig(): Promise<{ perfil?: any; logs?: any; googleCalendar?: any; onboardingCompleted?: boolean } | null> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -1218,7 +1218,8 @@ export const dbClient = {
         return {
           perfil: datos.perfil,
           logs: datos.logs,
-          googleCalendar: datos.googleCalendar
+          googleCalendar: datos.googleCalendar,
+          onboardingCompleted: datos.onboardingCompleted
         };
       }
       return null;
@@ -1277,6 +1278,54 @@ export const dbClient = {
       }
     } catch (e) {
       console.error('Failed to save user config:', e);
+    }
+  },
+  async setOnboardingCompleted(completed: boolean): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: existing } = await supabase
+        .from('elementos')
+        .select('id, datos')
+        .eq('user_id', user.id)
+        .eq('tipo', 'nota')
+        .eq('titulo', 'kyma_system_user_configuration');
+
+      const existingDatos = existing && existing.length > 0 ? existing[0].datos || {} : {};
+      const datos: any = {
+        ...existingDatos,
+        is_system_config: true,
+        onboardingCompleted: completed
+      };
+
+      if (existing && existing.length > 0) {
+        const { error } = await supabase
+          .from('elementos')
+          .update({
+            datos,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing[0].id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('elementos')
+          .insert({
+            user_id: user.id,
+            tipo: 'nota',
+            titulo: 'kyma_system_user_configuration',
+            datos,
+            peso: 1,
+            origen: 'manual',
+            cuerpo: 'Configuración interna de Kyma.',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        if (error) throw error;
+      }
+    } catch (e) {
+      console.warn('Failed to save onboarding config:', e);
     }
   },
 

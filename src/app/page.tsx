@@ -12,6 +12,7 @@ import { CalendarView } from '../components/CalendarView';
 import { EstelaTimelineView } from '../components/EstelaTimelineView';
 import { EstelaHorizontalTimelineView } from '../components/EstelaHorizontalTimelineView';
 import { KymaChat } from '../components/KymaChat';
+import { OnboardingModal } from '../components/OnboardingModal';
 import { usePWA } from '../components/PWAProvider';
 import * as Icons from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -167,6 +168,7 @@ export default function Home() {
   const [showLegend, setShowLegend] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Toast Notification state
   const [toastNotification, setToastNotification] = useState<{
@@ -249,6 +251,13 @@ export default function Home() {
                   setGoogleCalendarConnected(true);
                   setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
                 }
+                
+                // Onboarding Check
+                const localOnboarding = localStorage.getItem('kyma_onboarding_completed') === 'true';
+                const dbOnboarding = config.onboardingCompleted === true;
+                if (!localOnboarding && !dbOnboarding) {
+                  setShowOnboarding(true);
+                }
               }
             } catch (configErr) {
               console.warn('Failed to load user config element on mount:', configErr);
@@ -287,6 +296,13 @@ export default function Home() {
                 setGoogleCalendarConnected(true);
                 setSelectedCalendarIds(config.googleCalendar.selectedCalendars || []);
               }
+
+              // Onboarding Check
+              const localOnboarding = localStorage.getItem('kyma_onboarding_completed') === 'true';
+              const dbOnboarding = config.onboardingCompleted === true;
+              if (!localOnboarding && !dbOnboarding) {
+                setShowOnboarding(true);
+              }
             }
           } catch (configErr) {
             console.warn('Failed to load user config element on auth state change:', configErr);
@@ -298,6 +314,7 @@ export default function Home() {
           setConfigLoaded(false);
           setGoogleCalendarConnected(false);
           setGoogleEvents([]);
+          setShowOnboarding(false);
         }
       } catch (err) {
         console.warn('Error in auth state change handler:', err);
@@ -307,6 +324,8 @@ export default function Home() {
     });
 
     setLocalDbState(getDbState());
+
+    window.addEventListener('kyma_close_onboarding', handleCloseOnboarding);
 
     const handleProfileEvent = (e: any) => {
       if (e.detail) {
@@ -348,6 +367,7 @@ export default function Home() {
       if (typeof window !== 'undefined') {
         window.removeEventListener('kyma_user_profile_updated', handleProfileEvent);
         window.removeEventListener('kyma_calendar_sync_error', handleSyncError);
+        window.removeEventListener('kyma_close_onboarding', handleCloseOnboarding);
       }
       clearTimeout(timer);
       clearTimeout(safetyTimer);
@@ -692,6 +712,15 @@ export default function Home() {
       return () => clearTimeout(timer);
     }
   }, [undoToast]);
+
+  const handleCloseOnboarding = async () => {
+    setShowOnboarding(false);
+    localStorage.setItem('kyma_onboarding_completed', 'true');
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) {
+      await dbClient.setOnboardingCompleted(true);
+    }
+  };
 
   const refreshItems = async () => {
     try {
@@ -3474,6 +3503,11 @@ export default function Home() {
           }}
           onAskKyma={(item) => handleAskKyma(item)}
         />
+      )}
+
+      {/* 6. ONBOARDING MODAL */}
+      {showOnboarding && (
+        <OnboardingModal onClose={handleCloseOnboarding} />
       )}
 
       {/* UNDO TOAST NOTIFICATION WINDOW */}
