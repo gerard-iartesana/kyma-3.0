@@ -164,6 +164,7 @@ export default function Home() {
   const [newRecurrencia, setNewRecurrencia] = useState<'none' | 'semanal' | 'mensual' | 'anual'>('none');
   const [showPastAgendaEvents, setShowPastAgendaEvents] = useState(false);
   const [showAllCompletedTasks, setShowAllCompletedTasks] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -1802,19 +1803,46 @@ export default function Home() {
           <div className={`door-view animate-fade-in ${((selectedDoorId === 'personas' && personasViewMode === 'orbits') || (selectedDoorId === 'intereses' && interesesViewMode === 'orbits') || (selectedDoorId === 'estela' && estelaViewMode === 'timeline')) ? 'full-width-door-view' : ''}`}>
             <div className="door-header">
               <div className="door-header-main-row">
-                <div className="door-header-title-group">
-                  <button 
-                    className="back-to-home-btn circular-back-btn" 
-                    onClick={() => handleSelectDoor(null)}
-                    title="Volver"
-                  >
-                    <Icons.ArrowLeft size={18} />
-                  </button>
+                <div className="door-header-title-group" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button 
+                      className="back-to-home-btn circular-back-btn" 
+                      onClick={() => handleSelectDoor(null)}
+                      title="Volver"
+                    >
+                      <Icons.ArrowLeft size={18} />
+                    </button>
 
-                  <h1 className="door-title font-serif">
-                    {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
-                    {currentDoor?.title}
-                  </h1>
+                    <h1 className="door-title font-serif" style={{ margin: 0 }}>
+                      {renderIcon(currentDoor?.icon || '', 24, "text-purple inline-icon")}
+                      {currentDoor?.title}
+                    </h1>
+                  </div>
+
+                  {((selectedDoorId === 'personas' && personasViewMode === 'orbits') || 
+                    (selectedDoorId === 'intereses' && interesesViewMode === 'orbits') || 
+                    (selectedDoorId === 'estela' && estelaViewMode === 'timeline')) && (
+                      <button
+                        onClick={() => setShowLegend(!showLegend)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: 'none',
+                          border: 'none',
+                          padding: '2px 0 0 34px', // Alineado horizontalmente con el texto del título (saltando el botón circular de volver)
+                          color: showLegend ? 'var(--accent-purple)' : 'var(--text-muted)',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          outline: 'none',
+                          fontWeight: 500
+                        }}
+                      >
+                        <Icons.HelpCircle size={14} />
+                        <span>{showLegend ? 'Ocultar leyenda de colores' : 'Ver leyenda de colores'}</span>
+                      </button>
+                  )}
                 </div>
 
                 <div className="door-controls">
@@ -3021,22 +3049,139 @@ export default function Home() {
                   </button>
                 </div>
               ) : selectedDoorId === 'personas' && personasViewMode === 'orbits' ? (
-                <OrbitsView 
-                  people={filteredItems.filter(p => {
-                    const closeness = p.cercania || 'orbita';
-                    if (closeness === 'nucleo') return personasShowNucleo;
-                    if (closeness === 'cercana') return personasShowCercana;
-                    return personasShowOrbita;
-                  })}
-                  scale={personasOrbitsScale}
-                  onPersonClick={(person) => handleSelectItem(person)}
-                />
+                <div style={{ position: 'relative', flex: 1, display: 'flex', width: '100%', height: '100%', minHeight: '500px' }}>
+                  {showLegend && (
+                    <div 
+                      className="glass-panel animate-fade-in" 
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        left: '16px',
+                        zIndex: 40,
+                        width: '260px',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        background: 'rgba(15, 15, 20, 0.85)',
+                        backdropFilter: 'blur(12px)',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4)',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <Icons.Info size={14} style={{ color: 'var(--accent-purple)' }} />
+                          Leyenda: Vínculos
+                        </span>
+                        <button 
+                          onClick={() => setShowLegend(false)}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }}
+                        >
+                          <Icons.X size={14} />
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #f472b6 0%, #db2777 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Núcleo</strong>: Relaciones más íntimas, vitales o frecuentes.
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #38bdf8 0%, #0284c7 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Cercana</strong>: Contacto habitual y estrecho.
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #94a3b8 0%, #475569 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Órbita</strong>: Relaciones esporádicas o de menor contacto.
+                          </div>
+                        </div>
+                        <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: '8px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                          ℹ️ El <strong style={{ color: '#ffffff' }}>tamaño de la esfera</strong> indica la frecuencia de contacto (más grande = más interacción).
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <OrbitsView 
+                    people={filteredItems.filter(p => {
+                      const closeness = p.cercania || 'orbita';
+                      if (closeness === 'nucleo') return personasShowNucleo;
+                      if (closeness === 'cercana') return personasShowCercana;
+                      return personasShowOrbita;
+                    })}
+                    scale={personasOrbitsScale}
+                    onPersonClick={(person) => handleSelectItem(person)}
+                  />
+                </div>
               ) : selectedDoorId === 'intereses' && interesesViewMode === 'orbits' ? (
-                <InterestsMapView 
-                  interests={filteredItems}
-                  onInterestClick={(interest) => handleSelectItem(interest)}
-                  onTagSelect={setSelectedTag}
-                />
+                <div style={{ position: 'relative', flex: 1, display: 'flex', width: '100%', height: '100%', minHeight: '500px' }}>
+                  {showLegend && (
+                    <div 
+                      className="glass-panel animate-fade-in" 
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        left: '16px',
+                        zIndex: 40,
+                        width: '260px',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        background: 'rgba(15, 15, 20, 0.85)',
+                        backdropFilter: 'blur(12px)',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4)',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <Icons.Info size={14} style={{ color: 'var(--accent-purple)' }} />
+                          Leyenda: Intereses
+                        </span>
+                        <button 
+                          onClick={() => setShowLegend(false)}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }}
+                        >
+                          <Icons.X size={14} />
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #f472b6 0%, #db2777 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Pasión</strong>: Interés destacado o favorito (peso = 3, lleva icono de corazón ❤️).
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #38bdf8 0%, #0284c7 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Interés</strong>: Gustos habituales o recurrentes (peso = 2).
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #94a3b8 0%, #475569 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Curiosidad</strong>: Gustos tempranos o curiosidades (peso = 1).
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1.5px dashed rgba(255, 255, 255, 0.4)', background: 'transparent', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Etiquetas</strong>: Nodos de categorías temáticas a las que se enlazan las tarjetas.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <InterestsMapView 
+                    interests={filteredItems}
+                    onInterestClick={(interest) => handleSelectItem(interest)}
+                    onTagSelect={setSelectedTag}
+                  />
+                </div>
               ) : selectedDoorId === 'agenda' && agendaViewMode === 'calendar' ? (
                 <CalendarView 
                   items={filteredItems}
@@ -3049,12 +3194,78 @@ export default function Home() {
                   onTagSelect={(tag) => setSelectedTag(tag)}
                 />
               ) : selectedDoorId === 'estela' && estelaViewMode === 'timeline' ? (
-                <EstelaHorizontalTimelineView
-                  items={filteredItems}
-                  sortAsc={estelaSortAsc}
-                  onItemClick={(item) => handleSelectItem(item)}
-                  pxPerYear={estelaTimelineScale}
-                />
+                <div style={{ position: 'relative', flex: 1, display: 'flex', width: '100%', height: '100%', minHeight: '500px' }}>
+                  {showLegend && (
+                    <div 
+                      className="glass-panel animate-fade-in" 
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        left: '16px',
+                        zIndex: 40,
+                        width: '260px',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        background: 'rgba(15, 15, 20, 0.85)',
+                        backdropFilter: 'blur(12px)',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4)',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <Icons.Info size={14} style={{ color: 'var(--accent-purple)' }} />
+                          Leyenda: Estela de vida
+                        </span>
+                        <button 
+                          onClick={() => setShowLegend(false)}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }}
+                        >
+                          <Icons.X size={14} />
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #f472b6 0%, #db2777 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Muy alegre</strong>: Momentos muy felices (ej: bodas, nacimientos, logros vitales).
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #fbbf24 0%, #d97706 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Alegre</strong>: Instantes felices o de satisfacción.
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #34d399 0%, #059669 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Calma</strong>: Tiempos de serenidad, paz y neutralidad.
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #38bdf8 0%, #0284c7 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Tristeza</strong>: Momentos tristes o de melancolía.
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #3b82f6 0%, #1d4ed8 100%)', marginTop: '3px', flexShrink: 0 }} />
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: '#ffffff' }}>Pérdida / Duelo</strong>: Dificultades, fallecimientos o pérdidas dolorosas.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <EstelaHorizontalTimelineView
+                    items={filteredItems}
+                    sortAsc={estelaSortAsc}
+                    onItemClick={(item) => handleSelectItem(item)}
+                    pxPerYear={estelaTimelineScale}
+                  />
+                </div>
               ) : selectedDoorId === 'estela' ? (
                 <EstelaTimelineView
                   items={filteredItems}
