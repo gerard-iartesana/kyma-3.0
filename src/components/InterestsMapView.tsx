@@ -545,12 +545,19 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
               <stop offset="0%" stopColor="#a855f7" />
               <stop offset="100%" stopColor="#8b5cf6" />
             </linearGradient>
+            <linearGradient id="grad-curiosidad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#cbd5e1" />
+              <stop offset="100%" stopColor="#94a3b8" />
+            </linearGradient>
 
             <filter id="shadow-pasion" x="-25%" y="-25%" width="150%" height="150%">
               <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#ec4899" floodOpacity="0.35" />
             </filter>
             <filter id="shadow-interes" x="-25%" y="-25%" width="150%" height="150%">
               <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#a855f7" floodOpacity="0.3" />
+            </filter>
+            <filter id="shadow-curiosidad" x="-25%" y="-25%" width="150%" height="150%">
+              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#94a3b8" floodOpacity="0.2" />
             </filter>
           </defs>
 
@@ -566,19 +573,28 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
 
           {/* Connection Lines */}
           <g>
-            {links.map(link => (
-              <line
-                key={link.id}
-                ref={el => {
-                  if (el) domLinesRef.current.set(link.id, el);
-                  else domLinesRef.current.delete(link.id);
-                }}
-                stroke={link.target.item?.peso === 3 ? '#ec4899' : '#a855f7'}
-                strokeWidth="1.2"
-                opacity="0.22"
-                strokeDasharray="4,2"
-              />
-            ))}
+            {links.map(link => {
+              const itemPeso = link.target.item?.peso;
+              let linkStroke = '#cbd5e1'; // Curiosidad (gris claro)
+              if (itemPeso === 3) {
+                linkStroke = '#ec4899'; // Pasión
+              } else if (itemPeso === 2) {
+                linkStroke = '#8b5cf6'; // Interés (morado Kyma)
+              }
+              return (
+                <line
+                  key={link.id}
+                  ref={el => {
+                    if (el) domLinesRef.current.set(link.id, el);
+                    else domLinesRef.current.delete(link.id);
+                  }}
+                  stroke={linkStroke}
+                  strokeWidth="1.2"
+                  opacity="0.22"
+                  strokeDasharray="4,2"
+                />
+              );
+            })}
           </g>
 
           {/* Nodes */}
@@ -586,8 +602,15 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
             {nodes.map(node => {
               const isTag = node.type === 'tag';
               const isPasion = node.item?.peso === 3;
-              const gradId = isPasion ? 'grad-pasion' : 'grad-interes';
-              const shadowId = isPasion ? 'shadow-pasion' : 'shadow-interes';
+              const isInteres = node.item?.peso === 2;
+
+              const gradId = isPasion 
+                ? 'grad-pasion' 
+                : (isInteres ? 'grad-interes' : 'grad-curiosidad');
+
+              const shadowId = isPasion 
+                ? 'shadow-pasion' 
+                : (isInteres ? 'shadow-interes' : 'shadow-curiosidad');
 
               const formatSentenceCase = (txt: string) => {
                 if (!txt) return '';
@@ -623,7 +646,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
                         cy="0"
                         r={node.radius}
                         stroke="none"
-                        fill="rgba(161, 161, 170, 0.12)"
+                        fill="rgba(51, 65, 85, 0.25)"
                         className="interest-circle-bubble tag-bubble"
                         style={{
                           transition: 'all 0.25s ease',
@@ -635,7 +658,7 @@ export function InterestsMapView({ interests, onInterestClick, onTagSelect }: In
                         y="0"
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        fill="#a1a1aa"
+                        fill="#94a3b8"
                         fontSize={node.radius > 42 ? "12px" : "10px"}
                         fontWeight="600"
                         fontFamily="Noto Sans"
