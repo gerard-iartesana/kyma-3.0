@@ -1196,15 +1196,19 @@ export const dbClient = {
     }
   },
 
-  async getUserConfig(): Promise<{ perfil?: any; logs?: any; googleCalendar?: any; onboardingCompleted?: boolean } | null> {
+  async getUserConfig(overrideUserId?: string): Promise<{ perfil?: any; logs?: any; googleCalendar?: any; onboardingCompleted?: boolean } | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      let userId = overrideUserId;
+      if (!userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        userId = user?.id;
+      }
+      if (!userId) return null;
       
       const { data, error } = await supabase
         .from('elementos')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('tipo', 'nota')
         .eq('titulo', 'kyma_system_user_configuration');
       

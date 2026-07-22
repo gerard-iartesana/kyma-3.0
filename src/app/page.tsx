@@ -196,7 +196,7 @@ export default function Home() {
             setUser(null);
           } else {
             setUser(session.user);
-            refreshItems();
+            refreshItems(session.user.id);
           }
         } catch (e) {
           console.error('Failed to verify session on wake-up:', e);
@@ -218,14 +218,14 @@ export default function Home() {
   // Load database state and session on mount, and sync offline queue
   useEffect(() => {
     if (isOnline && user) {
-      dbClient.syncOfflineQueue().then(() => refreshItems());
+      dbClient.syncOfflineQueue().then(() => refreshItems(user.id));
     }
   }, [isOnline, user]);
 
   // Reactively load items whenever user is logged in
   useEffect(() => {
     if (user) {
-      refreshItems();
+      refreshItems(user.id);
     }
   }, [user]);
 
@@ -237,7 +237,7 @@ export default function Home() {
           setUser(session?.user ?? null);
           if (session?.user) {
             try {
-              const config = await dbClient.getUserConfig();
+              const config = await dbClient.getUserConfig(session.user.id);
               if (config) {
                 if (config.perfil) {
                   setUserProfile(config.perfil);
@@ -263,8 +263,10 @@ export default function Home() {
               console.warn('Failed to load user config element on mount:', configErr);
             }
             setConfigLoaded(true);
+            refreshItems(session.user.id);
+          } else {
+            refreshItems();
           }
-          refreshItems();
         } catch (err) {
           console.warn('Error loading initial session config:', err);
         } finally {
@@ -282,7 +284,7 @@ export default function Home() {
         setUser(session?.user ?? null);
         if (session?.user) {
           try {
-            const config = await dbClient.getUserConfig();
+            const config = await dbClient.getUserConfig(session.user.id);
             if (config) {
               if (config.perfil) {
                 setUserProfile(config.perfil);
@@ -308,7 +310,7 @@ export default function Home() {
             console.warn('Failed to load user config element on auth state change:', configErr);
           }
           setConfigLoaded(true);
-          refreshItems();
+          refreshItems(session.user.id);
         } else {
           setItems([]);
           setConfigLoaded(false);
@@ -722,9 +724,10 @@ export default function Home() {
     }
   };
 
-  const refreshItems = async () => {
+  const refreshItems = async (userId?: string) => {
     try {
-      const dbItems = await dbClient.getItems();
+      const activeUid = userId || user?.id;
+      const dbItems = await dbClient.getItems(undefined, activeUid);
       setItems(dbItems);
     } catch (e) {
       console.error('Error loading items from Supabase:', e);
