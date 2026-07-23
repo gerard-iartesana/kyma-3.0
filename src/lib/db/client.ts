@@ -1196,7 +1196,7 @@ export const dbClient = {
     }
   },
 
-  async getUserConfig(overrideUserId?: string): Promise<{ perfil?: any; logs?: any; googleCalendar?: any; onboardingCompleted?: boolean } | null> {
+  async getUserConfig(overrideUserId?: string, customClient?: any): Promise<{ perfil?: any; logs?: any; googleCalendar?: any; onboardingCompleted?: boolean } | null> {
     try {
       let userId = overrideUserId;
       if (!userId) {
@@ -1205,7 +1205,8 @@ export const dbClient = {
       }
       if (!userId) return null;
       
-      const { data, error } = await supabase
+      const sb = customClient || supabase;
+      const { data, error } = await sb
         .from('elementos')
         .select('*')
         .eq('user_id', userId)

@@ -15,7 +15,7 @@ import { KymaChat } from '../components/KymaChat';
 import { OnboardingModal } from '../components/OnboardingModal';
 import { usePWA } from '../components/PWAProvider';
 import * as Icons from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, createSupabaseClient } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 
 export default function Home() {
@@ -196,7 +196,7 @@ export default function Home() {
             setUser(null);
           } else {
             setUser(session.user);
-            refreshItems(session.user.id);
+            refreshItems(session.user.id, session.access_token);
           }
         } catch (e) {
           console.error('Failed to verify session on wake-up:', e);
@@ -218,6 +218,7 @@ export default function Home() {
   // Load database state and session on mount, and sync offline queue
   useEffect(() => {
     if (isOnline && user) {
+      // In reactive dependency, we fallback to session token if available or let it fetch via cookie
       dbClient.syncOfflineQueue().then(() => refreshItems(user.id));
     }
   }, [isOnline, user]);
@@ -225,7 +226,12 @@ export default function Home() {
   // Reactively load items whenever user is logged in
   useEffect(() => {
     if (user) {
-      refreshItems(user.id);
+      // Check if we can get access token from session state
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        refreshItems(user.id, session?.access_token);
+      }).catch(() => {
+        refreshItems(user.id);
+      });
     }
   }, [user]);
 
@@ -237,7 +243,8 @@ export default function Home() {
           setUser(session?.user ?? null);
           if (session?.user) {
             try {
-              const config = await dbClient.getUserConfig(session.user.id);
+              const sbClient = createSupabaseClient(session.access_token);
+              const config = await dbClient.getUserConfig(session.user.id, sbClient);
               if (config) {
                 if (config.perfil) {
                   setUserProfile(config.perfil);
@@ -263,7 +270,7 @@ export default function Home() {
               console.warn('Failed to load user config element on mount:', configErr);
             }
             setConfigLoaded(true);
-            refreshItems(session.user.id);
+            refreshItems(session.user.id, session.access_token);
           } else {
             refreshItems();
           }
@@ -284,7 +291,8 @@ export default function Home() {
         setUser(session?.user ?? null);
         if (session?.user) {
           try {
-            const config = await dbClient.getUserConfig(session.user.id);
+            const sbClient = createSupabaseClient(session.access_token);
+            const config = await dbClient.getUserConfig(session.user.id, sbClient);
             if (config) {
               if (config.perfil) {
                 setUserProfile(config.perfil);
@@ -310,7 +318,7 @@ export default function Home() {
             console.warn('Failed to load user config element on auth state change:', configErr);
           }
           setConfigLoaded(true);
-          refreshItems(session.user.id);
+          refreshItems(session.user.id, session.access_token);
         } else {
           setItems([]);
           setConfigLoaded(false);
@@ -724,10 +732,11 @@ export default function Home() {
     }
   };
 
-  const refreshItems = async (userId?: string) => {
+  const refreshItems = async (userId?: string, token?: string) => {
     try {
       const activeUid = userId || user?.id;
-      const dbItems = await dbClient.getItems(undefined, activeUid);
+      const sbClient = token ? createSupabaseClient(token) : undefined;
+      const dbItems = await dbClient.getItems(undefined, activeUid, sbClient);
       setItems(dbItems);
     } catch (e) {
       console.error('Error loading items from Supabase:', e);
