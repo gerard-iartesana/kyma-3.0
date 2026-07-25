@@ -882,7 +882,7 @@ export default function Home() {
     }
   };
 
-  const handleToggleComplete = async (item: KymaItem, e: React.MouseEvent) => {
+  const handleToggleComplete = useCallback(async (item: KymaItem, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       const nextCompleted = !item.completed;
@@ -897,9 +897,9 @@ export default function Home() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [refreshItems]);
 
-  const handleSelectItem = (item: KymaItem) => {
+  const handleSelectItem = useCallback((item: KymaItem) => {
     if (item.id && item.id.includes('-rec-')) {
       const realId = item.id.split('-rec-')[0];
       const realItem = items.find(i => i.id === realId);
@@ -909,16 +909,16 @@ export default function Home() {
       }
     }
     setSelectedItem(item);
-  };
+  }, [items]);
 
-  const handleAskKyma = (item: KymaItem, e?: React.MouseEvent) => {
+  const handleAskKyma = useCallback((item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setChatContextItem(item);
     setSelectedItem(null);
     setMobileTab('chat');
-  };
+  }, []);
 
-  const handleConfirmItem = async (item: KymaItem, e?: React.MouseEvent) => {
+  const handleConfirmItem = useCallback(async (item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     recordTrustAction('confirm');
     // Optimistic update — UI responds instantly
@@ -935,9 +935,9 @@ export default function Home() {
         i.id === item.id ? { ...i, origen: 'kyma_sugerido' as const } : i
       ));
     }
-  };
+  }, [recordTrustAction, refreshItems]);
 
-  const handleDiscardItem = async (item: KymaItem, e?: React.MouseEvent) => {
+  const handleDiscardItem = useCallback(async (item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     recordTrustAction('discard');
     // Optimistic update — remove from view instantly
@@ -951,7 +951,7 @@ export default function Home() {
       // Revert on failure
       setItems(previousItems);
     }
-  };
+  }, [items, recordTrustAction, refreshItems]);
 
   // Stable callbacks for KymaChat — prevents re-renders on every parent update
   const handleClearChatContext = useCallback(() => setChatContextItem(null), []);
@@ -1730,10 +1730,10 @@ export default function Home() {
                         <ItemCard
                           item={agendaItems[0]}
                           isCompact={!dashboardExpanded}
-                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                          onAskKyma={(item, e) => handleAskKyma(item, e)}
-                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                          onClick={handleSelectItem}
+                          onAskKyma={handleAskKyma}
+                          onConfirmItem={handleConfirmItem}
+                          onDiscardItem={handleDiscardItem}
                         />
                       </div>
                     )}
@@ -1754,11 +1754,11 @@ export default function Home() {
                         <ItemCard
                           item={urgentTaskItems[0]}
                           isCompact={!dashboardExpanded}
-                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                          onAskKyma={(item, e) => handleAskKyma(item, e)}
+                          onClick={handleSelectItem}
+                          onAskKyma={handleAskKyma}
                           onToggleComplete={handleToggleComplete}
-                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                          onConfirmItem={handleConfirmItem}
+                          onDiscardItem={handleDiscardItem}
                         />
                       </div>
                     )}
@@ -1779,10 +1779,10 @@ export default function Home() {
                         <ItemCard
                           item={newVinculoItems[0]}
                           isCompact={!dashboardExpanded}
-                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                          onAskKyma={(item, e) => handleAskKyma(item, e)}
-                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                          onClick={handleSelectItem}
+                          onAskKyma={handleAskKyma}
+                          onConfirmItem={handleConfirmItem}
+                          onDiscardItem={handleDiscardItem}
                         />
                       </div>
                     )}
@@ -1803,10 +1803,10 @@ export default function Home() {
                         <ItemCard
                           item={recienteIntereses[0]}
                           isCompact={!dashboardExpanded}
-                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                          onAskKyma={(item, e) => handleAskKyma(item, e)}
-                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                          onClick={handleSelectItem}
+                          onAskKyma={handleAskKyma}
+                          onConfirmItem={handleConfirmItem}
+                          onDiscardItem={handleDiscardItem}
                         />
                       </div>
                     )}
@@ -1827,10 +1827,10 @@ export default function Home() {
                         <ItemCard
                           item={recienteReflexiones[0]}
                           isCompact={!dashboardExpanded}
-                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                          onAskKyma={(item, e) => handleAskKyma(item, e)}
-                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                          onClick={handleSelectItem}
+                          onAskKyma={handleAskKyma}
+                          onConfirmItem={handleConfirmItem}
+                          onDiscardItem={handleDiscardItem}
                         />
                       </div>
                     )}
@@ -1851,10 +1851,10 @@ export default function Home() {
                         <ItemCard
                           item={recienteNotas[0]}
                           isCompact={!dashboardExpanded}
-                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                          onAskKyma={(item, e) => handleAskKyma(item, e)}
-                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                          onClick={handleSelectItem}
+                          onAskKyma={handleAskKyma}
+                          onConfirmItem={handleConfirmItem}
+                          onDiscardItem={handleDiscardItem}
                         />
                       </div>
                     )}
@@ -1875,10 +1875,10 @@ export default function Home() {
                         <ItemCard
                           item={recienteEstela[0]}
                           isCompact={!dashboardExpanded}
-                          onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                          onAskKyma={(item, e) => handleAskKyma(item, e)}
-                          onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                          onDiscardItem={(item, e) => handleDiscardItem(item, e)}
+                          onClick={handleSelectItem}
+                          onAskKyma={handleAskKyma}
+                          onConfirmItem={handleConfirmItem}
+                          onDiscardItem={handleDiscardItem}
                         />
                       </div>
                     )}
@@ -3453,12 +3453,12 @@ export default function Home() {
                             key={item.id}
                             item={item}
                             isCompact={isCompactView}
-                            onClick={(clickedItem) => handleSelectItem(clickedItem)}
-                            onAskKyma={(item, e) => handleAskKyma(item, e)}
+                            onClick={handleSelectItem}
+                            onAskKyma={handleAskKyma}
                             onToggleComplete={selectedDoorId === 'tareas' ? handleToggleComplete : undefined}
-                            onConfirmItem={(item, e) => handleConfirmItem(item, e)}
-                            onDiscardItem={(item, e) => handleDiscardItem(item, e)}
-                            onTagSelect={(tag) => setSelectedTag(tag)}
+                            onConfirmItem={handleConfirmItem}
+                            onDiscardItem={handleDiscardItem}
+                            onTagSelect={setSelectedTag}
                           />
                         );
                       })}
