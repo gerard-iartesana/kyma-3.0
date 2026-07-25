@@ -410,9 +410,6 @@ export const dbClient = {
 
   getSb(customClient?: any) {
     if (customClient) return customClient;
-    if (this.activeToken) {
-      return createSupabaseClient(this.activeToken);
-    }
     return supabase;
   },
 

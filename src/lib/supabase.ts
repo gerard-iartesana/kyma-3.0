@@ -19,8 +19,8 @@ export const supabase = createClient(
 const clientCache = new Map<string, any>();
 
 export function createSupabaseClient(accessToken?: string) {
-  // In browser context without custom token or empty token, always use the singleton client
-  if (typeof window !== 'undefined' && (!accessToken || accessToken === '')) {
+  // In browser context, ALWAYS return the singleton client to guarantee 100% single instance
+  if (typeof window !== 'undefined') {
     return supabase;
   }
 
