@@ -37,37 +37,41 @@ function renderFormattedText(text: string | null | undefined) {
   });
 }
 
-function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string; isLatest: boolean; onCharacterTyped?: () => void }) {
+function TypewriterMessage({ text, isLatest, onComplete }: { text: string; isLatest: boolean; onComplete?: () => void }) {
   const cleanText = text || 'Comprendo lo que compartes. ¿Quieres que hablemos más de ello?';
   const [displayedText, setDisplayedText] = useState(isLatest ? '' : cleanText);
+  const [isTyping, setIsTyping] = useState(isLatest);
+  const indexRef = useRef(0);
 
   useEffect(() => {
     if (!isLatest) {
       setDisplayedText(cleanText);
+      setIsTyping(false);
       return;
     }
 
     setDisplayedText('');
-    let index = 0;
+    setIsTyping(true);
+    indexRef.current = 0;
+
     const interval = setInterval(() => {
-      setDisplayedText((prev) => {
-        const next = cleanText.slice(0, index + 1);
-        if (next === cleanText) {
-          clearInterval(interval);
-        }
-        index++;
-        return next;
-      });
-      if (onCharacterTyped) onCharacterTyped();
-    }, 12);
+      indexRef.current += 3; // 3 chars per tick for speed
+      if (indexRef.current >= cleanText.length) {
+        indexRef.current = cleanText.length;
+        clearInterval(interval);
+        setIsTyping(false);
+        onComplete?.();
+      }
+      setDisplayedText(cleanText.slice(0, indexRef.current));
+    }, 18);
 
     return () => clearInterval(interval);
   }, [cleanText, isLatest]);
 
   return (
     <p className="message-text">
-      {renderFormattedText(displayedText)}
-      {isLatest && displayedText !== cleanText && <span className="typing-cursor" />}
+      {isTyping ? displayedText : renderFormattedText(displayedText)}
+      {isTyping && <span className="typing-cursor" />}
     </p>
   );
 }
@@ -583,7 +587,7 @@ export const KymaChat = React.memo(function KymaChatInner({ contextItem, onClear
                   <TypewriterMessage 
                     text={msg.text} 
                     isLatest={isLatestKyma} 
-                    onCharacterTyped={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })} 
+                    onComplete={() => chatEndRef.current?.scrollIntoView({ behavior: 'instant' })} 
                   />
                 ) : (
                   <p className="message-text">{renderFormattedText(msg.text)}</p>
