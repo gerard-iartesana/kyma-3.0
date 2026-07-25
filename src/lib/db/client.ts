@@ -1124,6 +1124,7 @@ export const dbClient = {
   },
 
   async sendMessage(text: string, contextItem?: ChatMessage['contextItem']): Promise<ChatMessage> {
+    const sb = this.getSb();
     const userId = await getCurrentUserId();
     const msgs = await this.getMessages();
     const userMsg: ChatMessage = {
@@ -1134,13 +1135,14 @@ export const dbClient = {
       contextItem
     };
     const newMsgs = [...msgs, userMsg];
-    await supabase
+    await sb
       .from('conversacion_buffer')
       .upsert({ user_id: userId, mensajes: newMsgs, updated_at: new Date().toISOString() });
     return userMsg;
   },
 
   async receiveKymaMessage(text: string): Promise<ChatMessage> {
+    const sb = this.getSb();
     const userId = await getCurrentUserId();
     const msgs = await this.getMessages();
     const kymaMsg: ChatMessage = {
@@ -1150,13 +1152,14 @@ export const dbClient = {
       timestamp: new Date().toISOString()
     };
     const newMsgs = [...msgs, kymaMsg];
-    await supabase
+    await sb
       .from('conversacion_buffer')
       .upsert({ user_id: userId, mensajes: newMsgs, updated_at: new Date().toISOString() });
     return kymaMsg;
   },
 
   async clearMessages(): Promise<ChatMessage[]> {
+    const sb = this.getSb();
     const userId = await getCurrentUserId();
     const cleanMsg: ChatMessage[] = [
       {
@@ -1166,7 +1169,7 @@ export const dbClient = {
         timestamp: new Date().toISOString()
       }
     ];
-    await supabase
+    await sb
       .from('conversacion_buffer')
       .upsert({ user_id: userId, mensajes: cleanMsg, updated_at: new Date().toISOString() });
     return cleanMsg;
