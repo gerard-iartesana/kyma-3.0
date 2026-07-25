@@ -9,26 +9,50 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Singleton client for browser context
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder'
 );
 
+// Cache created clients to avoid instantiating thousands of clients in memory
+const clientCache = new Map<string, any>();
+
 export function createSupabaseClient(accessToken?: string) {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (serviceRoleKey && supabaseUrl) {
-    return createClient(supabaseUrl, serviceRoleKey);
+  // In browser context without custom token or empty token, always use the singleton client
+  if (typeof window !== 'undefined' && (!accessToken || accessToken === '')) {
+    return supabase;
   }
 
-  if (accessToken && supabaseUrl && supabaseAnonKey) {
-    return createClient(supabaseUrl, supabaseAnonKey, {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const cacheKey = serviceRoleKey ? `service-${serviceRoleKey}` : (accessToken ? `token-${accessToken}` : 'default');
+
+  if (clientCache.has(cacheKey)) {
+    return clientCache.get(cacheKey)!;
+  }
+
+  let client: any;
+
+  if (serviceRoleKey && supabaseUrl) {
+    client = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false }
+    });
+  } else if (accessToken && supabaseUrl && supabaseAnonKey) {
+    client = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
-      }
+      },
+      auth: { persistSession: false }
     });
+  } else {
+    client = supabase;
   }
 
-  return supabase;
+  if (cacheKey !== 'default') {
+    clientCache.set(cacheKey, client);
+  }
+
+  return client;
 }
