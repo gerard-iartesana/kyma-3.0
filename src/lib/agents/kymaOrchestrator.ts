@@ -151,8 +151,8 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
 }
 
 async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
-  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-  const modelsToTry = Array.from(new Set([targetModel, 'gemini-1.5-flash', 'gemini-2.0-flash']));
+  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  const modelsToTry = Array.from(new Set([targetModel, 'gemini-3.6-flash', 'gemini-3.5-flash-lite']));
 
   for (const modelName of modelsToTry) {
     try {
@@ -259,7 +259,7 @@ export async function processKymaTurn(
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
   }
 
-  const preferredModel = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';
