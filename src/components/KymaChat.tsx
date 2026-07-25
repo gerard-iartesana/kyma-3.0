@@ -12,10 +12,11 @@ interface KymaChatProps {
   onMessageSent?: () => void;
 }
 
-function renderFormattedText(text: string) {
-  if (!text) return null;
+function renderFormattedText(text: string | null | undefined) {
+  const clean = text || '';
+  if (!clean) return null;
   const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g;
-  const splitText = text.split(regex);
+  const splitText = clean.split(regex);
 
   return splitText.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
@@ -37,11 +38,12 @@ function renderFormattedText(text: string) {
 }
 
 function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string; isLatest: boolean; onCharacterTyped?: () => void }) {
-  const [displayedText, setDisplayedText] = useState(isLatest ? '' : text);
+  const cleanText = text || 'Comprendo lo que compartes. ¿Quieres que hablemos más de ello?';
+  const [displayedText, setDisplayedText] = useState(isLatest ? '' : cleanText);
 
   useEffect(() => {
     if (!isLatest) {
-      setDisplayedText(text);
+      setDisplayedText(cleanText);
       return;
     }
 
@@ -49,8 +51,8 @@ function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string;
     let index = 0;
     const interval = setInterval(() => {
       setDisplayedText((prev) => {
-        const next = text.slice(0, index + 1);
-        if (next === text) {
+        const next = cleanText.slice(0, index + 1);
+        if (next === cleanText) {
           clearInterval(interval);
         }
         index++;
@@ -60,12 +62,12 @@ function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string;
     }, 12);
 
     return () => clearInterval(interval);
-  }, [text, isLatest]);
+  }, [cleanText, isLatest]);
 
   return (
     <p className="message-text">
       {renderFormattedText(displayedText)}
-      {isLatest && displayedText !== text && <span className="typing-cursor" />}
+      {isLatest && displayedText !== cleanText && <span className="typing-cursor" />}
     </p>
   );
 }
