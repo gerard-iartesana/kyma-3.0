@@ -386,10 +386,15 @@ export default function Home() {
     };
   }, []);
 
-  // Synchronize profile and trust logs to Supabase whenever they change
+  const prevConfigRef = useRef<string>('');
+  // Synchronize profile and trust logs to Supabase whenever they change from user interaction
   useEffect(() => {
     if (user && configLoaded) {
-      dbClient.saveUserConfig(userProfile, trustLogs);
+      const currentJson = JSON.stringify({ userProfile, trustLogs });
+      if (prevConfigRef.current && prevConfigRef.current !== currentJson) {
+        dbClient.saveUserConfig(userProfile, trustLogs, undefined, user.id);
+      }
+      prevConfigRef.current = currentJson;
     }
   }, [userProfile, trustLogs, user, configLoaded]);
 

@@ -1221,11 +1221,7 @@ export const dbClient = {
 
   async getUserConfig(overrideUserId?: string, customClient?: any): Promise<{ perfil?: any; logs?: any; googleCalendar?: any; onboardingCompleted?: boolean } | null> {
     try {
-      let userId = overrideUserId;
-      if (!userId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        userId = user?.id;
-      }
+      const userId = overrideUserId || await getCurrentUserId();
       if (!userId) return null;
       
       const sb = this.getSb(customClient);
@@ -1257,15 +1253,15 @@ export const dbClient = {
     }
   },
 
-  async saveUserConfig(perfil: any, logs: any, googleCalendar?: any): Promise<void> {
+  async saveUserConfig(perfil: any, logs: any, googleCalendar?: any, overrideUserId?: string): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const userId = overrideUserId || await getCurrentUserId();
+      if (!userId) return;
 
       const { data: existing } = await supabase
         .from('elementos')
         .select('id, datos')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('tipo', 'nota')
         .eq('titulo', 'kyma_system_user_configuration');
 
@@ -1295,7 +1291,7 @@ export const dbClient = {
         const { error: insertError } = await supabase
           .from('elementos')
           .insert({
-            user_id: user.id,
+            user_id: userId,
             tipo: 'nota',
             titulo: 'kyma_system_user_configuration',
             datos,
