@@ -151,14 +151,14 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
 }
 
 async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
-  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const modelsToTry = Array.from(new Set([targetModel, 'gemini-1.5-flash']));
 
   for (const modelName of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       const res = await fetch(url, {
         method: 'POST',
@@ -259,7 +259,7 @@ export async function processKymaTurn(
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
   }
 
-  const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';

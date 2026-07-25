@@ -72,7 +72,7 @@ function TypewriterMessage({ text, isLatest, onCharacterTyped }: { text: string;
   );
 }
 
-export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, onUserProfileUpdated, onMessageSent }: KymaChatProps) {
+export const KymaChat = React.memo(function KymaChatInner({ contextItem, onClearContext, onItemAddedOrModified, onUserProfileUpdated, onMessageSent }: KymaChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -997,4 +997,4 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       `}</style>
     </div>
   );
-}
+});

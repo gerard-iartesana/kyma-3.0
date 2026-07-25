@@ -15,7 +15,7 @@ interface ItemCardProps {
   showSectionBadge?: boolean;
 }
 
-export function ItemCard({ 
+export const ItemCard = React.memo(function ItemCardInner({ 
   item, 
   onClick, 
   onAskKyma, 
@@ -401,7 +401,9 @@ export function ItemCard({
             borderRadius: '8px',
             padding: '6px 10px',
             marginBottom: '10px',
-            width: '100%'
+            width: '100%',
+            position: 'relative' as const,
+            zIndex: 10
           }}
         >
           <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -410,6 +412,7 @@ export function ItemCard({
           <div style={{ display: 'flex', gap: '6px' }}>
             {onConfirmItem && (
               <button 
+                type="button"
                 onClick={(e) => { e.stopPropagation(); onConfirmItem(item, e); }}
                 style={{ background: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.7rem', fontWeight: 600 }}
               >
@@ -418,6 +421,7 @@ export function ItemCard({
             )}
             {onDiscardItem && (
               <button 
+                type="button"
                 onClick={(e) => { e.stopPropagation(); onDiscardItem(item, e); }}
                 style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#a1a1aa', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '4px', padding: '3px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.7rem' }}
               >
@@ -1065,4 +1069,4 @@ export function ItemCard({
       `}</style>
     </div>
   );
-}
+});

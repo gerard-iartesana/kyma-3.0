@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { dbClient, KymaItem, getDbState, setDbState } from '../lib/db/client';
 import { DOOR_MODULES, DoorModule } from '../lib/modules';
 import { LogoFull, LogoIcon } from '../components/Logo';
@@ -734,27 +734,43 @@ export default function Home() {
     }
   };
 
-  const refreshItems = async (userId?: string, token?: string) => {
-    try {
-      const activeUid = userId || user?.id;
-      const sbClient = token ? createSupabaseClient(token) : undefined;
-      const dbItems = await dbClient.getItems(undefined, activeUid, sbClient);
-      setItems(dbItems);
-    } catch (e) {
-      console.error('Error loading items from Supabase:', e);
-    }
-  };
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshItems = useCallback(async (userId?: string, token?: string) => {
+    // Debounce: cancel any pending refresh and schedule a new one
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    return new Promise<void>((resolve) => {
+      refreshTimerRef.current = setTimeout(async () => {
+        refreshTimerRef.current = null;
+        try {
+          const activeUid = userId || user?.id;
+          const sbClient = token ? createSupabaseClient(token) : undefined;
+          const dbItems = await dbClient.getItems(undefined, activeUid, sbClient);
+          setItems(dbItems);
+        } catch (e) {
+          console.error('Error loading items from Supabase:', e);
+        }
+        resolve();
+      }, 150);
+    });
+  }, [user]);
 
+  const autoApproveInProgress = useRef(false);
   useEffect(() => {
-    if (userProfile.autoApprove && items.length > 0) {
-      const tentativeItems = items.filter(i => i.origen === 'kyma_sugerido');
-      if (tentativeItems.length > 0) {
-        Promise.all(tentativeItems.map(item => dbClient.confirmItem(item.id)))
-          .then(() => refreshItems())
-          .catch(err => console.error('Error auto-approving items:', err));
-      }
-    }
+    if (!userProfile.autoApprove || items.length === 0 || autoApproveInProgress.current) return;
+    const tentativeItems = items.filter(i => i.origen === 'kyma_sugerido');
+    if (tentativeItems.length === 0) return;
+    autoApproveInProgress.current = true;
+    // Optimistic local update first — remove from tentative immediately to break re-render loop
+    setItems(prev => prev.map(i =>
+      i.origen === 'kyma_sugerido' ? { ...i, origen: 'kyma_confirmado' as const } : i
+    ));
+    Promise.all(tentativeItems.map(item => dbClient.confirmItem(item.id)))
+      .then(() => refreshItems())
+      .catch(err => console.error('Error auto-approving items:', err))
+      .finally(() => { autoApproveInProgress.current = false; });
   }, [items, userProfile.autoApprove]);
+
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleItemAddedOrModified = async (item?: KymaItem, action?: string) => {
     if (item) {
@@ -786,8 +802,10 @@ export default function Home() {
         item
       });
 
-      setTimeout(() => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => {
         setToastNotification(prev => (prev?.item?.id === item.id ? null : prev));
+        toastTimerRef.current = null;
       }, 5000);
     }
   };
@@ -913,24 +931,42 @@ export default function Home() {
   const handleConfirmItem = async (item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     recordTrustAction('confirm');
+    // Optimistic update — UI responds instantly
+    setItems(prev => prev.map(i =>
+      i.id === item.id ? { ...i, origen: 'kyma_confirmado' as const } : i
+    ));
     try {
       await dbClient.confirmItem(item.id);
       refreshItems();
     } catch (err) {
       console.error('Error al confirmar elemento:', err);
+      // Revert on failure
+      setItems(prev => prev.map(i =>
+        i.id === item.id ? { ...i, origen: 'kyma_sugerido' as const } : i
+      ));
     }
   };
 
   const handleDiscardItem = async (item: KymaItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     recordTrustAction('discard');
+    // Optimistic update — remove from view instantly
+    const previousItems = items;
+    setItems(prev => prev.filter(i => i.id !== item.id));
     try {
       await dbClient.discardItem(item.id);
       refreshItems();
     } catch (err) {
       console.error('Error al descartar elemento:', err);
+      // Revert on failure
+      setItems(previousItems);
     }
   };
+
+  // Stable callbacks for KymaChat — prevents re-renders on every parent update
+  const handleClearChatContext = useCallback(() => setChatContextItem(null), []);
+  const handleUserProfileUpdated = useCallback((updatedProf: any) => setUserProfile(updatedProf), []);
+  const handleMessageSent = useCallback(() => setMobileTab('chat'), []);
 
   const handleBrandClick = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -992,7 +1028,7 @@ export default function Home() {
     return expanded;
   };
 
-  const baseDoorItems = selectedDoorId
+  const baseDoorItems = useMemo(() => selectedDoorId
     ? (selectedDoorId === 'agenda' 
         ? expandRecurringAgendaItems(items.filter(item => item.doorId === 'agenda')) 
         : selectedDoorId === 'tareas'
@@ -1002,9 +1038,10 @@ export default function Home() {
               return showAllCompletedTasks; // Mostrar completadas solo si se clica en el boton de reloj (historial)
             })
           : items.filter(item => item.doorId === selectedDoorId))
-    : [];
+    : []
+  , [selectedDoorId, items, showAllCompletedTasks]);
 
-  let filteredItems = selectedDoorId 
+  let filteredItems = useMemo(() => selectedDoorId 
     ? baseDoorItems
         .filter(item => !selectedTag || item.tags.includes(selectedTag))
         .filter(item => {
@@ -1082,36 +1119,84 @@ export default function Home() {
           }
           return 0; // Maintain original order
         })
-    : [];
+    : []
+  , [baseDoorItems, selectedTag, selectedDoorId, showPastAgendaEvents, agendaViewMode, personasSortMode, reflexionesSortMode, interesesSortMode, currentTime]);
 
-  if (selectedDoorId === 'agenda' && showPastAgendaEvents) {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const localTodayStr = `${year}-${month}-${day}`;
-    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  // Memoized dashboard data — avoids recomputing on every render
+  const dashboardData = useMemo(() => {
+    const isRecentDashboardItem = (item: KymaItem) => {
+      if (!item.createdAt) return true;
+      const itemDate = new Date(item.createdAt).getTime();
+      if (isNaN(itemDate)) return true;
+      const now = Date.now();
+      const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+      return (now - itemDate) <= oneWeekMs || itemDate >= now;
+    };
 
-    const futureOrCurrent: KymaItem[] = [];
-    const past: KymaItem[] = [];
+    const agendaItems = expandRecurringAgendaItems(items.filter(i => i.doorId === 'agenda'))
+      .filter(i => {
+        if (!i.eventDate) return false;
+        const year = currentTime.getFullYear();
+        const month = String(currentTime.getMonth() + 1).padStart(2, '0');
+        const day = String(currentTime.getDate()).padStart(2, '0');
+        const localTodayStr = `${year}-${month}-${day}`;
+        const ctStr = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
+        if (i.eventDate < localTodayStr) return false;
+        if (i.eventDate === localTodayStr && i.eventTime) return i.eventTime >= ctStr;
+        return true;
+      })
+      .sort((a, b) => {
+        const dateCompare = (a.eventDate || '').localeCompare(b.eventDate || '');
+        if (dateCompare !== 0) return dateCompare;
+        return (a.eventTime || '').localeCompare(b.eventTime || '');
+      });
 
-    for (const item of filteredItems) {
-      if (!item.eventDate) {
-        futureOrCurrent.push(item);
-        continue;
+    const urgentTaskItems = items.filter(i => i.doorId === 'tareas' && !i.completed && i.peso === 3);
+    const newVinculoItems = items.filter(i => i.doorId === 'personas' && isRecentDashboardItem(i))
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const recienteIntereses = items.filter(i => i.doorId === 'intereses' && isRecentDashboardItem(i))
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const recienteReflexiones = items.filter(i => i.doorId === 'reflexiones' && isRecentDashboardItem(i))
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const recienteNotas = items.filter(i => i.doorId === 'notas' && isRecentDashboardItem(i))
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const recienteEstela = items.filter(i => i.doorId === 'estela' && isRecentDashboardItem(i))
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+    return { agendaItems, urgentTaskItems, newVinculoItems, recienteIntereses, recienteReflexiones, recienteNotas, recienteEstela };
+  }, [items, currentTime]);
+
+  // Apply past agenda events reordering (separate from useMemo since it conditionally mutates)
+  const displayedFilteredItems = useMemo(() => {
+    if (selectedDoorId === 'agenda' && showPastAgendaEvents) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const localTodayStr = `${year}-${month}-${day}`;
+      const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const futureOrCurrent: KymaItem[] = [];
+      const past: KymaItem[] = [];
+
+      for (const item of filteredItems) {
+        if (!item.eventDate) {
+          futureOrCurrent.push(item);
+          continue;
+        }
+        const isPast = item.eventDate < localTodayStr || (item.eventDate === localTodayStr && item.eventTime ? item.eventTime < currentTimeStr : false);
+        if (isPast) {
+          past.push(item);
+        } else {
+          futureOrCurrent.push(item);
+        }
       }
-      const isPast = item.eventDate < localTodayStr || (item.eventDate === localTodayStr && item.eventTime ? item.eventTime < currentTimeStr : false);
-      if (isPast) {
-        past.push(item);
-      } else {
-        futureOrCurrent.push(item);
-      }
+
+      const limitedPast = past.slice(-20);
+      return [...limitedPast, ...futureOrCurrent];
     }
-
-    // Limit past events to at most 20 back
-    const limitedPast = past.slice(-20);
-    filteredItems = [...limitedPast, ...futureOrCurrent];
-  }
+    return filteredItems;
+  }, [filteredItems, selectedDoorId, showPastAgendaEvents, currentTime]);
   const currentDoor = selectedDoorId === 'configuracion'
     ? { id: 'configuracion', title: 'Configuración y Contexto', icon: 'Settings', category: 'utility' as const, description: 'Ajustes del espacio y datos de contexto personal.', emptyPromise: '' }
     : selectedDoorId === 'busqueda'
@@ -1119,7 +1204,7 @@ export default function Home() {
     : selectedDoorId === 'ayuda'
     ? { id: 'ayuda', title: 'Ayuda y Consejos de Uso', icon: 'HelpCircle', category: 'utility' as const, description: 'Guía y recomendaciones para exprimir al máximo tu espacio con Kyma.', emptyPromise: '' }
     : DOOR_MODULES.find(d => d.id === selectedDoorId);
-  const isVelado = !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && currentDoor?.category === 'map' && filteredItems.length === 0;
+  const isVelado = !['configuracion', 'busqueda', 'ayuda'].includes(selectedDoorId || '') && currentDoor?.category === 'map' && displayedFilteredItems.length === 0;
 
   // Render Premium Loading Screen before mounting completes or session is loading
   if (!isMounted || loadingSession) {
@@ -1603,55 +1688,25 @@ export default function Home() {
                 };
 
                 // 1. Agenda: Próximos eventos
-                const agendaItems = expandRecurringAgendaItems(items.filter(i => i.doorId === 'agenda'))
-                  .filter(i => {
-                    if (!i.eventDate) return false;
-                    const year = currentTime.getFullYear();
-                    const month = String(currentTime.getMonth() + 1).padStart(2, '0');
-                    const day = String(currentTime.getDate()).padStart(2, '0');
-                    const localTodayStr = `${year}-${month}-${day}`;
-                    const currentTimeStr = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
-                    
-                    if (i.eventDate < localTodayStr) return false;
-                    if (i.eventDate === localTodayStr && i.eventTime) {
-                      return i.eventTime >= currentTimeStr;
-                    }
-                    return true;
-                  })
-                  .sort((a, b) => {
-                    const dateCompare = (a.eventDate || '').localeCompare(b.eventDate || '');
-                    if (dateCompare !== 0) return dateCompare;
-                    return (a.eventTime || '').localeCompare(b.eventTime || '');
-                  });
+                const agendaItems = dashboardData.agendaItems;
                 
                 // 2. Tareas urgentes (solo si hay alguna marcada con peso === 3)
-                const urgentTaskItems = items
-                  .filter(i => i.doorId === 'tareas' && !i.completed && i.peso === 3);
+                const urgentTaskItems = dashboardData.urgentTaskItems;
 
                 // 3. Nuevos vínculos (creados la última semana)
-                const newVinculoItems = items
-                  .filter(i => i.doorId === 'personas' && isRecentDashboardItem(i))
-                  .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+                const newVinculoItems = dashboardData.newVinculoItems;
 
                 // 4. Intereses (últimos modificados/creados en la última semana)
-                const recienteIntereses = items
-                  .filter(i => i.doorId === 'intereses' && isRecentDashboardItem(i))
-                  .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+                const recienteIntereses = dashboardData.recienteIntereses;
 
                 // 5. Reflexiones (últimas modificadas en la última semana)
-                const recienteReflexiones = items
-                  .filter(i => i.doorId === 'reflexiones' && isRecentDashboardItem(i))
-                  .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+                const recienteReflexiones = dashboardData.recienteReflexiones;
 
                 // 6. Notas (últimas añadidas en la última semana)
-                const recienteNotas = items
-                  .filter(i => i.doorId === 'notas' && isRecentDashboardItem(i))
-                  .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+                const recienteNotas = dashboardData.recienteNotas;
 
                 // 7. Recuerdos añadidos (Estela de vida, ÚLTIMO BLOQUE)
-                const recienteEstela = items
-                  .filter(i => i.doorId === 'estela' && isRecentDashboardItem(i))
-                  .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+                const recienteEstela = dashboardData.recienteEstela;
 
                 const hasAnyContent = agendaItems.length > 0 || urgentTaskItems.length > 0 || newVinculoItems.length > 0 || recienteIntereses.length > 0 || recienteReflexiones.length > 0 || recienteNotas.length > 0 || recienteEstela.length > 0;
 
@@ -3078,7 +3133,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              ) : filteredItems.length === 0 ? (
+              ) : displayedFilteredItems.length === 0 ? (
                 <div className="empty-utility-state animate-fade-in">
                   {renderIcon(currentDoor?.icon || '', 32, "text-muted")}
                   <p>{currentDoor?.emptyPromise}</p>
@@ -3149,7 +3204,7 @@ export default function Home() {
                     </div>
                   )}
                   <OrbitsView 
-                    people={filteredItems.filter(p => {
+                    people={displayedFilteredItems.filter(p => {
                       const closeness = p.cercania || 'orbita';
                       if (closeness === 'nucleo') return personasShowNucleo;
                       if (closeness === 'cercana') return personasShowCercana;
@@ -3220,14 +3275,14 @@ export default function Home() {
                     </div>
                   )}
                   <InterestsMapView 
-                    interests={filteredItems}
+                    interests={displayedFilteredItems}
                     onInterestClick={(interest) => handleSelectItem(interest)}
                     onTagSelect={setSelectedTag}
                   />
                 </div>
               ) : selectedDoorId === 'agenda' && agendaViewMode === 'calendar' ? (
                 <CalendarView 
-                  items={filteredItems}
+                  items={displayedFilteredItems}
                   googleCalendarConnected={googleCalendarConnected}
                   googleEvents={googleCalendarConnected ? googleEvents : []}
                   onItemClick={(item) => handleSelectItem(item)}
@@ -3303,7 +3358,7 @@ export default function Home() {
                     </div>
                   )}
                   <EstelaHorizontalTimelineView
-                    items={filteredItems}
+                    items={displayedFilteredItems}
                     sortAsc={estelaSortAsc}
                     onItemClick={(item) => handleSelectItem(item)}
                     pxPerYear={estelaTimelineScale}
@@ -3311,7 +3366,7 @@ export default function Home() {
                 </div>
               ) : selectedDoorId === 'estela' ? (
                 <EstelaTimelineView
-                  items={filteredItems}
+                  items={displayedFilteredItems}
                   isCompact={isCompactView}
                   sortAsc={estelaSortAsc}
                   onItemClick={(item) => handleSelectItem(item)}
@@ -3346,7 +3401,7 @@ export default function Home() {
                         };
                       });
                       
-                      return [...filteredItems, ...virtualGoogleItems].sort((a, b) => {
+                      return [...displayedFilteredItems, ...virtualGoogleItems].sort((a, b) => {
                         const dateA = a.eventDate || '';
                         const dateB = b.eventDate || '';
                         const dateCompare = dateA.localeCompare(dateB);
@@ -3357,7 +3412,7 @@ export default function Home() {
                         return timeA.localeCompare(timeB);
                       });
                     }
-                    return filteredItems;
+                    return displayedFilteredItems;
                   })();
 
                   return (
@@ -3491,10 +3546,10 @@ export default function Home() {
       <section className={`chat-pane state-${chatState} ${mobileTab === 'chat' ? 'mobile-visible' : 'mobile-hidden'}`}>
         <KymaChat
           contextItem={chatContextItem}
-          onClearContext={() => setChatContextItem(null)}
+          onClearContext={handleClearChatContext}
           onItemAddedOrModified={handleItemAddedOrModified}
-          onUserProfileUpdated={(updatedProf) => setUserProfile(updatedProf)}
-          onMessageSent={() => setMobileTab('chat')}
+          onUserProfileUpdated={handleUserProfileUpdated}
+          onMessageSent={handleMessageSent}
         />
       </section>
 
