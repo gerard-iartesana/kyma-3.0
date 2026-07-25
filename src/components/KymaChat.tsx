@@ -233,7 +233,7 @@ export const KymaChat = React.memo(function KymaChatInner({ contextItem, onClear
 
   // Scroll to bottom whenever messages or typing state changes
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    chatEndRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [messages, isTyping]);
 
   // When a context item is set from outside (e.g. clicking "Preguntar a Kyma")
@@ -437,9 +437,6 @@ export const KymaChat = React.memo(function KymaChatInner({ contextItem, onClear
           if (isTimerCleared) return;
           isTimerCleared = true;
           clearTimeout(safetyTimer);
-          
-          setTypingStatus('preparing');
-          await new Promise(resolve => setTimeout(resolve, 2000));
           
           // INSTANT OPTIMISTIC RENDER (0ms latency transition from Pensando... to message)
           const tempKymaId = `kyma-${Date.now()}`;

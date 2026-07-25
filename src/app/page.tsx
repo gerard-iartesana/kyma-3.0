@@ -771,7 +771,7 @@ export default function Home() {
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleItemAddedOrModified = async (item?: KymaItem, action?: string) => {
+  const handleItemAddedOrModified = useCallback(async (item?: KymaItem, action?: string) => {
     if (item) {
       try {
         const cached = localStorage.getItem('kyma_cached_items');
@@ -807,7 +807,7 @@ export default function Home() {
         toastTimerRef.current = null;
       }, 5000);
     }
-  };
+  }, [refreshItems]);
 
   const handleToggleDbState = () => {
     const nextState = dbState === 'populated' ? 'empty' : 'populated';
