@@ -39,39 +39,16 @@ function renderFormattedText(text: string | null | undefined) {
 
 function TypewriterMessage({ text, isLatest, onComplete }: { text: string; isLatest: boolean; onComplete?: () => void }) {
   const cleanText = text || 'Comprendo lo que compartes. ¿Quieres que hablemos más de ello?';
-  const [displayedText, setDisplayedText] = useState(isLatest ? '' : cleanText);
-  const [isTyping, setIsTyping] = useState(isLatest);
-  const indexRef = useRef(0);
 
   useEffect(() => {
-    if (!isLatest) {
-      setDisplayedText(cleanText);
-      setIsTyping(false);
-      return;
+    if (isLatest && onComplete) {
+      onComplete();
     }
-
-    setDisplayedText('');
-    setIsTyping(true);
-    indexRef.current = 0;
-
-    const interval = setInterval(() => {
-      indexRef.current += 3; // 3 chars per tick for speed
-      if (indexRef.current >= cleanText.length) {
-        indexRef.current = cleanText.length;
-        clearInterval(interval);
-        setIsTyping(false);
-        onComplete?.();
-      }
-      setDisplayedText(cleanText.slice(0, indexRef.current));
-    }, 18);
-
-    return () => clearInterval(interval);
-  }, [cleanText, isLatest]);
+  }, [isLatest]);
 
   return (
     <p className="message-text">
-      {isTyping ? displayedText : renderFormattedText(displayedText)}
-      {isTyping && <span className="typing-cursor" />}
+      {renderFormattedText(cleanText)}
     </p>
   );
 }
