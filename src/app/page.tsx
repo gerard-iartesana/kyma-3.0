@@ -734,24 +734,15 @@ export default function Home() {
     }
   };
 
-  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshItems = useCallback(async (userId?: string, token?: string) => {
-    // Debounce: cancel any pending refresh and schedule a new one
-    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    return new Promise<void>((resolve) => {
-      refreshTimerRef.current = setTimeout(async () => {
-        refreshTimerRef.current = null;
-        try {
-          const activeUid = userId || user?.id;
-          const sbClient = token ? createSupabaseClient(token) : undefined;
-          const dbItems = await dbClient.getItems(undefined, activeUid, sbClient);
-          setItems(dbItems);
-        } catch (e) {
-          console.error('Error loading items from Supabase:', e);
-        }
-        resolve();
-      }, 150);
-    });
+    try {
+      const activeUid = userId || user?.id;
+      const sbClient = token ? createSupabaseClient(token) : undefined;
+      const dbItems = await dbClient.getItems(undefined, activeUid, sbClient);
+      setItems(dbItems);
+    } catch (e) {
+      console.error('Error loading items from Supabase:', e);
+    }
   }, [user]);
 
   const autoApproveInProgress = useRef(false);
