@@ -119,7 +119,7 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
       const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognitionAPI) {
         const rec = new SpeechRecognitionAPI();
-        rec.continuous = false;
+        rec.continuous = true;
         rec.interimResults = true;
         rec.lang = 'es-ES';
 

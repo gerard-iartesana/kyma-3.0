@@ -151,24 +151,30 @@ function extractUserProfileUpdates(userText: string, currentProfile?: any): { up
 }
 
 async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
-  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-  const modelsToTry = Array.from(new Set([targetModel, 'gemini-3.5-flash']));
+  const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const modelsToTry = Array.from(new Set([targetModel, 'gemini-2.0-flash']));
 
   for (const modelName of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyObj)
+        body: JSON.stringify(bodyObj),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+      
       if (res.ok) {
         return await res.json();
       } else {
         const errText = await res.text();
         console.warn(`Gemini API call to ${modelName} returned status ${res.status}: ${errText}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Fetch error with model ${modelName}:`, err);
     }
   }
@@ -253,7 +259,7 @@ export async function processKymaTurn(
     throw new Error('GEMINI_API_KEY no configurada en el servidor.');
   }
 
-  const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const preferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
   const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
   const userText = lastUserMessage?.text || '';

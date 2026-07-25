@@ -881,18 +881,17 @@ export const dbClient = {
     
     let itemToTrash = cachedItem;
     
-    // Save item in trash recovery stack
     try {
       if (!itemToTrash) {
         const { data: dbRow } = await sb
           .from('elementos')
-          .select('*, elementos_etiquetas(etiquetas(nombre))')
+          .select('*, elemento_tags(tags(nombre))')
           .eq('user_id', userId)
           .eq('id', id)
           .maybeSingle();
           
         if (dbRow) {
-          const tagNames = (dbRow.elementos_etiquetas || []).map((ee: any) => ee.etiquetas?.nombre).filter(Boolean);
+          const tagNames = (dbRow.elemento_tags || []).map((ee: any) => ee.tags?.nombre).filter(Boolean);
           itemToTrash = mapDbToKymaItem(dbRow, tagNames);
         }
       }
@@ -946,6 +945,16 @@ export const dbClient = {
           }
         })();
       }
+    }
+
+    // First delete associated rows from elemento_tags to prevent foreign key constraint violations
+    try {
+      await sb
+        .from('elemento_tags')
+        .delete()
+        .eq('elemento_id', id);
+    } catch (tagDelErr) {
+      console.warn('Failed to delete associated tags on item delete:', tagDelErr);
     }
 
     const { error } = await sb
