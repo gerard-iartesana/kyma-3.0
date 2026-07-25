@@ -105,7 +105,7 @@ function deriveEstelaTitle(userMessage: string, extractedTitle?: string): string
 
 async function callGeminiWithFallback(apiKey: string, bodyObj: any, preferredModel?: string): Promise<any> {
   const targetModel = preferredModel || process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-  const modelsToTry = Array.from(new Set([targetModel, 'gemini-3.6-flash']));
+  const modelsToTry = Array.from(new Set([targetModel, 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']));
 
   for (const modelName of modelsToTry) {
     try {

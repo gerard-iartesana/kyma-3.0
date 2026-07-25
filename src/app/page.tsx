@@ -240,6 +240,7 @@ export default function Home() {
     supabase.auth.getSession()
       .then(async ({ data: { session } }) => {
         try {
+          dbClient.setToken(session?.access_token || null);
           setUser(session?.user ?? null);
           if (session?.user) {
             try {
@@ -288,6 +289,7 @@ export default function Home() {
     // 2. Set auth listener safely
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
+        dbClient.setToken(session?.access_token || null);
         setUser(session?.user ?? null);
         if (session?.user) {
           try {

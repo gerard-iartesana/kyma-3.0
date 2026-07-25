@@ -424,6 +424,10 @@ export function KymaChat({ contextItem, onClearContext, onItemAddedOrModified, o
             kymaText = await generateResponse(fullTextForDB, contextItem);
           }
 
+          if (!kymaText || typeof kymaText !== 'string' || kymaText.trim().length < 5) {
+            kymaText = 'Comprendo lo que compartes. A veces, simplemente conversar nos ayuda a ordenar las ideas y ver las cosas desde otra perspectiva. ¿Quieres que indaguemos más en ello?';
+          }
+
           if (isTimerCleared) return;
           isTimerCleared = true;
           clearTimeout(safetyTimer);

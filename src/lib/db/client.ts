@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { supabase, createSupabaseClient } from '../supabase';
 
 export interface KymaItem {
   id: string;
@@ -402,9 +402,23 @@ export function setDbState(state: 'populated' | 'empty') {
 
 // Client Database API
 export const dbClient = {
+  activeToken: null as string | null,
+  
+  setToken(token: string | null) {
+    this.activeToken = token;
+  },
+
+  getSb(customClient?: any) {
+    if (customClient) return customClient;
+    if (this.activeToken) {
+      return createSupabaseClient(this.activeToken);
+    }
+    return supabase;
+  },
+
   // Sync tag names to public.tags and create relations in elemento_tags
   async syncElementTags(elementoId: string, userId: string, tagNames: string[], customClient?: any): Promise<void> {
-    const sb = customClient || supabase;
+    const sb = this.getSb(customClient);
     // 1. Delete existing associations
     const { error: deleteError } = await sb
       .from('elemento_tags')
@@ -479,7 +493,7 @@ export const dbClient = {
 
   // Items CRUD
   async getItems(doorId?: string, overrideUserId?: string, customClient?: any): Promise<KymaItem[]> {
-    const sb = customClient || supabase;
+    const sb = this.getSb(customClient);
     try {
       const userId = await getCurrentUserId(overrideUserId);
       
@@ -594,7 +608,7 @@ export const dbClient = {
   },
 
   async getItemById(id: string, overrideUserId?: string, customClient?: any): Promise<KymaItem | undefined> {
-    const sb = customClient || supabase;
+    const sb = this.getSb(customClient);
     const userId = await getCurrentUserId(overrideUserId);
     const { data, error } = await sb
       .from('elementos')
@@ -622,7 +636,7 @@ export const dbClient = {
   },
 
   async createItem(item: Omit<KymaItem, 'id' | 'createdAt' | 'userId'>, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
-    const sb = customClient || supabase;
+    const sb = this.getSb(customClient);
     const userId = await getCurrentUserId(overrideUserId);
 
     // Offline capture fallback
@@ -754,7 +768,7 @@ export const dbClient = {
   },
 
   async updateItem(id: string, updates: Partial<Omit<KymaItem, 'id' | 'userId'>>, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
-    const sb = customClient || supabase;
+    const sb = this.getSb(customClient);
     const userId = await getCurrentUserId(overrideUserId);
     
     // 1. Fetch current element
@@ -876,7 +890,7 @@ export const dbClient = {
   },
 
   async deleteItem(id: string, cachedItem?: KymaItem, overrideUserId?: string, customClient?: any): Promise<void> {
-    const sb = customClient || supabase;
+    const sb = this.getSb(customClient);
     const userId = await getCurrentUserId(overrideUserId);
     
     let itemToTrash = cachedItem;
@@ -1017,7 +1031,7 @@ export const dbClient = {
   },
 
   async confirmItem(id: string, overrideUserId?: string, customClient?: any): Promise<KymaItem> {
-    const sb = customClient || supabase;
+    const sb = this.getSb(customClient);
     const updatedItem = await this.updateItem(id, { origen: 'kyma_confirmado' }, overrideUserId, customClient);
     
     if (updatedItem.doorId === 'agenda' && !updatedItem.googleEventId && typeof window !== 'undefined') {
@@ -1214,7 +1228,7 @@ export const dbClient = {
       }
       if (!userId) return null;
       
-      const sb = customClient || supabase;
+      const sb = this.getSb(customClient);
       const { data, error } = await sb
         .from('elementos')
         .select('*')
